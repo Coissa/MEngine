@@ -1,2 +1,13 @@
 does/Vulkan_DX12_Engine_Implementation_Plan.md
 does/Piccolo_Source_Learning_Roadmap.md
+CodexSessionTransfer/session/rollout-2026-07-31T15-32-31-019fb716-c698-7a31-886b-1a4bd017ee72.jsonl
+CodexSession-019fb716-c698-7a31-886b-1a4bd017ee72.zip
+CodexSessionTransfer/import-session.ps1
+.gitignore
+CodexSessionTransfer/README-导入说明.md
+CodexSessionTransfer/SHA256.txt
+.vscode/c_cpp_properties.json
+Engine/build/reflection_tests/TypeRegistry.obj
+Engine/build/reflection_tests/TypeRegistryTests.exe
+Engine/build/reflection_tests/TypeRegistryTests.obj
+Engine/Tests/Reflection/TypeRegistryTests.cpp
