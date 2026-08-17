@@ -206,6 +206,8 @@ namespace GE::Reflection::Generator
             "mengine.reflect.type";
         constexpr llvm::StringLiteral ReflectedFieldAnnotation =
             "mengine.reflect.field";
+        constexpr llvm::StringLiteral ReflectedFunctionAnnotation =
+            "mengine.reflect.function";
 
         bool HasAnnotation(
             const clang::Decl& declaration,
@@ -286,6 +288,102 @@ namespace GE::Reflection::Generator
             return fields;
         }
 
+        std::vector<ClangFunctionDeclaration> CollectReflectedFunctions(
+            const clang::CXXRecordDecl& record,
+            const clang::SourceManager& source_manager)
+        {
+            std::vector<ClangFunctionDeclaration> functions;
+            const clang::PrintingPolicy printing_policy =
+                record.getASTContext().getPrintingPolicy();
+
+            for (const clang::CXXMethodDecl* method : record.methods())
+            {
+                if (method == nullptr
+                    || !HasAnnotation(
+                        *method,
+                        ReflectedFunctionAnnotation))
+                {
+                    continue;
+                }
+
+                const clang::SourceLocation expansion_location =
+                    source_manager.getExpansionLoc(method->getLocation());
+                if (expansion_location.isInvalid()
+                    || !source_manager.isWrittenInMainFile(
+                        expansion_location))
+                {
+                    continue;
+                }
+
+                const std::optional<SourcePosition> source_position =
+                    GetSourcePosition(source_manager, expansion_location);
+                if (!source_position.has_value())
+                {
+                    continue;
+                }
+
+                std::vector<ClangParameterDeclaration> parameters;
+                parameters.reserve(method->getNumParams());
+                for (const clang::ParmVarDecl* parameter :
+                     method->parameters())
+                {
+                    const clang::SourceLocation parameter_location =
+                        source_manager.getExpansionLoc(
+                            parameter->getLocation());
+                    const std::optional<SourcePosition> parameter_position =
+                        GetSourcePosition(
+                            source_manager,
+                            parameter_location);
+                    const clang::QualType parameter_type =
+                        parameter->getType();
+                    const clang::QualType referenced_type =
+                        parameter_type.getNonReferenceType();
+
+                    parameters.push_back(ClangParameterDeclaration{
+                        parameter->getNameAsString(),
+                        parameter_type.getAsString(printing_policy),
+                        parameter_position.has_value()
+                            ? parameter_position->source_file
+                            : source_position->source_file,
+                        parameter_position.has_value()
+                            ? parameter_position->line
+                            : source_position->line,
+                        parameter_position.has_value()
+                            ? parameter_position->column
+                            : source_position->column,
+                        parameter_type->isLValueReferenceType(),
+                        parameter_type->isRValueReferenceType(),
+                        referenced_type.isConstQualified()});
+                }
+
+                const clang::QualType return_type = method->getReturnType();
+                functions.push_back(ClangFunctionDeclaration{
+                    method->getNameAsString(),
+                    return_type.getAsString(printing_policy),
+                    source_position->source_file,
+                    source_position->line,
+                    source_position->column,
+                    ConvertFieldAccess(method->getAccess()),
+                    std::move(parameters),
+                    method->isConst(),
+                    method->isStatic(),
+                    method->isVariadic(),
+                    method->isDeleted(),
+                    method->isVolatile(),
+                    method->getRefQualifier() != clang::RQ_None,
+                    method->getTemplatedKind()
+                        != clang::FunctionDecl::TK_NonTemplate,
+                    llvm::isa<clang::CXXConstructorDecl>(method)
+                        || llvm::isa<clang::CXXDestructorDecl>(method)
+                        || llvm::isa<clang::CXXConversionDecl>(method),
+                    method->isOverloadedOperator(),
+                    return_type->isVoidType(),
+                    return_type->isReferenceType()});
+            }
+
+            return functions;
+        }
+
         class HeaderRecordVisitor final
             : public clang::RecursiveASTVisitor<HeaderRecordVisitor>
         {
@@ -328,6 +426,8 @@ namespace GE::Reflection::Generator
 
                 std::vector<ClangFieldDeclaration> fields =
                     CollectReflectedFields(*declaration, source_manager_);
+                std::vector<ClangFunctionDeclaration> functions =
+                    CollectReflectedFunctions(*declaration, source_manager_);
 
                 records_.push_back(ClangRecordDeclaration{
                     declaration->isClass()
@@ -337,7 +437,8 @@ namespace GE::Reflection::Generator
                     source_position->source_file,
                     source_position->line,
                     source_position->column,
-                    std::move(fields)});
+                    std::move(fields),
+                    std::move(functions)});
 
                 return true;
             }

@@ -53,6 +53,40 @@ namespace GE::Reflection::Generator
         bool is_bit_field;
     };
 
+    struct ClangParameterDeclaration
+    {
+        std::string name;
+        std::string type_spelling;
+        std::filesystem::path source_file;
+        std::uint32_t line;
+        std::uint32_t column;
+        bool is_lvalue_reference;
+        bool is_rvalue_reference;
+        bool is_const;
+    };
+
+    struct ClangFunctionDeclaration
+    {
+        std::string name;
+        std::string return_type_spelling;
+        std::filesystem::path source_file;
+        std::uint32_t line;
+        std::uint32_t column;
+        ClangFieldAccess access;
+        std::vector<ClangParameterDeclaration> parameters;
+        bool is_const;
+        bool is_static;
+        bool is_variadic;
+        bool is_deleted;
+        bool is_volatile;
+        bool is_ref_qualified;
+        bool is_template;
+        bool is_special_member;
+        bool is_operator;
+        bool returns_void;
+        bool returns_reference;
+    };
+
     struct ClangRecordDeclaration
     {
         ClangRecordDeclarationKind kind;
@@ -61,6 +95,7 @@ namespace GE::Reflection::Generator
         std::uint32_t line;
         std::uint32_t column;
         std::vector<ClangFieldDeclaration> fields;
+        std::vector<ClangFunctionDeclaration> functions;
     };
 
     struct ClangHeaderScanOutput

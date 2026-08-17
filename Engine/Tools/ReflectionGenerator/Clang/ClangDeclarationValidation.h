@@ -16,7 +16,23 @@ namespace GE::Reflection::Generator
         EmptyFieldTypeSpelling,
         UnsupportedBitField,
         UnspecifiedFieldAccess,
-        DuplicateFieldName
+        DuplicateFieldName,
+        EmptyFunctionName,
+        EmptyFunctionReturnTypeSpelling,
+        DuplicateFunctionName,
+        UnsupportedStaticFunction,
+        UnsupportedVariadicFunction,
+        UnsupportedDeletedFunction,
+        UnsupportedVolatileFunction,
+        UnsupportedRefQualifiedFunction,
+        UnsupportedFunctionTemplate,
+        UnsupportedSpecialMemberFunction,
+        UnsupportedOperatorFunction,
+        UnsupportedReferenceReturn,
+        EmptyParameterName,
+        EmptyParameterTypeSpelling,
+        UnsupportedNonConstReferenceParameter,
+        UnsupportedRValueReferenceParameter
     };
 
     struct ClangDeclarationValidationError
@@ -29,6 +45,8 @@ namespace GE::Reflection::Generator
         std::filesystem::path source_file;
         std::uint32_t line;
         std::uint32_t column;
+        std::string function_name;
+        std::string parameter_name;
     };
 
     using ClangDeclarationValidationResult =

@@ -97,19 +97,43 @@ namespace GE::Reflection::Generator
             return name.str();
         }
 
+        bool HasReflectedFunctions(
+            const ClangHeaderScanOutput& scan_output)
+        {
+            for (const ClangRecordDeclaration& record : scan_output.records)
+            {
+                if (!record.functions.empty())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         std::string RenderHeader(
             const ClangHeaderScanOutput& scan_output,
             std::string_view source_header_include,
             std::string_view registration_function_name)
         {
+            const bool has_functions = HasReflectedFunctions(scan_output);
             std::ostringstream output;
             output << "#pragma once\n\n"
                    << "#include \""
                    << EscapeCppStringLiteral(source_header_include)
                    << "\"\n\n"
                    << "#include \"TypeRegistry.h\"\n"
-                   << "#include \"TypeTraits.h\"\n\n"
-                   << "#include <string_view>\n\n"
+                   << "#include \"TypeTraits.h\"\n";
+            if (has_functions)
+            {
+                output << "#include \"ValueView.h\"\n";
+            }
+            output << "\n";
+            if (has_functions)
+            {
+                output << "#include <span>\n";
+            }
+            output << "#include <string_view>\n\n"
                    << "namespace GE::Reflection\n"
                    << "{\n";
 
@@ -148,6 +172,23 @@ namespace GE::Reflection::Generator
                            << "Const(const void* owner) noexcept;\n";
                 }
 
+                for (std::size_t function_index = 0;
+                     function_index < record.functions.size();
+                     ++function_index)
+                {
+                    const ClangFunctionDeclaration& function =
+                        record.functions[function_index];
+                    output << "        static void InvokeFunction"
+                           << function_index
+                           << (function.is_const ? "Const" : "Mutable")
+                           << "(\n"
+                           << (function.is_const
+                                   ? "            const void* owner,\n"
+                                   : "            void* owner,\n")
+                           << "            std::span<const ConstValueView> arguments,\n"
+                           << "            void* return_storage);\n";
+                }
+
                 output << "    };\n\n";
             }
 
@@ -157,6 +198,86 @@ namespace GE::Reflection::Generator
                    << "        TypeRegistry& registry);\n"
                    << "}\n";
             return output.str();
+        }
+
+        void RenderFunctionCallArguments(
+            std::ostringstream& output,
+            const ClangFunctionDeclaration& function)
+        {
+            for (std::size_t parameter_index = 0;
+                 parameter_index < function.parameters.size();
+                 ++parameter_index)
+            {
+                if (parameter_index != 0)
+                {
+                    output << ",\n";
+                }
+
+                output << "                *static_cast<const std::remove_cvref_t<"
+                       << function.parameters[parameter_index].type_spelling
+                       << ">*>(arguments[" << parameter_index
+                       << "].Data())";
+            }
+        }
+
+        void RenderFunctionInvokers(
+            std::ostringstream& output,
+            const ClangRecordDeclaration& record)
+        {
+            const std::string type_name = GlobalTypeName(record.qualified_name);
+
+            for (std::size_t function_index = 0;
+                 function_index < record.functions.size();
+                 ++function_index)
+            {
+                const ClangFunctionDeclaration& function =
+                    record.functions[function_index];
+                output << "    void GeneratedTypeAccess<" << type_name
+                       << ">::InvokeFunction" << function_index
+                       << (function.is_const ? "Const" : "Mutable")
+                       << "(\n"
+                       << (function.is_const
+                               ? "        const void* owner,\n"
+                               : "        void* owner,\n")
+                       << "        std::span<const ConstValueView> arguments,\n"
+                       << "        void* return_storage)\n"
+                       << "    {\n";
+
+                if (function.parameters.empty())
+                {
+                    output << "        static_cast<void>(arguments);\n";
+                }
+                if (function.returns_void)
+                {
+                    output << "        static_cast<void>(return_storage);\n"
+                           << "        static_cast<"
+                           << (function.is_const ? "const " : "")
+                           << type_name << "*>(owner)->" << function.name
+                           << "(";
+                }
+                else
+                {
+                    output << "        *static_cast<std::remove_cvref_t<"
+                           << function.return_type_spelling
+                           << ">*>(return_storage) =\n"
+                           << "            static_cast<"
+                           << (function.is_const ? "const " : "")
+                           << type_name << "*>(owner)->" << function.name
+                           << "(";
+                }
+
+                if (!function.parameters.empty())
+                {
+                    output << "\n";
+                    RenderFunctionCallArguments(output, function);
+                    output << ");\n";
+                }
+                else
+                {
+                    output << ");\n";
+                }
+                output << "    }\n\n";
+            }
         }
 
         void RenderAccessors(
@@ -235,6 +356,60 @@ namespace GE::Reflection::Generator
                        << ">::GetField" << field_index << "Const);\n";
             }
 
+            if (!record.functions.empty())
+            {
+                output << "            std::vector<FunctionInfo> functions;\n"
+                       << "            functions.reserve("
+                       << record.functions.size() << ");\n";
+            }
+
+            for (std::size_t function_index = 0;
+                 function_index < record.functions.size();
+                 ++function_index)
+            {
+                const ClangFunctionDeclaration& function =
+                    record.functions[function_index];
+                output << "            {\n"
+                       << "                std::vector<ParameterInfo> parameters;\n"
+                       << "                parameters.reserve("
+                       << function.parameters.size() << ");\n";
+                for (const ClangParameterDeclaration& parameter :
+                     function.parameters)
+                {
+                    output << "                parameters.emplace_back(\n"
+                           << "                    GetTypeId<"
+                           << parameter.type_spelling << ">(),\n"
+                           << "                    \""
+                           << EscapeCppStringLiteral(parameter.name)
+                           << "\");\n";
+                }
+
+                output << "                functions.emplace_back(\n"
+                       << "                    owner_type_id,\n"
+                       << "                    GetTypeId<"
+                       << function.return_type_spelling << ">(),\n"
+                       << "                    std::move(parameters),\n"
+                       << "                    \""
+                       << EscapeCppStringLiteral(function.name) << "\",\n"
+                       << "                    FunctionInfo::FunctionFlags::"
+                       << (function.is_const ? "Const" : "None") << ",\n";
+                if (function.is_const)
+                {
+                    output << "                    nullptr,\n"
+                           << "                    &GeneratedTypeAccess<"
+                           << type_name << ">::InvokeFunction"
+                           << function_index << "Const);\n";
+                }
+                else
+                {
+                    output << "                    &GeneratedTypeAccess<"
+                           << type_name << ">::InvokeFunction"
+                           << function_index << "Mutable,\n"
+                           << "                    nullptr);\n";
+                }
+                output << "            }\n";
+            }
+
             output << "\n"
                    << "            const TypeRegistry::RegisterTypeResult result =\n"
                    << "                registry.RegisterType(TypeInfo(\n"
@@ -248,7 +423,13 @@ namespace GE::Reflection::Generator
                    << type_name << ">()),\n"
                    << "                    sizeof(" << type_name << "),\n"
                    << "                    alignof(" << type_name << "),\n"
-                   << "                    std::move(fields)));\n"
+                   << "                    std::move(fields)";
+            if (!record.functions.empty())
+            {
+                output << ",\n"
+                       << "                    std::move(functions)";
+            }
+            output << "));\n"
                    << "            if (result != TypeRegistry::RegisterTypeResult::Success)\n"
                    << "            {\n"
                    << "                return result;\n"
@@ -261,15 +442,25 @@ namespace GE::Reflection::Generator
             std::string_view generated_header_include,
             std::string_view registration_function_name)
         {
+            const bool has_functions = HasReflectedFunctions(scan_output);
             std::ostringstream output;
             output << "#include \""
                    << EscapeCppStringLiteral(generated_header_include)
                    << "\"\n\n"
-                   << "#include \"FieldInfo.h\"\n"
-                   << "#include \"TypeInfo.h\"\n\n"
+                   << "#include \"FieldInfo.h\"\n";
+            if (has_functions)
+            {
+                output << "#include \"FunctionInfo.h\"\n"
+                       << "#include \"ParameterInfo.h\"\n";
+            }
+            output << "#include \"TypeInfo.h\"\n\n"
                    << "#include <memory>\n"
-                   << "#include <string>\n"
-                   << "#include <utility>\n"
+                   << "#include <string>\n";
+            if (has_functions)
+            {
+                output << "#include <type_traits>\n";
+            }
+            output << "#include <utility>\n"
                    << "#include <vector>\n\n"
                    << "namespace GE::Reflection\n"
                    << "{\n";
@@ -277,6 +468,7 @@ namespace GE::Reflection::Generator
             for (const ClangRecordDeclaration& record : scan_output.records)
             {
                 RenderAccessors(output, record);
+                RenderFunctionInvokers(output, record);
             }
 
             output << "    TypeRegistry::RegisterTypeResult "

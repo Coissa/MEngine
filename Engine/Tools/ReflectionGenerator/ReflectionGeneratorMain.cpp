@@ -270,6 +270,14 @@ namespace
                 {
                     std::cerr << " field " << detail.field_name;
                 }
+                if (!detail.function_name.empty())
+                {
+                    std::cerr << " function " << detail.function_name;
+                }
+                if (!detail.parameter_name.empty())
+                {
+                    std::cerr << " parameter " << detail.parameter_name;
+                }
                 std::cerr << '\n';
             }
         }
