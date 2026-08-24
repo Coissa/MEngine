@@ -1,0 +1,5 @@
+add_subdirectory(Engine/Core/Reflection)
+add_subdirectory(Engine/Runtime)
+add_subdirectory(Engine/Launch)
+add_subdirectory(Game)
+add_subdirectory(Editor)

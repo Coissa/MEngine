@@ -39,15 +39,7 @@ set(
     "Compilation database consumed by the reflection generator"
 )
 
-add_library(MEngineReflection STATIC
-    Engine/Engine/Core/Reflection/BuiltinTypeRegistration.cpp
-    Engine/Engine/Core/Reflection/TypeRegistry.cpp
-)
-
-target_include_directories(MEngineReflection
-    PUBLIC
-        Engine/Engine/Core/Reflection
-)
+add_subdirectory(Engine)
 
 add_library(MEngineReflectionGeneratorCore STATIC
     Engine/Tools/ReflectionGenerator/CompilationDatabase.cpp
