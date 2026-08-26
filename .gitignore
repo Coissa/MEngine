@@ -47,3 +47,7 @@ Testing/
 
 # Legacy local-only test source retained by the user
 /Engine/Tests/Reflection/TypeRegistryTests.cpp
+
+# Local-only tests, smoke verification, and architecture documents
+/Engine/Tests/
+/docs/

@@ -1,4 +1,6 @@
+add_subdirectory(Engine/Core)
 add_subdirectory(Engine/Core/Reflection)
+add_subdirectory(Engine/Platform)
 add_subdirectory(Engine/Runtime)
 add_subdirectory(Engine/Launch)
 add_subdirectory(Game)

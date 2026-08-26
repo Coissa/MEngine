@@ -16,8 +16,13 @@ int main()
             return 1;
         }
 
+        const GE::Launch::EngineRunSettings run_settings{
+            .max_frames = 1
+        };
+
         const int exit_code = engine_loop.Run(
-            std::make_unique<GE::Editor::EditorEngine>()
+            std::make_unique<GE::Editor::EditorEngine>(),
+            run_settings
         );
         engine_loop.Shutdown();
         return exit_code;

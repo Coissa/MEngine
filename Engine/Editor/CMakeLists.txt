@@ -17,6 +17,13 @@ add_executable(MEngineEditor
     EditorMain.cpp
 )
 
+if(MSVC)
+    target_compile_options(MEngineEditor
+        PRIVATE
+            /EHsc
+    )
+endif()
+
 target_link_libraries(MEngineEditor
     PRIVATE
         MEngineLaunch

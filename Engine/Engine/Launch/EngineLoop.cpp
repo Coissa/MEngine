@@ -4,15 +4,43 @@
 #include "Engine/Core/Version.h"
 #include "TypeRegistry.h"
 
+#include <Engine/Core/Time/FrameClock.h>
+#include <Engine/Platform/PlatformApplication.h>
 #include <Engine/Runtime/Engine.h>
 
+#include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <utility>
 
 namespace GE::Launch
 {
-    EngineLoop::EngineLoop() = default;
+    namespace
+    {
+        [[nodiscard]] bool IsValidRunSettings(
+            const EngineRunSettings& settings) noexcept
+        {
+            if (!settings.fixed_delta_seconds.has_value())
+            {
+                return true;
+            }
+
+            const float fixed_delta_seconds =
+                *settings.fixed_delta_seconds;
+
+            return std::isfinite(fixed_delta_seconds)
+                && fixed_delta_seconds >= 0.0F;
+        }
+    }
+
+    EngineLoop::EngineLoop() noexcept = default;
+
+    EngineLoop::EngineLoop(
+        std::unique_ptr<GE::Platform::PlatformApplication> platform_application
+    ) noexcept : m_platform_application(std::move(platform_application))
+    {
+    }
 
     EngineLoop::~EngineLoop() noexcept
     {
@@ -30,7 +58,7 @@ namespace GE::Launch
             m_engine->Shutdown();
             m_engine.reset();
         }
-
+        m_platform_application.reset();
         m_type_registry.reset();
         m_state = State::Shutdown;
 
@@ -81,7 +109,9 @@ namespace GE::Launch
         return true;
     }
 
-    [[nodiscard]] int EngineLoop::Run(std::unique_ptr<GE::Runtime::Engine> engine)
+    [[nodiscard]] int EngineLoop::Run(
+        std::unique_ptr<GE::Runtime::Engine> engine,
+        EngineRunSettings settings)
     {
         if (m_state != State::Initialized)
         {
@@ -96,24 +126,59 @@ namespace GE::Launch
             return 1;
         }
 
-        m_state = State::Running;
-        m_engine = std::move(engine);
-
-        const bool init_state = m_engine->Initialize();
-        if (init_state == false)
+        if (!IsValidRunSettings(settings))
         {
-            std::cerr << "[MEngineLaunch] Engine initialization failed\n";
-            m_engine->Shutdown();
-            m_engine.reset();
+            std::cerr << "[MEngineLaunch] Invalid run settings\n";
             m_state = State::Failed;
             return 1;
         }
 
-        std::cout << "[MEngineLaunch] Run\n";
-        m_engine->Tick(0.0F);
-        m_engine->Shutdown();
-        m_engine.reset();
-        m_state = State::Ran;
-        return 0;
+        m_state = State::Running;
+        m_engine = std::move(engine);
+
+        try
+        {
+            const bool init_state = m_engine->Initialize();
+            if (init_state == false)
+            {
+                std::cerr << "[MEngineLaunch] Engine initialization failed\n";
+                m_engine->Shutdown();
+                m_engine.reset();
+                m_state = State::Failed;
+                return 1;
+            }
+
+            std::cout << "[MEngineLaunch] Run\n";
+            GE::Core::FrameClock frame_clock;
+            std::uint64_t completed_frame_count = 0;
+
+            while (!m_engine->IsExitRequested()
+                && (!settings.max_frames.has_value()
+                || completed_frame_count < *settings.max_frames))
+            {
+                if (m_platform_application != nullptr
+                    && !m_platform_application->PumpMessages())
+                {
+                    break;
+                }
+                const float delta_seconds =
+                    settings.fixed_delta_seconds.has_value()
+                    ? *settings.fixed_delta_seconds
+                    : frame_clock.Sample();
+
+                m_engine->Tick(delta_seconds);
+                ++completed_frame_count;
+            }
+
+            m_engine->Shutdown();
+            m_engine.reset();
+            m_state = State::Ran;
+            return 0;
+        }
+        catch (...)
+        {
+            Shutdown();
+            throw;
+        }
     }
 }

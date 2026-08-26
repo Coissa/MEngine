@@ -1,7 +1,13 @@
 add_library(MEngineLaunch STATIC
     EngineLoop.cpp
     EngineLoop.h
+    EngineRunSettings.h
     ${PROJECT_SOURCE_DIR}/Engine/Engine/Core/Version.h
+)
+
+target_compile_options(MEngineLaunch
+    PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/EHsc>
 )
 
 target_include_directories(MEngineLaunch
@@ -11,6 +17,8 @@ target_include_directories(MEngineLaunch
 
 target_link_libraries(MEngineLaunch
     PRIVATE
+        MEngineCore
+        MEnginePlatform
         MEngineReflection
         MEngineRuntime
 )

@@ -14,7 +14,13 @@ namespace GE::Runtime
         Engine& operator=(const Engine&) = delete;
         Engine(Engine&&) = delete;
         Engine& operator=(Engine&&) = delete;
+
+        void RequestExit() noexcept;
+        [[nodiscard]] bool IsExitRequested() const noexcept;
     protected:
         Engine() noexcept;
+
+    private:
+        bool m_exit_requested = false;
     };
 }
