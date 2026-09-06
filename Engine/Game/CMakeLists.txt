@@ -11,6 +11,10 @@ endif()
 
 target_link_libraries(MEngineGame
     PRIVATE
+        MEngineD3D12RHI
+        MEngineD3D12RendererExample
         MEngineLaunch
+        MEnginePlatformWindows
+        MEngineRenderer
         MEngineRuntime
 )

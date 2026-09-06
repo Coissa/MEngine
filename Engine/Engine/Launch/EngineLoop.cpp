@@ -6,6 +6,8 @@
 
 #include <Engine/Core/Time/FrameClock.h>
 #include <Engine/Platform/PlatformApplication.h>
+#include <Engine/RenderCore/RenderFrame.h>
+#include <Engine/Renderer/Renderer.h>
 #include <Engine/Runtime/Engine.h>
 
 #include <cmath>
@@ -38,7 +40,20 @@ namespace GE::Launch
 
     EngineLoop::EngineLoop(
         std::unique_ptr<GE::Platform::PlatformApplication> platform_application
-    ) noexcept : m_platform_application(std::move(platform_application))
+    ) noexcept
+        : EngineLoop(std::move(platform_application), nullptr)
+    {
+    }
+
+    EngineLoop::EngineLoop(
+        std::unique_ptr<GE::Platform::PlatformApplication> platform_application,
+        std::unique_ptr<GE::Render::Renderer> renderer,
+        RenderFrameBuilder render_frame_builder
+    ) noexcept
+        // 函数指针不拥有场景，也不能捕获 World/Object；仅在当前主线程同步调用。
+        : m_renderer(std::move(renderer)),
+          m_platform_application(std::move(platform_application)),
+          m_render_frame_builder(render_frame_builder)
     {
     }
 
@@ -55,11 +70,23 @@ namespace GE::Launch
         }
         if (m_engine != nullptr)
         {
+            if (m_platform_application != nullptr)
+            {
+                m_platform_application->SetMessageHandler(nullptr, nullptr);
+            }
             m_engine->Shutdown();
             m_engine.reset();
         }
-        m_platform_application.reset();
+
+        if (m_renderer != nullptr)
+        {
+            m_renderer->Shutdown();
+            m_renderer.reset();
+        }
+
         m_type_registry.reset();
+        m_platform_application.reset();
+
         m_state = State::Shutdown;
 
         try
@@ -103,6 +130,13 @@ namespace GE::Launch
             return false;
         }
 
+        if (m_renderer != nullptr && !m_renderer->Initialize())
+        {
+            std::cerr << "[MEngineLaunch] Renderer initialization failed\n";
+            m_renderer->Shutdown();
+            return false;
+        }
+
         m_type_registry = std::move(registry);
         m_state = State::Initialized;
         std::cout << "[MEngineLaunch] Reflection ready\n";
@@ -142,6 +176,10 @@ namespace GE::Launch
             if (init_state == false)
             {
                 std::cerr << "[MEngineLaunch] Engine initialization failed\n";
+                if (m_platform_application != nullptr)
+                {
+                    m_platform_application->SetMessageHandler(nullptr, nullptr);
+                }
                 m_engine->Shutdown();
                 m_engine.reset();
                 m_state = State::Failed;
@@ -151,6 +189,7 @@ namespace GE::Launch
             std::cout << "[MEngineLaunch] Run\n";
             GE::Core::FrameClock frame_clock;
             std::uint64_t completed_frame_count = 0;
+            float elapsed_seconds = 0.0F;
 
             while (!m_engine->IsExitRequested()
                 && (!settings.max_frames.has_value()
@@ -165,11 +204,69 @@ namespace GE::Launch
                     settings.fixed_delta_seconds.has_value()
                     ? *settings.fixed_delta_seconds
                     : frame_clock.Sample();
+                elapsed_seconds += delta_seconds;
 
                 m_engine->Tick(delta_seconds);
+
+                if (m_renderer != nullptr)
+                {
+                    GE::Platform::WindowSize window_size;
+                    if (m_platform_application != nullptr)
+                    {
+                        window_size =
+                            m_platform_application->GetClientSize();
+                    }
+
+                    GE::RenderCore::RenderFrame render_frame{
+                        .frame_number = completed_frame_count,
+                        .output_extent = {
+                            .width = window_size.width,
+                            .height = window_size.height
+                        },
+                        .elapsed_seconds = elapsed_seconds
+                    };
+                    if (!m_engine->BuildRenderFrame(render_frame))
+                    {
+                        std::cerr
+                            << "[MEngineLaunch] Render frame extraction failed\n";
+                        if (m_platform_application != nullptr)
+                        {
+                            m_platform_application->SetMessageHandler(
+                                nullptr, nullptr);
+                        }
+                        m_engine->Shutdown();
+                        m_engine.reset();
+                        m_state = State::Failed;
+                        return 1;
+                    }
+                    if (m_render_frame_builder)
+                    {
+                        m_render_frame_builder(elapsed_seconds, render_frame);
+                    }
+
+                    if (!m_renderer->SubmitFrame(std::move(render_frame)))
+                    {
+                        std::cerr
+                            << "[MEngineLaunch] Renderer frame submission failed\n";
+                        if (m_platform_application != nullptr)
+                        {
+                            m_platform_application->SetMessageHandler(
+                                nullptr, nullptr);
+                        }
+                        m_engine->Shutdown();
+                        m_engine.reset();
+                        m_state = State::Failed;
+                        return 1;
+                    }
+                }
+
                 ++completed_frame_count;
             }
 
+            if (m_platform_application != nullptr)
+            {
+                m_platform_application->SetMessageHandler(nullptr, nullptr);
+            }
             m_engine->Shutdown();
             m_engine.reset();
             m_state = State::Ran;

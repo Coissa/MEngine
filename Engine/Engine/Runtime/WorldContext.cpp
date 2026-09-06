@@ -152,6 +152,11 @@ namespace GE::Runtime
         return m_world.get();
     }
 
+    [[nodiscard]] World* WorldContext::GetWorld() noexcept
+    {
+        return m_world.get();
+    }
+
     [[nodiscard]] const GameInstance* WorldContext::GetGameInstance() const noexcept
     {
         return m_game_instance.get();

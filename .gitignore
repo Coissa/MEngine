@@ -37,8 +37,7 @@ Testing/
 *.log
 
 # Local notes and archived Codex sessions
-/does/Vulkan_DX12_Engine_Implementation_Plan.md
-/does/Piccolo_Source_Learning_Roadmap.md
+/does/
 /CodexSessionTransfer/session/rollout-2026-07-31T15-32-31-019fb716-c698-7a31-886b-1a4bd017ee72.jsonl
 /CodexSession-019fb716-c698-7a31-886b-1a4bd017ee72.zip
 /CodexSessionTransfer/import-session.ps1
@@ -51,3 +50,6 @@ Testing/
 # Local-only tests, smoke verification, and architecture documents
 /Engine/Tests/
 /docs/
+
+# Third-party documents kept outside source-only commits
+/Engine/ThirdParty/imgui/LICENSE.txt

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Engine/RenderCore/RenderFrame.h>
+
 namespace GE::Runtime
 {
     class Engine
@@ -10,6 +12,8 @@ namespace GE::Runtime
         [[nodiscard]] virtual bool Initialize() = 0;
         virtual void Tick(float delta_seconds) = 0;
         virtual void Shutdown() noexcept = 0;
+        [[nodiscard]] virtual bool BuildRenderFrame(
+            GE::RenderCore::RenderFrame& out_frame) noexcept;
         Engine(const Engine&) = delete;
         Engine& operator=(const Engine&) = delete;
         Engine(Engine&&) = delete;

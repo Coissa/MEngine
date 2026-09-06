@@ -2,6 +2,7 @@
 
 #include "Engine/Platform/Windows/Win32NativeWindowHandle.h"
 #include "Engine/Platform/WindowTypes.h"
+#include "Engine/Platform/PlatformApplication.h"
 
 #include <memory>
 
@@ -22,6 +23,9 @@ namespace GE::Platform::Windows
         [[nodiscard]] bool PumpMessages() noexcept;
         [[nodiscard]] WindowSize GetClientSize() const noexcept;
         [[nodiscard]] Win32NativeWindowHandle GetNativeWindowHandle() const noexcept;
+        void SetMessageHandler(
+            PlatformMessageHandler handler,
+            void* context) noexcept;
 
     private:
         class Impl;

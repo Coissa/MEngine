@@ -28,7 +28,11 @@ namespace GE::Platform::Windows
 
         [[nodiscard]] bool PumpMessages() noexcept override;
 
-        [[nodiscard]] WindowSize GetClientSize() const noexcept;
+        [[nodiscard]] WindowSize GetClientSize() const noexcept override;
+
+        void SetMessageHandler(
+            PlatformMessageHandler handler,
+            void* context) noexcept override;
 
         [[nodiscard]] Win32NativeWindowHandle GetNativeWindowHandle() const noexcept;
 

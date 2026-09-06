@@ -31,6 +31,7 @@ namespace GE::Runtime
         [[nodiscard]] bool IsInitialized() const noexcept;
         [[nodiscard]] WorldType GetWorldType() const noexcept;
         [[nodiscard]] const World* GetWorld() const noexcept;
+        [[nodiscard]] World* GetWorld() noexcept;
         [[nodiscard]] const GameInstance* GetGameInstance() const noexcept;
     private:
         enum class State

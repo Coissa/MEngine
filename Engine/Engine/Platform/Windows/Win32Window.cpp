@@ -82,6 +82,8 @@ namespace GE::Platform::Windows
         ATOM window_class_atom = 0;
         WindowSize client_size;
         bool close_requested = false;
+        PlatformMessageHandler message_handler = nullptr;
+        void* message_handler_context = nullptr;
 
         static LRESULT CALLBACK WindowProcedure(
             HWND window,
@@ -135,6 +137,17 @@ namespace GE::Platform::Windows
                 message,
                 word_parameter,
                 long_parameter);
+        }
+
+        if (impl->message_handler != nullptr
+            && impl->message_handler(
+                impl->message_handler_context,
+                {.native_window = reinterpret_cast<std::uintptr_t>(window),
+                 .message = message,
+                 .word_parameter = word_parameter,
+                 .long_parameter = long_parameter}))
+        {
+            return 1;
         }
 
         switch (message)
@@ -369,6 +382,18 @@ namespace GE::Platform::Windows
             .instance = m_impl->instance,
             .window = m_impl->window
         };
+    }
+
+    void Win32Window::SetMessageHandler(
+        PlatformMessageHandler handler,
+        void* context) noexcept
+    {
+        if (m_impl == nullptr)
+        {
+            return;
+        }
+        m_impl->message_handler = handler;
+        m_impl->message_handler_context = context;
     }
 
 }

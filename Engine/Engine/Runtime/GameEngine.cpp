@@ -1,8 +1,11 @@
 #include "GameEngine.h"
+#include "BuiltinScene.h"
 #include "GameInstance.h"
+#include "SceneSerializer.h"
 #include "World.h"
 #include "WorldContext.h"
 #include "WorldType.h"
+#include "WorldRenderExtractor.h"
 
 #include <cmath>
 #include <iostream>
@@ -14,6 +17,12 @@ namespace GE::Runtime
 {
     GameEngine::GameEngine(std::int32_t initial_scene_state) noexcept
         : m_initial_scene_state(initial_scene_state)
+    {
+    }
+
+    GameEngine::GameEngine(std::filesystem::path scene_path)
+        : m_initial_scene_state(0),
+          m_initial_scene_path(std::move(scene_path))
     {
     }
 
@@ -33,7 +42,25 @@ namespace GE::Runtime
         m_state = State::Failed;
         std::cout << "[GameEngine] Initialize\n";
 
-        auto world = std::make_unique<World>(m_initial_scene_state);
+        std::unique_ptr<World> world;
+        if (!m_initial_scene_path.empty())
+        {
+            std::string error;
+            world = SceneSerializer::LoadFromFile(m_initial_scene_path, error);
+            if (world == nullptr)
+            {
+                std::cerr << "[GameEngine] Scene load failed: " << error << '\n';
+                return false;
+            }
+        }
+        else
+        {
+            world = std::make_unique<World>(m_initial_scene_state);
+        }
+        if (m_initial_scene_path.empty() && !PopulateBuiltinScene(*world))
+        {
+            return false;
+        }
         auto game_instance = std::make_unique<GameInstance>();
 
         auto world_context = std::make_unique<WorldContext>(
@@ -98,5 +125,14 @@ namespace GE::Runtime
     [[nodiscard]] const WorldContext* GameEngine::GetWorldContext() const noexcept
     {
         return m_world_context.get();
+    }
+
+    bool GameEngine::BuildRenderFrame(
+        GE::RenderCore::RenderFrame& out_frame) noexcept
+    {
+        const World* world = m_world_context == nullptr
+            ? nullptr : m_world_context->GetWorld();
+        return world != nullptr
+            && WorldRenderExtractor::Extract(*world, out_frame);
     }
 }

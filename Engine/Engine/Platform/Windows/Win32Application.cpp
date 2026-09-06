@@ -43,6 +43,13 @@ namespace GE::Platform::Windows
         return m_window->GetClientSize();
     }
 
+    void Win32Application::SetMessageHandler(
+        PlatformMessageHandler handler,
+        void* context) noexcept
+    {
+        m_window->SetMessageHandler(handler, context);
+    }
+
     [[nodiscard]] Win32NativeWindowHandle Win32Application::GetNativeWindowHandle() const noexcept
     {
         return m_window->GetNativeWindowHandle();

@@ -16,9 +16,12 @@ target_include_directories(MEngineLaunch
 )
 
 target_link_libraries(MEngineLaunch
+    PUBLIC
+        MEngineRenderCore
     PRIVATE
         MEngineCore
         MEnginePlatform
         MEngineReflection
+        MEngineRenderer
         MEngineRuntime
 )

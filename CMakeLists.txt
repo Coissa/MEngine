@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 
+if(POLICY CMP0184)
+    cmake_policy(SET CMP0184 NEW)
+endif()
+
 project(MEngine LANGUAGES CXX)
+
+option(BUILD_TESTING "Build the local test tree" OFF)
+include(CTest)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
