@@ -4,16 +4,19 @@
 #include <Engine/Runtime/Engine.h>
 #include "EditorCommand.h"
 #include "EditorScenePicker.h"
+#include "EditorTransaction.h"
 
 #include <array>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace GE::Runtime
 {
+    class GameObject;
     class World;
     class WorldContext;
 }
@@ -53,7 +56,7 @@ namespace GE::Editor
             std::string& out_error);
         [[nodiscard]] bool SaveScene(
             const std::filesystem::path& path,
-            std::string& out_error) const;
+            std::string& out_error);
         [[nodiscard]] bool QueueCommand(EditorCommand command);
         [[nodiscard]] bool RegisterMeshBounds(
             GE::RenderCore::MeshHandle mesh,
@@ -78,6 +81,9 @@ namespace GE::Editor
             void* context,
             const GE::Platform::PlatformMessage& message) noexcept;
         [[nodiscard]] const std::string& GetWorkflowStatus() const noexcept;
+        [[nodiscard]] bool CanUndo() const noexcept;
+        [[nodiscard]] bool CanRedo() const noexcept;
+        [[nodiscard]] bool IsSceneDirty() const noexcept;
         [[nodiscard]] const GE::Runtime::WorldContext*
         GetEditorWorldContext() const noexcept;
         [[nodiscard]] const GE::Runtime::WorldContext*
@@ -100,12 +106,16 @@ namespace GE::Editor
         std::unique_ptr<GE::Runtime::WorldContext> m_editor_world_context;
         std::unique_ptr<GE::Runtime::WorldContext> m_pie_world_context;
         std::vector<EditorCommand> m_pending_commands;
+        std::vector<EditorTransaction> m_undo_stack;
+        std::vector<EditorTransaction> m_redo_stack;
+        std::optional<EditorTransaction> m_active_transform_edit;
         std::unique_ptr<EditorUserInterface> m_user_interface;
         EditorCamera m_editor_camera;
         EditorScenePicker m_scene_picker;
         GE::Runtime::GameObjectId m_editor_selected_object;
         GE::Runtime::GameObjectId m_pie_selected_object;
         std::string m_workflow_status;
+        bool m_scene_dirty = false;
         State m_state = State::Created;
 
         [[nodiscard]] bool ReplaceEditorWorld(
@@ -113,6 +123,17 @@ namespace GE::Editor
             std::string& out_error);
         [[nodiscard]] GE::Runtime::World* GetActiveWorld() noexcept;
         [[nodiscard]] const GE::Runtime::World* GetActiveWorld() const noexcept;
+        void BeginTransformEdit(GE::Runtime::GameObject& object);
+        void PreviewTransformEdit(
+            GE::Runtime::GameObject& object,
+            const GE::Runtime::TransformComponent& transform);
+        void CommitTransformEdit();
+        void CancelTransformEdit() noexcept;
+        void PushTransaction(EditorTransaction transaction);
+        [[nodiscard]] bool Undo();
+        [[nodiscard]] bool Redo();
+        void MarkUntrackedSceneEdit();
+        void ResetHistory() noexcept;
         void ApplyPendingCommands();
     };
 }

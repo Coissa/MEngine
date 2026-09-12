@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <cmath>
 #include <limits>
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(
@@ -45,6 +46,52 @@ namespace GE::Editor
         void Queue(EditorEngine& editor, EditorCommand command)
         {
             (void)editor.QueueCommand(std::move(command));
+        }
+
+        [[nodiscard]] float DistanceToSegmentSquared(
+            ImVec2 point,
+            ImVec2 start,
+            ImVec2 end) noexcept
+        {
+            const float segment_x = end.x - start.x;
+            const float segment_y = end.y - start.y;
+            const float length_squared =
+                segment_x * segment_x + segment_y * segment_y;
+            if (length_squared <= 0.0F)
+            {
+                const float x = point.x - start.x;
+                const float y = point.y - start.y;
+                return x * x + y * y;
+            }
+            const float projection = (std::max)(0.0F, (std::min)(1.0F,
+                ((point.x - start.x) * segment_x
+                    + (point.y - start.y) * segment_y) / length_squared));
+            const float nearest_x = start.x + segment_x * projection;
+            const float nearest_y = start.y + segment_y * projection;
+            const float x = point.x - nearest_x;
+            const float y = point.y - nearest_y;
+            return x * x + y * y;
+        }
+
+        [[nodiscard]] ImU32 GizmoColor(
+            EditorGizmoAxis axis,
+            bool highlighted) noexcept
+        {
+            if (highlighted)
+            {
+                return IM_COL32(255, 230, 80, 255);
+            }
+            switch (axis)
+            {
+            case EditorGizmoAxis::X:
+                return IM_COL32(230, 70, 70, 255);
+            case EditorGizmoAxis::Y:
+                return IM_COL32(80, 210, 100, 255);
+            case EditorGizmoAxis::Z:
+                return IM_COL32(70, 130, 240, 255);
+            default:
+                return IM_COL32(255, 255, 255, 255);
+            }
         }
 
         void BuildEditorDockspace()
@@ -215,7 +262,35 @@ namespace GE::Editor
                     }
                     ImGui::EndMenu();
                 }
+                if (ImGui::BeginMenu("Edit"))
+                {
+                    if (ImGui::MenuItem(
+                            "Undo", "Ctrl+Z", false, editor.CanUndo()))
+                    {
+                        Queue(editor, {.type = EditorCommandType::Undo});
+                    }
+                    if (ImGui::MenuItem(
+                            "Redo", "Ctrl+Y", false, editor.CanRedo()))
+                    {
+                        Queue(editor, {.type = EditorCommandType::Redo});
+                    }
+                    ImGui::EndMenu();
+                }
                 ImGui::EndMainMenuBar();
+            }
+
+            const ImGuiIO& shortcut_io = ImGui::GetIO();
+            if (!shortcut_io.WantTextInput && shortcut_io.KeyCtrl)
+            {
+                if (ImGui::IsKeyPressed(ImGuiKey_Z, false))
+                {
+                    Queue(editor, {.type = shortcut_io.KeyShift
+                        ? EditorCommandType::Redo : EditorCommandType::Undo});
+                }
+                else if (ImGui::IsKeyPressed(ImGuiKey_Y, false))
+                {
+                    Queue(editor, {.type = EditorCommandType::Redo});
+                }
             }
 
             BuildEditorDockspace();
@@ -249,6 +324,8 @@ namespace GE::Editor
             {
                 ImGui::TextWrapped("%s", editor.GetWorkflowStatus().c_str());
             }
+            ImGui::TextUnformatted(editor.IsSceneDirty()
+                ? "Scene modified *" : "Scene saved");
             ImGui::End();
 
             ImGui::Begin("Play");
@@ -285,6 +362,129 @@ namespace GE::Editor
 
             const bool edit_mode = !editor.IsPlaySessionRunning();
             const bool image_hovered = ImGui::IsItemHovered();
+            const ImVec2 image_min = ImGui::GetItemRectMin();
+            const ImVec2 image_max = ImGui::GetItemRectMax();
+            bool gizmo_consumed_click = false;
+
+            EditorGizmoAxis hovered_axis = EditorGizmoAxis::None;
+            std::array<TranslationGizmoAxisProjection, 3> axis_projections{};
+            constexpr std::array<EditorGizmoAxis, 3> GizmoAxes{
+                EditorGizmoAxis::X,
+                EditorGizmoAxis::Y,
+                EditorGizmoAxis::Z};
+            GE::Runtime::GameObject* viewport_selected =
+                edit_mode && world != nullptr
+                ? world->FindGameObjectById(editor.GetSelectedObjectId())
+                : nullptr;
+            if (viewport_selected != nullptr)
+            {
+                GE::RenderCore::RenderView gizmo_view;
+                if (editor.GetEditorCamera().BuildRenderView(
+                        out_frame.scene_extent, gizmo_view))
+                {
+                    const GE::Math::Mat4 view_projection =
+                        gizmo_view.view * gizmo_view.projection;
+                    const ImVec2 mouse = ImGui::GetMousePos();
+                    float closest_axis_distance_squared = 64.0F;
+                    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                    for (std::size_t axis_index = 0;
+                        axis_index < GizmoAxes.size(); ++axis_index)
+                    {
+                        const EditorGizmoAxis axis = GizmoAxes[axis_index];
+                        TranslationGizmoAxisProjection& projection =
+                            axis_projections[axis_index];
+                        if (!BuildTranslationGizmoAxisProjection(
+                                viewport_selected->GetTransform().translation,
+                                axis,
+                                view_projection,
+                                out_frame.scene_extent,
+                                projection))
+                        {
+                            continue;
+                        }
+                        const ImVec2 origin{
+                            image_min.x + projection.origin_pixels[0],
+                            image_min.y + projection.origin_pixels[1]};
+                        const ImVec2 endpoint{
+                            origin.x + projection.screen_direction[0] * 72.0F,
+                            origin.y + projection.screen_direction[1] * 72.0F};
+                        const float distance_squared =
+                            DistanceToSegmentSquared(mouse, origin, endpoint);
+                        if (image_hovered
+                            && distance_squared < closest_axis_distance_squared)
+                        {
+                            closest_axis_distance_squared = distance_squared;
+                            hovered_axis = axis;
+                        }
+                        const bool highlighted = axis == hovered_axis
+                            || axis == m_gizmo_drag_axis;
+                        draw_list->AddLine(
+                            origin,
+                            endpoint,
+                            GizmoColor(axis, highlighted),
+                            highlighted ? 5.0F : 3.0F);
+                        draw_list->AddCircleFilled(
+                            endpoint,
+                            highlighted ? 6.0F : 4.0F,
+                            GizmoColor(axis, highlighted));
+                    }
+                }
+            }
+
+            if (m_gizmo_drag_axis != EditorGizmoAxis::None)
+            {
+                GE::Runtime::GameObject* target = world == nullptr
+                    ? nullptr : world->FindGameObject(m_gizmo_target);
+                if (!edit_mode || target == nullptr
+                    || ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+                {
+                    Queue(editor, {
+                        .type = EditorCommandType::CancelTransformEdit});
+                    m_gizmo_drag_axis = EditorGizmoAxis::None;
+                    m_gizmo_target = {};
+                }
+                else if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+                {
+                    const ImVec2 mouse = ImGui::GetMousePos();
+                    EditorCommand preview{
+                        .type = EditorCommandType::PreviewTransformEdit,
+                        .target = m_gizmo_target};
+                    preview.transform = ApplyTranslationGizmoDrag(
+                        m_gizmo_initial_transform,
+                        m_gizmo_drag_axis,
+                        m_gizmo_drag_projection,
+                        {mouse.x - m_gizmo_drag_start_mouse[0],
+                         mouse.y - m_gizmo_drag_start_mouse[1]});
+                    Queue(editor, std::move(preview));
+                    gizmo_consumed_click = true;
+                }
+                else
+                {
+                    Queue(editor, {
+                        .type = EditorCommandType::CommitTransformEdit});
+                    m_gizmo_drag_axis = EditorGizmoAxis::None;
+                    m_gizmo_target = {};
+                    gizmo_consumed_click = true;
+                }
+            }
+            else if (viewport_selected != nullptr
+                && hovered_axis != EditorGizmoAxis::None
+                && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {
+                const std::size_t axis_index = hovered_axis == EditorGizmoAxis::X
+                    ? 0 : hovered_axis == EditorGizmoAxis::Y ? 1 : 2;
+                const ImVec2 mouse = ImGui::GetMousePos();
+                m_gizmo_drag_axis = hovered_axis;
+                m_gizmo_target = viewport_selected->GetHandle();
+                m_gizmo_initial_transform = viewport_selected->GetTransform();
+                m_gizmo_drag_projection = axis_projections[axis_index];
+                m_gizmo_drag_start_mouse = {mouse.x, mouse.y};
+                Queue(editor, {
+                    .type = EditorCommandType::BeginTransformEdit,
+                    .target = m_gizmo_target});
+                gizmo_consumed_click = true;
+            }
+
             if (!edit_mode)
             {
                 m_viewport_navigation_active = false;
@@ -321,11 +521,9 @@ namespace GE::Editor
                     ImGui::SetMouseCursor(ImGuiMouseCursor_None);
                 }
 
-                if (!m_viewport_navigation_active
+                if (!m_viewport_navigation_active && !gizmo_consumed_click
                     && ImGui::IsItemClicked(ImGuiMouseButton_Left))
                 {
-                    const ImVec2 image_min = ImGui::GetItemRectMin();
-                    const ImVec2 image_max = ImGui::GetItemRectMax();
                     const ImVec2 mouse = ImGui::GetMousePos();
                     const float width = image_max.x - image_min.x;
                     const float height = image_max.y - image_min.y;
@@ -398,20 +596,47 @@ namespace GE::Editor
 
                 GE::Runtime::TransformComponent transform =
                     selected->GetTransform();
-                bool transform_changed = false;
-                transform_changed |= ImGui::DragFloat3(
-                    "Translation", transform.translation.data(), 0.05F);
-                transform_changed |= ImGui::DragFloat3(
-                    "Rotation", transform.rotation_degrees.data(), 0.25F);
-                transform_changed |= ImGui::DragFloat3(
-                    "Scale", transform.scale.data(), 0.02F, 0.001F, 1000.0F);
-                if (!editor.IsPlaySessionRunning() && transform_changed)
+                const bool transform_editable =
+                    !editor.IsPlaySessionRunning();
+                auto DrawTransformField = [&](
+                    const char* label,
+                    float* values,
+                    float speed,
+                    float minimum = 0.0F,
+                    float maximum = 0.0F)
                 {
-                    EditorCommand command{.type = EditorCommandType::SetTransform};
-                    command.target = selected->GetHandle();
-                    command.transform = transform;
-                    Queue(editor, std::move(command));
-                }
+                    const bool changed = ImGui::DragFloat3(
+                        label, values, speed, minimum, maximum);
+                    if (!transform_editable)
+                    {
+                        return;
+                    }
+                    if (ImGui::IsItemActivated())
+                    {
+                        Queue(editor, {
+                            .type = EditorCommandType::BeginTransformEdit,
+                            .target = selected->GetHandle()});
+                    }
+                    if (changed)
+                    {
+                        EditorCommand preview{
+                            .type = EditorCommandType::PreviewTransformEdit,
+                            .target = selected->GetHandle()};
+                        preview.transform = transform;
+                        Queue(editor, std::move(preview));
+                    }
+                    if (ImGui::IsItemDeactivatedAfterEdit())
+                    {
+                        Queue(editor, {
+                            .type = EditorCommandType::CommitTransformEdit});
+                    }
+                };
+                DrawTransformField(
+                    "Translation", transform.translation.data(), 0.05F);
+                DrawTransformField(
+                    "Rotation", transform.rotation_degrees.data(), 0.25F);
+                DrawTransformField(
+                    "Scale", transform.scale.data(), 0.02F, 0.001F, 1000.0F);
 
                 if (GE::Runtime::MeshRendererComponent* mesh =
                     selected->GetMeshRenderer())

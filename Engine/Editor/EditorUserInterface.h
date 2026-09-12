@@ -1,7 +1,10 @@
 #pragma once
 
+#include "EditorGizmo.h"
+
 #include <Engine/Platform/PlatformApplication.h>
 #include <Engine/RenderCore/RenderFrame.h>
+#include <Engine/Runtime/GameObjectHandle.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -42,6 +45,11 @@ namespace GE::Editor
     private:
         bool m_initialized = false;
         bool m_viewport_navigation_active = false;
+        EditorGizmoAxis m_gizmo_drag_axis = EditorGizmoAxis::None;
+        GE::Runtime::GameObjectHandle m_gizmo_target;
+        GE::Runtime::TransformComponent m_gizmo_initial_transform;
+        TranslationGizmoAxisProjection m_gizmo_drag_projection;
+        GE::Math::Vec2 m_gizmo_drag_start_mouse;
         void* m_context = nullptr;
         std::string m_scene_path = "scene.mscene";
     };

@@ -4,8 +4,12 @@ add_library(MEngineEditorRuntime STATIC
     EditorCommand.h
     EditorEngine.cpp
     EditorEngine.h
+    EditorGizmo.cpp
+    EditorGizmo.h
     EditorScenePicker.cpp
     EditorScenePicker.h
+    EditorTransaction.cpp
+    EditorTransaction.h
     EditorUserInterface.cpp
     EditorUserInterface.h
 )
@@ -30,9 +34,15 @@ add_executable(MEngineEditor
 )
 
 if(MSVC)
+    target_compile_options(MEngineEditorRuntime
+        PRIVATE
+            /EHsc
+            /utf-8
+    )
     target_compile_options(MEngineEditor
         PRIVATE
             /EHsc
+            /utf-8
     )
 endif()
 

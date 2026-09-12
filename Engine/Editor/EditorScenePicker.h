@@ -2,6 +2,7 @@
 
 #include "EditorCamera.h"
 
+#include <Engine/Core/Math/vector.h>
 #include <Engine/RenderCore/RenderExtent.h>
 #include <Engine/RenderCore/RenderHandles.h>
 #include <Engine/Runtime/GameObjectHandle.h>
@@ -20,8 +21,8 @@ namespace GE::Editor
 {
     struct EditorMeshBounds final
     {
-        std::array<float, 3> minimum{};
-        std::array<float, 3> maximum{};
+        GE::Math::Vec3 minimum{};
+        GE::Math::Vec3 maximum{};
 
         [[nodiscard]] bool IsValid() const noexcept;
     };

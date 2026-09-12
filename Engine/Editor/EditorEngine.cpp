@@ -83,6 +83,7 @@ namespace GE::Editor
         m_editor_camera.ResetFromWorld(*m_editor_world_context->GetWorld());
         m_editor_selected_object = {};
         m_pie_selected_object = {};
+        ResetHistory();
         m_state = State::Initialized;
         return true;
     }
@@ -130,6 +131,7 @@ namespace GE::Editor
         }
 
         StopPlaySession();
+        ResetHistory();
         m_editor_selected_object = {};
         m_pie_selected_object = {};
         if (m_editor_world_context != nullptr)
@@ -156,6 +158,8 @@ namespace GE::Editor
             std::cerr << "[EditorEngine] Play session is already running\n";
             return false;
         }
+
+        CancelTransformEdit();
 
         const GE::Runtime::World* editor_world =
             m_editor_world_context->GetWorld();
@@ -300,16 +304,22 @@ namespace GE::Editor
 
     bool EditorEngine::SaveScene(
         const std::filesystem::path& path,
-        std::string& out_error) const
+        std::string& out_error)
     {
+        CommitTransformEdit();
         if (m_editor_world_context == nullptr
             || m_editor_world_context->GetWorld() == nullptr)
         {
             out_error = "Editor World is unavailable";
             return false;
         }
-        return GE::Runtime::SceneSerializer::SaveToFile(
+        const bool saved = GE::Runtime::SceneSerializer::SaveToFile(
             *m_editor_world_context->GetWorld(), path, out_error);
+        if (saved)
+        {
+            m_scene_dirty = false;
+        }
+        return saved;
     }
 
     bool EditorEngine::QueueCommand(EditorCommand command)
@@ -450,6 +460,21 @@ namespace GE::Editor
         return m_workflow_status;
     }
 
+    bool EditorEngine::CanUndo() const noexcept
+    {
+        return m_pie_world_context == nullptr && !m_undo_stack.empty();
+    }
+
+    bool EditorEngine::CanRedo() const noexcept
+    {
+        return m_pie_world_context == nullptr && !m_redo_stack.empty();
+    }
+
+    bool EditorEngine::IsSceneDirty() const noexcept
+    {
+        return m_scene_dirty;
+    }
+
     bool EditorEngine::ReplaceEditorWorld(
         std::unique_ptr<GE::Runtime::World> world,
         std::string& out_error)
@@ -473,8 +498,132 @@ namespace GE::Editor
         m_editor_selected_object = {};
         m_pie_selected_object = {};
         m_pending_commands.clear();
+        ResetHistory();
         out_error.clear();
         return true;
+    }
+
+    void EditorEngine::BeginTransformEdit(GE::Runtime::GameObject& object)
+    {
+        if (m_active_transform_edit.has_value())
+        {
+            CommitTransformEdit();
+        }
+        EditorTransaction transaction;
+        transaction.target = object.GetId();
+        transaction.before_transform = object.GetTransform();
+        transaction.after_transform = object.GetTransform();
+        m_active_transform_edit = std::move(transaction);
+    }
+
+    void EditorEngine::PreviewTransformEdit(
+        GE::Runtime::GameObject& object,
+        const GE::Runtime::TransformComponent& transform)
+    {
+        if (!m_active_transform_edit.has_value()
+            || m_active_transform_edit->target != object.GetId())
+        {
+            BeginTransformEdit(object);
+        }
+        object.GetTransform() = transform;
+        m_active_transform_edit->after_transform = transform;
+    }
+
+    void EditorEngine::CommitTransformEdit()
+    {
+        if (!m_active_transform_edit.has_value())
+        {
+            return;
+        }
+        EditorTransaction transaction = std::move(*m_active_transform_edit);
+        m_active_transform_edit.reset();
+        PushTransaction(std::move(transaction));
+    }
+
+    void EditorEngine::CancelTransformEdit() noexcept
+    {
+        if (!m_active_transform_edit.has_value())
+        {
+            return;
+        }
+        if (m_editor_world_context != nullptr
+            && m_editor_world_context->GetWorld() != nullptr)
+        {
+            (void)m_active_transform_edit->ApplyBefore(
+                *m_editor_world_context->GetWorld());
+        }
+        m_active_transform_edit.reset();
+    }
+
+    void EditorEngine::PushTransaction(EditorTransaction transaction)
+    {
+        if (!transaction.HasEffect())
+        {
+            return;
+        }
+        m_undo_stack.push_back(std::move(transaction));
+        m_redo_stack.clear();
+        m_scene_dirty = true;
+    }
+
+    bool EditorEngine::Undo()
+    {
+        CancelTransformEdit();
+        if (m_pie_world_context != nullptr || m_undo_stack.empty()
+            || m_editor_world_context == nullptr
+            || m_editor_world_context->GetWorld() == nullptr)
+        {
+            return false;
+        }
+        EditorTransaction transaction = std::move(m_undo_stack.back());
+        m_undo_stack.pop_back();
+        if (!transaction.ApplyBefore(*m_editor_world_context->GetWorld()))
+        {
+            m_undo_stack.push_back(std::move(transaction));
+            return false;
+        }
+        m_workflow_status = "Undo " + std::string(transaction.GetLabel());
+        m_redo_stack.push_back(std::move(transaction));
+        m_scene_dirty = true;
+        return true;
+    }
+
+    bool EditorEngine::Redo()
+    {
+        CancelTransformEdit();
+        if (m_pie_world_context != nullptr || m_redo_stack.empty()
+            || m_editor_world_context == nullptr
+            || m_editor_world_context->GetWorld() == nullptr)
+        {
+            return false;
+        }
+        EditorTransaction transaction = std::move(m_redo_stack.back());
+        m_redo_stack.pop_back();
+        if (!transaction.ApplyAfter(*m_editor_world_context->GetWorld()))
+        {
+            m_redo_stack.push_back(std::move(transaction));
+            return false;
+        }
+        m_workflow_status = "Redo " + std::string(transaction.GetLabel());
+        m_undo_stack.push_back(std::move(transaction));
+        m_scene_dirty = true;
+        return true;
+    }
+
+    void EditorEngine::MarkUntrackedSceneEdit()
+    {
+        CancelTransformEdit();
+        m_undo_stack.clear();
+        m_redo_stack.clear();
+        m_scene_dirty = true;
+    }
+
+    void EditorEngine::ResetHistory() noexcept
+    {
+        m_active_transform_edit.reset();
+        m_undo_stack.clear();
+        m_redo_stack.clear();
+        m_scene_dirty = false;
     }
 
     void EditorEngine::ApplyPendingCommands()
@@ -516,6 +665,16 @@ namespace GE::Editor
                     : "Save failed: " + error;
                 continue;
             }
+            if (command.type == EditorCommandType::Undo)
+            {
+                (void)Undo();
+                continue;
+            }
+            if (command.type == EditorCommandType::Redo)
+            {
+                (void)Redo();
+                continue;
+            }
             if (m_pie_world_context != nullptr)
             {
                 continue;
@@ -523,7 +682,20 @@ namespace GE::Editor
             GE::Runtime::World* world = m_editor_world_context->GetWorld();
             if (command.type == EditorCommandType::CreateObject)
             {
-                (void)world->CreateGameObject(std::move(command.name));
+                if (world->CreateGameObject(std::move(command.name)).IsValid())
+                {
+                    MarkUntrackedSceneEdit();
+                }
+                continue;
+            }
+            if (command.type == EditorCommandType::CommitTransformEdit)
+            {
+                CommitTransformEdit();
+                continue;
+            }
+            if (command.type == EditorCommandType::CancelTransformEdit)
+            {
+                CancelTransformEdit();
                 continue;
             }
             GE::Runtime::GameObject* object =
@@ -537,37 +709,62 @@ namespace GE::Editor
             case EditorCommandType::DeleteObject:
             {
                 const GE::Runtime::GameObjectId deleted_id = object->GetId();
-                if (world->DestroyGameObject(command.target)
-                    && deleted_id == m_editor_selected_object)
+                if (world->DestroyGameObject(command.target))
                 {
-                    m_editor_selected_object = {};
+                    if (deleted_id == m_editor_selected_object)
+                    {
+                        m_editor_selected_object = {};
+                    }
+                    MarkUntrackedSceneEdit();
                 }
                 break;
             }
             case EditorCommandType::RenameObject:
                 object->SetName(std::move(command.name));
+                MarkUntrackedSceneEdit();
                 break;
             case EditorCommandType::SetTransform:
+            {
+                EditorTransaction transaction;
+                transaction.target = object->GetId();
+                transaction.before_transform = object->GetTransform();
+                transaction.after_transform = command.transform;
                 object->GetTransform() = command.transform;
+                PushTransaction(std::move(transaction));
+                break;
+            }
+            case EditorCommandType::BeginTransformEdit:
+                BeginTransformEdit(*object);
+                break;
+            case EditorCommandType::PreviewTransformEdit:
+                PreviewTransformEdit(*object, command.transform);
                 break;
             case EditorCommandType::SetMeshRenderer:
                 if (GE::Runtime::MeshRendererComponent* mesh =
                     object->AddMeshRenderer())
                 {
                     *mesh = command.mesh_renderer;
+                    MarkUntrackedSceneEdit();
                 }
                 break;
             case EditorCommandType::RemoveMeshRenderer:
-                (void)object->RemoveMeshRenderer();
+                if (object->RemoveMeshRenderer())
+                {
+                    MarkUntrackedSceneEdit();
+                }
                 break;
             case EditorCommandType::SetCamera:
                 if (GE::Runtime::CameraComponent* camera = object->AddCamera())
                 {
                     *camera = command.camera;
+                    MarkUntrackedSceneEdit();
                 }
                 break;
             case EditorCommandType::RemoveCamera:
-                (void)object->RemoveCamera();
+                if (object->RemoveCamera())
+                {
+                    MarkUntrackedSceneEdit();
+                }
                 break;
             default:
                 break;

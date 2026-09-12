@@ -1,8 +1,8 @@
 #pragma once
 
+#include <Engine/Core/Math/vector.h>
 #include <Engine/RenderCore/RenderHandles.h>
 
-#include <array>
 #include <memory>
 
 namespace GE::Runtime
@@ -34,9 +34,9 @@ namespace GE::Runtime
     class TransformComponent final : public Component
     {
     public:
-        std::array<float, 3> translation{0.0F, 0.0F, 0.0F};
-        std::array<float, 3> rotation_degrees{0.0F, 0.0F, 0.0F};
-        std::array<float, 3> scale{1.0F, 1.0F, 1.0F};
+        Math::Vec3 translation{0.0F, 0.0F, 0.0F};
+        Math::Vec3 rotation_degrees{0.0F, 0.0F, 0.0F};
+        Math::Vec3 scale{1.0F, 1.0F, 1.0F};
 
         [[nodiscard]] ComponentType GetType() const noexcept override;
         [[nodiscard]] std::unique_ptr<Component> Clone() const override;

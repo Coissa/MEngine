@@ -14,6 +14,10 @@ namespace GE::Editor
         DeleteObject,
         RenameObject,
         SetTransform,
+        BeginTransformEdit,
+        PreviewTransformEdit,
+        CommitTransformEdit,
+        CancelTransformEdit,
         SetMeshRenderer,
         RemoveMeshRenderer,
         SetCamera,
@@ -21,6 +25,8 @@ namespace GE::Editor
         NewScene,
         LoadScene,
         SaveScene,
+        Undo,
+        Redo,
         StartPlay,
         StopPlay
     };

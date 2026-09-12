@@ -1,10 +1,10 @@
 #pragma once
 
-#include <array>
+#include <Engine/Core/Math/matrix4.h>
 
 namespace GE::RenderCore
 {
-    using RenderMatrix4 = std::array<float, 16>;
+    using RenderMatrix4 = Math::Mat4;
 
     // 单个观察视图的纯值快照。它不拥有 Camera，也不暴露图形 API 对象。
     // 当前 M2 只有主视图；未来可由 RenderFrame 扩展为多视图数组。

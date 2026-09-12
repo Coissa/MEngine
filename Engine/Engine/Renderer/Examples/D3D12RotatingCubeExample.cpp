@@ -1,10 +1,13 @@
 #include "D3D12RotatingCubeExample.h"
 
+#include <Engine/Core/Math/angle.h>
+#include <Engine/Core/Math/matrix4.h>
+#include <Engine/Core/Math/vector.h>
+
 #include <d3dcompiler.h>
 #include <wrl/client.h>
 
 #include <array>
-#include <cmath>
 #include <cstddef>
 #include <cstring>
 #include <exception>
@@ -22,29 +25,20 @@ namespace GE::Render::Examples
         [[nodiscard]] RenderCore::RenderMatrix4 MakeViewMatrix() noexcept
         {
             // 左手坐标系：相机位于 z=-5，因此把世界沿 +z 变换到观察空间。
-            return {
-                1.0F, 0.0F, 0.0F, 0.0F,
-                0.0F, 1.0F, 0.0F, 0.0F,
-                0.0F, 0.0F, 1.0F, 0.0F,
-                0.0F, 0.0F, 5.0F, 1.0F};
+            return Math::TranslationMatrix({0.0F, 0.0F, 5.0F});
         }
 
         [[nodiscard]] RenderCore::RenderMatrix4 MakeProjectionMatrix(
             float aspect) noexcept
         {
-            constexpr float Pi = 3.14159265358979323846F;
-            constexpr float VerticalFieldOfView = Pi / 3.0F;
             constexpr float NearPlane = 0.1F;
             constexpr float FarPlane = 100.0F;
             const float safe_aspect = aspect > 0.0F ? aspect : 1.0F;
-            const float y_scale = 1.0F / std::tan(VerticalFieldOfView * 0.5F);
-            const float x_scale = y_scale / safe_aspect;
-            const float depth_scale = FarPlane / (FarPlane - NearPlane);
-            return {
-                x_scale, 0.0F, 0.0F, 0.0F,
-                0.0F, y_scale, 0.0F, 0.0F,
-                0.0F, 0.0F, depth_scale, 1.0F,
-                0.0F, 0.0F, -NearPlane * depth_scale, 0.0F};
+            return Math::PerspectiveFovLH_ZO(
+                Math::Radians{Math::Pi / 3.0F},
+                safe_aspect,
+                NearPlane,
+                FarPlane);
         }
 
         [[nodiscard]] bool CompileShader(
@@ -256,14 +250,9 @@ namespace GE::Render::Examples
 
         const auto make_transform = [](float angle, float x) noexcept
         {
-            const float cosine = std::cos(angle);
-            const float sine = std::sin(angle);
             // row-vector 约定：平移位于最后一行，与 HLSL mul(position, matrix) 一致。
-            return std::array<float, 16>{
-                cosine, 0.0F, -sine, 0.0F,
-                0.0F, 1.0F, 0.0F, 0.0F,
-                sine, 0.0F, cosine, 0.0F,
-                x, 0.0F, 0.0F, 1.0F};
+            return Math::RotationYMatrix(Math::Radians{angle})
+                * Math::TranslationMatrix({x, 0.0F, 0.0F});
         };
 
         try

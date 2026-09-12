@@ -24,3 +24,8 @@ target_include_directories(MEngineRenderCore
     INTERFACE
         ${PROJECT_SOURCE_DIR}/Engine
 )
+
+target_link_libraries(MEngineRenderCore
+    INTERFACE
+        MEngineCore
+)

@@ -30,7 +30,11 @@ target_include_directories(MEngineRuntime
         ${PROJECT_SOURCE_DIR}/Engine
 )
 
-target_link_libraries(MEngineRuntime PUBLIC MEngineRenderCore)
+target_link_libraries(MEngineRuntime
+    PUBLIC
+        MEngineCore
+        MEngineRenderCore
+)
 
 if(MSVC)
     target_compile_options(MEngineRuntime PRIVATE /EHsc /utf-8)

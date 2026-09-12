@@ -2,6 +2,8 @@
 
 #include "RenderHandles.h"
 
+#include "RenderView.h"
+
 #include <array>
 
 namespace GE::RenderCore
@@ -13,7 +15,7 @@ namespace GE::RenderCore
         MaterialHandle material;
 
         // 行主序 Local-to-World；默认值为单位矩阵。
-        std::array<float, 16> local_to_world{
+        RenderMatrix4 local_to_world{
             1.0F, 0.0F, 0.0F, 0.0F,
             0.0F, 1.0F, 0.0F, 0.0F,
             0.0F, 0.0F, 1.0F, 0.0F,

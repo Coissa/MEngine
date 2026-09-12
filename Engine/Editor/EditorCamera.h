@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Engine/Core/Math/vector.h>
 #include <Engine/RenderCore/RenderExtent.h>
 #include <Engine/RenderCore/RenderView.h>
 #include <Engine/Runtime/Component.h>
@@ -25,8 +26,8 @@ namespace GE::Editor
 
     struct EditorRay final
     {
-        std::array<float, 3> origin{};
-        std::array<float, 3> direction{0.0F, 0.0F, 1.0F};
+        GE::Math::Vec3 origin{};
+        GE::Math::Vec3 direction{0.0F, 0.0F, 1.0F};
     };
 
     class EditorCamera final

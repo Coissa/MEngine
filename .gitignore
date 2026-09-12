@@ -44,12 +44,14 @@ Testing/
 /CodexSessionTransfer/README-导入说明.md
 /CodexSessionTransfer/SHA256.txt
 
-# Legacy local-only test source retained by the user
-/Engine/Tests/Reflection/TypeRegistryTests.cpp
-
 # Local-only tests, smoke verification, and architecture documents
 /Engine/Tests/
 /docs/
+/README.md
+
+# Local verification and hosting configuration
+/.github/
+/CMakePresets.json
 
 # Third-party documents kept outside source-only commits
 /Engine/ThirdParty/imgui/LICENSE.txt

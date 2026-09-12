@@ -3,6 +3,8 @@
 #include <Engine/Runtime/GameObject.h>
 #include <Engine/Runtime/SceneMath.h>
 #include <Engine/Runtime/World.h>
+#include <Engine/Core/Math/angle.h>
+#include <Engine/Core/Math/vector.h>
 
 #include <algorithm>
 #include <cmath>
@@ -11,8 +13,6 @@ namespace GE::Editor
 {
     namespace
     {
-        constexpr float Pi = 3.14159265358979323846F;
-
         [[nodiscard]] bool IsFiniteInput(
             const EditorCameraInput& input) noexcept
         {
@@ -24,26 +24,6 @@ namespace GE::Editor
                 && std::isfinite(input.wheel_delta);
         }
 
-        [[nodiscard]] float LengthSquared(
-            const std::array<float, 3>& value) noexcept
-        {
-            return value[0] * value[0] + value[1] * value[1]
-                + value[2] * value[2];
-        }
-
-        [[nodiscard]] bool Normalize(std::array<float, 3>& value) noexcept
-        {
-            const float length_squared = LengthSquared(value);
-            if (!std::isfinite(length_squared) || length_squared <= 0.0F)
-            {
-                return false;
-            }
-            const float inverse_length = 1.0F / std::sqrt(length_squared);
-            value[0] *= inverse_length;
-            value[1] *= inverse_length;
-            value[2] *= inverse_length;
-            return true;
-        }
     }
 
     EditorCamera::EditorCamera() noexcept
@@ -127,20 +107,20 @@ namespace GE::Editor
         const GE::Runtime::SceneCameraBasis basis =
             GE::Runtime::MakeSceneCameraBasis(
                 m_transform.rotation_degrees);
-        std::array<float, 3> movement{
+        GE::Math::Vec3 movement{
             basis.forward[0] * input.forward_axis
                 + basis.right[0] * input.right_axis,
             basis.forward[1] * input.forward_axis
                 + basis.right[1] * input.right_axis + input.up_axis,
             basis.forward[2] * input.forward_axis
                 + basis.right[2] * input.right_axis};
-        if (!Normalize(movement))
+        if (!GE::Math::Normalize(movement))
         {
             return;
         }
 
         const float distance = m_move_speed * delta_seconds;
-        for (std::size_t axis = 0; axis < movement.size(); ++axis)
+        for (std::size_t axis = 0; axis < 3; ++axis)
         {
             m_transform.translation[axis] += movement[axis] * distance;
         }
@@ -181,12 +161,13 @@ namespace GE::Editor
         const float aspect = static_cast<float>(extent.width)
             / static_cast<float>(extent.height);
         const float tangent = std::tan(
-            m_projection.vertical_field_of_view_degrees * Pi / 360.0F);
-        std::array<float, 3> camera_direction{
+            GE::Math::ToRadians(GE::Math::Degrees{
+                m_projection.vertical_field_of_view_degrees}).Value() * 0.5F);
+        GE::Math::Vec3 camera_direction{
             (2.0F * viewport_uv[0] - 1.0F) * aspect * tangent,
             (1.0F - 2.0F * viewport_uv[1]) * tangent,
             1.0F};
-        if (!Normalize(camera_direction))
+        if (!GE::Math::Normalize(camera_direction))
         {
             return false;
         }
@@ -205,7 +186,7 @@ namespace GE::Editor
             basis.right[2] * camera_direction[0]
                 + basis.up[2] * camera_direction[1]
                 + basis.forward[2] * camera_direction[2]};
-        return Normalize(out_ray.direction);
+        return GE::Math::Normalize(out_ray.direction);
     }
 
     const GE::Runtime::TransformComponent&

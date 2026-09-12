@@ -1,6 +1,7 @@
 #include "RHIRenderer.h"
 #include "Private/ResourceStateTracker.h"
 
+#include <Engine/Core/Math/matrix4.h>
 #include <Engine/RHI/RHIBuffer.h>
 #include <Engine/RHI/RHICommand.h>
 #include <Engine/RHI/RHIDevice.h>
@@ -38,31 +39,14 @@ namespace GE::Render
             std::array<float, 4> color_tint{};
         };
 
+        static_assert(sizeof(Matrix4) == sizeof(float) * 16);
+        static_assert(sizeof(ObjectConstants) == sizeof(float) * 20);
+
         struct UIConstants final
         {
             std::array<float, 2> scale{};
             std::array<float, 2> translate{};
         };
-
-        [[nodiscard]] Matrix4 Multiply(
-            const Matrix4& left,
-            const Matrix4& right) noexcept
-        {
-            Matrix4 result{};
-            for (std::size_t row = 0; row < 4; ++row)
-            {
-                for (std::size_t column = 0; column < 4; ++column)
-                {
-                    for (std::size_t inner = 0; inner < 4; ++inner)
-                    {
-                        result[row * 4 + column] +=
-                            left[row * 4 + inner]
-                            * right[inner * 4 + column];
-                    }
-                }
-            }
-            return result;
-        }
 
         [[nodiscard]] std::uint64_t AlignUp(
             std::uint64_t value,
@@ -1363,8 +1347,8 @@ namespace GE::Render
             return false;
         }
 
-        const Matrix4 view_projection = Multiply(
-            frame.main_view.view, frame.main_view.projection);
+        const Matrix4 view_projection =
+            frame.main_view.view * frame.main_view.projection;
 
         struct DrawSubmission final
         {
@@ -1432,9 +1416,9 @@ namespace GE::Render
             for (std::size_t index = 0; index < frame.render_items.size(); ++index)
             {
                 const ObjectConstants constants{
-                    .world_view_projection = Multiply(
-                        frame.render_items[index].local_to_world,
-                        view_projection),
+                    .world_view_projection =
+                        frame.render_items[index].local_to_world
+                            * view_projection,
                     .color_tint = frame.render_items[index].color_tint};
                 std::memcpy(
                     mapped_bytes + object_constant_stride * index,

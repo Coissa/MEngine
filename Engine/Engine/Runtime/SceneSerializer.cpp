@@ -3,6 +3,8 @@
 #include "GameObject.h"
 #include "World.h"
 
+#include <Engine/Core/Math/vector.h>
+
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -29,12 +31,6 @@ namespace GE::Runtime
                 return false;
             }
             return true;
-        }
-
-        [[nodiscard]] bool IsFinite3(const std::array<float, 3>& value) noexcept
-        {
-            return std::isfinite(value[0]) && std::isfinite(value[1])
-                && std::isfinite(value[2]);
         }
 
         [[nodiscard]] bool ReadBoolean(
@@ -198,9 +194,9 @@ namespace GE::Runtime
                     >> transform.rotation_degrees[2]
                     >> transform.scale[0] >> transform.scale[1]
                     >> transform.scale[2])
-                || !IsFinite3(transform.translation)
-                || !IsFinite3(transform.rotation_degrees)
-                || !IsFinite3(transform.scale))
+                || !Math::IsFinite(transform.translation)
+                || !Math::IsFinite(transform.rotation_degrees)
+                || !Math::IsFinite(transform.scale))
             {
                 out_error = "Invalid Transform component";
                 return nullptr;

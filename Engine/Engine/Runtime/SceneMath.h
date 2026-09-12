@@ -1,15 +1,14 @@
 #pragma once
 
+#include <Engine/Core/Math/vector.h>
 #include <Engine/RenderCore/RenderView.h>
-
-#include <array>
 
 namespace GE::Runtime
 {
     class CameraComponent;
     class TransformComponent;
 
-    using SceneVector3 = std::array<float, 3>;
+    using SceneVector3 = Math::Vec3;
 
     struct SceneCameraBasis final
     {

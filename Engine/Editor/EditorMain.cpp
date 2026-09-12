@@ -58,8 +58,8 @@ namespace
         {
             return false;
         }
-        out_bounds.minimum = first;
-        out_bounds.maximum = first;
+        out_bounds.minimum = {first[0], first[1], first[2]};
+        out_bounds.maximum = out_bounds.minimum;
         for (const GE::Render::PositionColorTextureVertex& vertex
             : mesh.vertices)
         {
