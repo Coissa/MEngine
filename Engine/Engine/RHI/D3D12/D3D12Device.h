@@ -56,6 +56,7 @@ namespace GE::D3D12RHI
             std::unique_ptr<RHI::ColorAttachmentView>& out_view) override;
         [[nodiscard]] RHI::RHIResult CreateSampledTextureView(
             RHI::Texture& texture,
+            const RHI::SampledTextureViewDescription& description,
             std::unique_ptr<RHI::SampledTextureView>& out_view) override;
         [[nodiscard]] RHI::RHIResult CreateTexture(
             const RHI::TextureDescription& description,

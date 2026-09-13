@@ -2,6 +2,7 @@ add_library(MEngineRenderCore INTERFACE)
 
 target_sources(MEngineRenderCore
     INTERFACE
+        GizmoRenderData.h
         RenderExtent.h
         RenderFrame.h
         RenderHandles.h

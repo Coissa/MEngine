@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GizmoRenderData.h"
 #include "RenderExtent.h"
 #include "RenderItem.h"
 #include "RenderView.h"
@@ -26,6 +27,9 @@ namespace GE::RenderCore
 
         // 本帧逐物体绘制快照；包被移动给 Renderer，内部不含 World/Object 指针。
         std::vector<RenderItem> render_items;
+
+        // Editor 的屏幕恒定尺寸 Gizmo；Game 帧保持为空。
+        GizmoRenderData gizmo;
 
         // 可选的最终 UI 合成值包；Game 帧保持为空。
         UIRenderData ui;

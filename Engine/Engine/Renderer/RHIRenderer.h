@@ -34,13 +34,16 @@ namespace GE::Render
         std::vector<std::uint16_t> indices;
     };
 
-    // M2 暂支持一层、紧密排列的 RGBA8/BGRA8 像素。
+    // 启动期纹理数据按 array layer、再按 mip 的顺序紧密排列；每个子资源无行填充。
     struct RHITextureDescription final
     {
         RenderCore::TextureHandle handle;
         std::uint32_t width = 0;
         std::uint32_t height = 0;
+        std::uint32_t array_layers = 1;
+        std::uint32_t mip_levels = 1;
         RHI::RHIFormat format = RHI::RHIFormat::Unknown;
+        RHI::SampledTextureViewDescription view;
         std::vector<std::byte> pixels;
     };
 
@@ -62,6 +65,28 @@ namespace GE::Render
         std::vector<std::byte> pixel_shader;
     };
 
+    struct RHIGizmoCompositionDescription final
+    {
+        RHI::ShaderBytecodeFormat shader_format =
+            RHI::ShaderBytecodeFormat::D3DBytecode;
+        std::vector<std::byte> vertex_shader;
+        std::vector<std::byte> visible_pixel_shader;
+        std::vector<std::byte> occluded_pixel_shader;
+    };
+
+    struct RHISkyboxDescription final
+    {
+        RenderCore::TextureHandle cubemap_texture;
+        RHI::SamplerDescription sampler;
+        float intensity = 1.0F;
+        float exposure = 1.0F;
+
+        RHI::ShaderBytecodeFormat shader_format =
+            RHI::ShaderBytecodeFormat::D3DBytecode;
+        std::vector<std::byte> vertex_shader;
+        std::vector<std::byte> pixel_shader;
+    };
+
     // 示例层提交一次性的纯值资源。Renderer 会取得这些容器的所有权。
     struct RHIRenderScene final
     {
@@ -76,6 +101,12 @@ namespace GE::Render
 
         // 存在时启用“场景离屏 + UI 最终合成”；具体 UI 框架不进入 Renderer。
         std::optional<RHIUICompositionDescription> ui_composition;
+
+        // 存在时允许消费 RenderFrame 中的编辑器 Gizmo 值包。
+        std::optional<RHIGizmoCompositionDescription> gizmo_composition;
+
+        // 静态天空环境；首轮只作为背景显示，不参与 IBL。
+        std::optional<RHISkyboxDescription> skybox;
     };
 
     struct RHIRendererCreateInfo final

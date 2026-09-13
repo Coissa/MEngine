@@ -28,10 +28,13 @@ target_link_libraries(MEngineEditorRuntime
 )
 
 add_executable(MEngineEditor
-    D3D12EditorUIResources.cpp
-    D3D12EditorUIResources.h
+    D3D12EditorRenderResources.cpp
+    D3D12EditorRenderResources.h
     EditorMain.cpp
 )
+
+mengine_package_shaders(MEngineEditor)
+mengine_package_assets(MEngineEditor)
 
 if(MSVC)
     target_compile_options(MEngineEditorRuntime

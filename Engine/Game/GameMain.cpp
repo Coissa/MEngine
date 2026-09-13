@@ -36,6 +36,20 @@ namespace
         }
         return std::nullopt;
     }
+
+    [[nodiscard]] std::filesystem::path FindShaderDirectory(
+        int argument_count,
+        char** arguments)
+    {
+        const std::filesystem::path executable =
+            argument_count > 0 && arguments != nullptr
+                && arguments[0] != nullptr && arguments[0][0] != '\0'
+            ? std::filesystem::absolute(arguments[0])
+            : std::filesystem::current_path();
+        const std::filesystem::path directory = executable.has_parent_path()
+            ? executable.parent_path() : std::filesystem::current_path();
+        return directory / "Shaders";
+    }
 }
 
 int main(int argument_count, char** arguments)
@@ -57,7 +71,9 @@ int main(int argument_count, char** arguments)
         GE::Render::RHIRenderScene scene;
         std::string scene_error;
         if (!GE::Render::Examples::BuildD3D12RotatingCubeScene(
-                scene, scene_error))
+                FindShaderDirectory(argument_count, arguments),
+                scene,
+                scene_error))
         {
             std::cerr << "[MEngineGame] Cube scene creation failed: "
                       << scene_error << '\n';

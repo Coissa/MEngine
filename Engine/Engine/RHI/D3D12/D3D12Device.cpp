@@ -39,6 +39,21 @@ namespace
         }
     }
 
+    [[nodiscard]] std::uint32_t BytesPerTexel(
+        GE::RHI::RHIFormat format) noexcept
+    {
+        switch (format)
+        {
+        case GE::RHI::RHIFormat::R8G8B8A8_UNorm:
+        case GE::RHI::RHIFormat::B8G8R8A8_UNorm:
+            return 4;
+        case GE::RHI::RHIFormat::R32G32B32A32_Float:
+            return 16;
+        default:
+            return 0;
+        }
+    }
+
     [[nodiscard]] bool TryMapTextureState(
         GE::RHI::TextureState state,
         D3D12_RESOURCE_STATES& out_state) noexcept
@@ -376,18 +391,33 @@ namespace GE::D3D12RHI
 
     RHI::RHIResult D3D12Device::CreateSampledTextureView(
         RHI::Texture& texture,
+        const RHI::SampledTextureViewDescription& view,
         std::unique_ptr<RHI::SampledTextureView>& out_view)
     {
         out_view.reset();
         auto* native_texture = dynamic_cast<D3D12Texture*>(&texture);
         const RHI::TextureDescription& description = texture.GetDescription();
         const DXGI_FORMAT native_format = ToNativeFormat(description.format);
+        const std::uint32_t mip_count = view.mip_level_count == 0
+            && view.base_mip_level < description.mip_levels
+            ? description.mip_levels - view.base_mip_level
+            : view.mip_level_count;
+        const bool valid_dimension =
+            (view.dimension == RHI::SampledTextureViewDimension::Texture2D
+                && description.array_layers == 1)
+            || (view.dimension
+                    == RHI::SampledTextureViewDimension::TextureCube
+                && description.array_layers == 6
+                && description.width == description.height);
         if (native_texture == nullptr
             || !RHI::HasTextureUsage(
                 description.usage, RHI::TextureUsage::Sampled)
             || native_format == DXGI_FORMAT_UNKNOWN
             || description.sample_count != 1
-            || description.array_layers != 1
+            || !valid_dimension
+            || view.base_mip_level >= description.mip_levels
+            || mip_count == 0
+            || mip_count > description.mip_levels - view.base_mip_level
             || description.format == RHI::RHIFormat::D32_Float
             || description.format == RHI::RHIFormat::D24_UNorm_S8_UInt)
         {
@@ -409,12 +439,22 @@ namespace GE::D3D12RHI
             heap->GetCPUDescriptorHandleForHeapStart();
         D3D12_SHADER_RESOURCE_VIEW_DESC view_description{};
         view_description.Format = native_format;
-        view_description.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
         view_description.Shader4ComponentMapping =
             D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        view_description.Texture2D.MostDetailedMip = 0;
-        view_description.Texture2D.MipLevels = description.mip_levels;
-        view_description.Texture2D.ResourceMinLODClamp = 0.0F;
+        if (view.dimension == RHI::SampledTextureViewDimension::TextureCube)
+        {
+            view_description.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+            view_description.TextureCube.MostDetailedMip = view.base_mip_level;
+            view_description.TextureCube.MipLevels = mip_count;
+            view_description.TextureCube.ResourceMinLODClamp = 0.0F;
+        }
+        else
+        {
+            view_description.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            view_description.Texture2D.MostDetailedMip = view.base_mip_level;
+            view_description.Texture2D.MipLevels = mip_count;
+            view_description.Texture2D.ResourceMinLODClamp = 0.0F;
+        }
         native_device_->CreateShaderResourceView(
             native_texture->native_resource_.Get(),
             &view_description,
@@ -522,11 +562,11 @@ namespace GE::D3D12RHI
             return RHI::RHIResult::InvalidArgument;
         }
 
-        // 首个教学检查点只开放最小且已验证的颜色纹理范围。
-        if (description.format != RHI::RHIFormat::R8G8B8A8_UNorm
-            || description.sample_count != 1
-            || description.mip_levels != 1
-            || description.array_layers != 1)
+        const DXGI_FORMAT native_format = ToNativeFormat(description.format);
+        const std::uint32_t bytes_per_texel = BytesPerTexel(description.format);
+        if (native_format == DXGI_FORMAT_UNKNOWN
+            || bytes_per_texel == 0
+            || description.sample_count != 1)
         {
             return RHI::RHIResult::Unsupported;
         }
@@ -535,9 +575,11 @@ namespace GE::D3D12RHI
         native_description.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         native_description.Width = description.width;
         native_description.Height = description.height;
-        native_description.DepthOrArraySize = 1;
-        native_description.MipLevels = 1;
-        native_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        native_description.DepthOrArraySize =
+            static_cast<UINT16>(description.array_layers);
+        native_description.MipLevels =
+            static_cast<UINT16>(description.mip_levels);
+        native_description.Format = native_format;
         native_description.SampleDesc.Count = 1;
         native_description.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
@@ -560,14 +602,19 @@ namespace GE::D3D12RHI
         if (total_size == (std::numeric_limits<UINT64>::max)()
             || row_count == 0
             || row_size == 0
-            || footprint.Footprint.RowPitch == 0)
+            || footprint.Footprint.RowPitch == 0
+            || total_size > (std::numeric_limits<UINT64>::max)()
+                - base_offset)
         {
             return RHI::RHIResult::InvalidArgument;
         }
 
         out_layout.subresource = subresource;
         out_layout.buffer_offset = footprint.Offset;
-        out_layout.required_buffer_size = total_size;
+        // GetCopyableFootprints reports the byte count of the requested
+        // subresource, excluding BaseOffset.  The RHI contract exposes the
+        // minimum size of the complete upload buffer, so include it here.
+        out_layout.required_buffer_size = base_offset + total_size;
         out_layout.row_size = row_size;
         out_layout.row_pitch = footprint.Footprint.RowPitch;
         out_layout.row_count = row_count;

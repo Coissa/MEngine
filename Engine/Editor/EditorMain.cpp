@@ -1,5 +1,5 @@
 #include "EditorEngine.h"
-#include "D3D12EditorUIResources.h"
+#include "D3D12EditorRenderResources.h"
 #include "EditorUserInterface.h"
 
 #include <Engine/Launch/EngineLoop.h>
@@ -42,6 +42,20 @@ namespace
             }
         }
         return std::nullopt;
+    }
+
+    [[nodiscard]] std::filesystem::path FindShaderDirectory(
+        int argument_count,
+        char** arguments)
+    {
+        const std::filesystem::path executable =
+            argument_count > 0 && arguments != nullptr
+                && arguments[0] != nullptr && arguments[0][0] != '\0'
+            ? std::filesystem::absolute(arguments[0])
+            : std::filesystem::current_path();
+        const std::filesystem::path directory = executable.has_parent_path()
+            ? executable.parent_path() : std::filesystem::current_path();
+        return directory / "Shaders";
     }
 
     [[nodiscard]] bool BuildMeshBounds(
@@ -118,8 +132,10 @@ int main(int argument_count, char** arguments)
 
         GE::Render::RHIRenderScene scene;
         std::string scene_error;
+        const std::filesystem::path shader_directory =
+            FindShaderDirectory(argument_count, arguments);
         if (!GE::Render::Examples::BuildD3D12RotatingCubeScene(
-                scene, scene_error))
+                shader_directory, scene, scene_error))
         {
             std::cerr << "[MEngineEditor] Cube scene creation failed: "
                       << scene_error << '\n';
@@ -136,8 +152,8 @@ int main(int argument_count, char** arguments)
                 return 1;
             }
         }
-        if (!GE::Editor::AddD3D12EditorUIResources(
-                font_atlas, scene, scene_error))
+        if (!GE::Editor::AddD3D12EditorRenderResources(
+                font_atlas, shader_directory, scene, scene_error))
         {
             std::cerr << "[MEngineEditor] UI render resources failed: "
                       << scene_error << '\n';

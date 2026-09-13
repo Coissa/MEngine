@@ -4,12 +4,44 @@
 #include "D3D12Texture.h"
 #include "D3D12TextureView.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <limits>
 #include <utility>
 
 namespace
 {
+    [[nodiscard]] DXGI_FORMAT ToNativeFormat(
+        GE::RHI::RHIFormat format) noexcept
+    {
+        switch (format)
+        {
+        case GE::RHI::RHIFormat::R8G8B8A8_UNorm:
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
+        case GE::RHI::RHIFormat::B8G8R8A8_UNorm:
+            return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case GE::RHI::RHIFormat::R32G32B32A32_Float:
+            return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        default:
+            return DXGI_FORMAT_UNKNOWN;
+        }
+    }
+
+    [[nodiscard]] std::uint32_t BytesPerTexel(
+        GE::RHI::RHIFormat format) noexcept
+    {
+        switch (format)
+        {
+        case GE::RHI::RHIFormat::R8G8B8A8_UNorm:
+        case GE::RHI::RHIFormat::B8G8R8A8_UNorm:
+            return 4;
+        case GE::RHI::RHIFormat::R32G32B32A32_Float:
+            return 16;
+        default:
+            return 0;
+        }
+    }
+
     [[nodiscard]] bool TryMapState(
         GE::RHI::TextureState state,
         D3D12_RESOURCE_STATES& out_state) noexcept
@@ -214,8 +246,25 @@ namespace GE::D3D12RHI
         const RHI::TextureDescription& destination_description =
             destination.GetDescription();
 
+        const DXGI_FORMAT native_format =
+            ToNativeFormat(destination_description.format);
+        const std::uint32_t bytes_per_texel =
+            BytesPerTexel(destination_description.format);
+        const bool valid_subresource =
+            layout.subresource.mip_level
+                < destination_description.mip_levels
+            && layout.subresource.array_layer
+                < destination_description.array_layers;
+        const std::uint32_t mip_width = valid_subresource
+            ? (std::max)(1u, destination_description.width
+                >> layout.subresource.mip_level)
+            : 0;
+        const std::uint32_t mip_height = valid_subresource
+            ? (std::max)(1u, destination_description.height
+                >> layout.subresource.mip_level)
+            : 0;
         const std::uint64_t expected_row_size =
-            static_cast<std::uint64_t>(destination_description.width) * 4u;
+            static_cast<std::uint64_t>(mip_width) * bytes_per_texel;
         if (!recording_ || native_source == nullptr
             || native_destination == nullptr
             || !RHI::HasBufferUsage(
@@ -223,15 +272,12 @@ namespace GE::D3D12RHI
             || !RHI::HasTextureUsage(
                 destination_description.usage,
                 RHI::TextureUsage::CopyDestination)
-            || destination_description.format
-                != RHI::RHIFormat::R8G8B8A8_UNorm
+            || native_format == DXGI_FORMAT_UNKNOWN
+            || bytes_per_texel == 0
             || destination_description.sample_count != 1
-            || destination_description.mip_levels != 1
-            || destination_description.array_layers != 1
-            || layout.subresource.mip_level != 0
-            || layout.subresource.array_layer != 0
+            || !valid_subresource
             || layout.row_size != expected_row_size
-            || layout.row_count != destination_description.height
+            || layout.row_count != mip_height
             || layout.row_pitch < layout.row_size
             || layout.row_pitch % D3D12_TEXTURE_DATA_PITCH_ALIGNMENT != 0
             || layout.buffer_offset
@@ -265,12 +311,9 @@ namespace GE::D3D12RHI
         source_location.pResource = native_source->native_resource_.Get();
         source_location.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
         source_location.PlacedFootprint.Offset = layout.buffer_offset;
-        source_location.PlacedFootprint.Footprint.Format =
-            DXGI_FORMAT_R8G8B8A8_UNORM;
-        source_location.PlacedFootprint.Footprint.Width =
-            destination_description.width;
-        source_location.PlacedFootprint.Footprint.Height =
-            destination_description.height;
+        source_location.PlacedFootprint.Footprint.Format = native_format;
+        source_location.PlacedFootprint.Footprint.Width = mip_width;
+        source_location.PlacedFootprint.Footprint.Height = mip_height;
         source_location.PlacedFootprint.Footprint.Depth = 1;
         source_location.PlacedFootprint.Footprint.RowPitch = layout.row_pitch;
 

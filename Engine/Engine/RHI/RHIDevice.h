@@ -48,6 +48,7 @@ namespace GE::RHI
 
         [[nodiscard]] virtual RHIResult CreateSampledTextureView(
             Texture& texture,
+            const SampledTextureViewDescription& description,
             std::unique_ptr<SampledTextureView>& out_view) = 0;
 
         [[nodiscard]] virtual RHIResult CreateTexture(

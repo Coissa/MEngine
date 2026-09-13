@@ -1,8 +1,25 @@
 #pragma once
 
+#include <cstdint>
+
 namespace GE::RHI
 {
     class Texture;
+
+    enum class SampledTextureViewDimension : std::uint8_t
+    {
+        Texture2D,
+        TextureCube
+    };
+
+    // 0 个 Mip 表示从 base_mip_level 开始观察纹理剩余的全部 Mip。
+    struct SampledTextureViewDescription final
+    {
+        SampledTextureViewDimension dimension =
+            SampledTextureViewDimension::Texture2D;
+        std::uint32_t base_mip_level = 0;
+        std::uint32_t mip_level_count = 0;
+    };
 
     // Shader 只读访问纹理的视图；拥有描述符，但只借用被观察的 Texture。
     class SampledTextureView

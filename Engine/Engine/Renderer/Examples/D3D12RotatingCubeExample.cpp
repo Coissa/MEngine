@@ -4,6 +4,10 @@
 #include <Engine/Core/Math/matrix4.h>
 #include <Engine/Core/Math/vector.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_HDR
+#include <ThirdParty/stb/stb_image.h>
+
 #include <d3dcompiler.h>
 #include <wrl/client.h>
 
@@ -11,6 +15,8 @@
 #include <cstddef>
 #include <cstring>
 #include <exception>
+#include <filesystem>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -20,6 +26,7 @@ namespace GE::Render::Examples
     {
         constexpr RenderCore::MeshHandle CubeMesh{1};
         constexpr RenderCore::TextureHandle CheckerboardTexture{1};
+        constexpr RenderCore::TextureHandle SkyboxTexture{2};
         constexpr RenderCore::MaterialHandle CubeMaterial{1};
 
         [[nodiscard]] RenderCore::RenderMatrix4 MakeViewMatrix() noexcept
@@ -42,25 +49,29 @@ namespace GE::Render::Examples
         }
 
         [[nodiscard]] bool CompileShader(
-            const char* source,
+            const std::filesystem::path& path,
             const char* entry_point,
             const char* target,
             std::vector<std::byte>& out_bytecode,
-            std::string& out_error) noexcept
+            std::string& out_error)
         {
             out_bytecode.clear();
+            std::error_code path_error;
+            if (!std::filesystem::is_regular_file(path, path_error))
+            {
+                out_error = "Shader file not found: " + path.string();
+                return false;
+            }
             Microsoft::WRL::ComPtr<ID3DBlob> bytecode;
             Microsoft::WRL::ComPtr<ID3DBlob> errors;
             UINT flags = D3DCOMPILE_ENABLE_STRICTNESS;
 #ifndef NDEBUG
             flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
-            const HRESULT result = D3DCompile(
-                source,
-                std::strlen(source),
-                "MEngineRotatingCube.hlsl",
+            const HRESULT result = D3DCompileFromFile(
+                path.c_str(),
                 nullptr,
-                nullptr,
+                D3D_COMPILE_STANDARD_FILE_INCLUDE,
                 entry_point,
                 target,
                 flags,
@@ -77,27 +88,108 @@ namespace GE::Render::Examples
                 }
                 else
                 {
-                    out_error = "D3DCompile failed without diagnostics";
+                    out_error = "Shader compile failed: " + path.string();
                 }
                 return false;
             }
 
-            try
+            const auto* begin = static_cast<const std::byte*>(
+                bytecode->GetBufferPointer());
+            out_bytecode.assign(begin, begin + bytecode->GetBufferSize());
+            return true;
+        }
+
+        [[nodiscard]] bool LoadPiccoloSkybox(
+            const std::filesystem::path& asset_directory,
+            RHITextureDescription& out_texture,
+            std::string& out_error)
+        {
+            constexpr std::array<const char*, 6> face_names{{
+                "skybox_specular_X+.hdr",
+                "skybox_specular_X-.hdr",
+                "skybox_specular_Y+.hdr",
+                "skybox_specular_Y-.hdr",
+                "skybox_specular_Z+.hdr",
+                "skybox_specular_Z-.hdr"
+            }};
+            const std::filesystem::path sky_directory =
+                asset_directory / "Textures" / "Sky" / "Piccolo";
+            int expected_width = 0;
+            int expected_height = 0;
+            out_texture = {};
+            out_texture.handle = SkyboxTexture;
+            out_texture.array_layers = 6;
+            out_texture.mip_levels = 1;
+            out_texture.format = RHI::RHIFormat::R32G32B32A32_Float;
+            out_texture.view.dimension =
+                RHI::SampledTextureViewDimension::TextureCube;
+
+            for (const char* face_name : face_names)
             {
-                const auto* begin = static_cast<const std::byte*>(
-                    bytecode->GetBufferPointer());
-                out_bytecode.assign(begin, begin + bytecode->GetBufferSize());
+                const std::filesystem::path path = sky_directory / face_name;
+                std::error_code path_error;
+                if (!std::filesystem::is_regular_file(path, path_error))
+                {
+                    out_error = "Skybox face not found: " + path.string();
+                    return false;
+                }
+                int width = 0;
+                int height = 0;
+                int channels = 0;
+                std::unique_ptr<float, decltype(&stbi_image_free)> pixels(
+                    stbi_loadf(path.string().c_str(),
+                        &width, &height, &channels, STBI_rgb_alpha),
+                    &stbi_image_free);
+                if (pixels == nullptr || width <= 0 || height <= 0)
+                {
+                    const char* reason = stbi_failure_reason();
+                    out_error = "Failed to load HDR skybox face: "
+                        + path.string();
+                    if (reason != nullptr)
+                    {
+                        out_error += " (";
+                        out_error += reason;
+                        out_error += ')';
+                    }
+                    return false;
+                }
+                if (expected_width == 0)
+                {
+                    expected_width = width;
+                    expected_height = height;
+                }
+                else if (width != expected_width || height != expected_height)
+                {
+                    out_error = "Skybox faces must have identical dimensions: "
+                        + path.string();
+                    return false;
+                }
+                if (width != height)
+                {
+                    out_error = "Skybox faces must be square: " + path.string();
+                    return false;
+                }
+
+                const std::size_t float_count =
+                    static_cast<std::size_t>(width)
+                    * static_cast<std::size_t>(height) * 4u;
+                const std::size_t byte_count = float_count * sizeof(float);
+                const std::size_t old_size = out_texture.pixels.size();
+                out_texture.pixels.resize(old_size + byte_count);
+                std::memcpy(
+                    out_texture.pixels.data() + old_size,
+                    pixels.get(),
+                    byte_count);
             }
-            catch (const std::exception& exception)
-            {
-                out_error = exception.what();
-                return false;
-            }
+
+            out_texture.width = static_cast<std::uint32_t>(expected_width);
+            out_texture.height = static_cast<std::uint32_t>(expected_height);
             return true;
         }
     }
 
     bool BuildD3D12RotatingCubeScene(
+        const std::filesystem::path& shader_directory,
         RHIRenderScene& out_scene,
         std::string& out_error) noexcept
     {
@@ -145,51 +237,15 @@ namespace GE::Render::Examples
             16, 17, 18, 16, 18, 19,
             20, 21, 22, 20, 22, 23
         }};
-        constexpr const char* shader_source = R"(
-            cbuffer FrameConstants : register(b0)
-            {
-                row_major float4x4 world_view_projection;
-                float4 color_tint;
-            };
-
-            Texture2D<float4> albedo_texture : register(t1);
-            SamplerState albedo_sampler : register(s2);
-
-            struct VertexInput
-            {
-                float3 position : ATTRIBUTE0;
-                float3 color : ATTRIBUTE1;
-                float2 texture_coordinate : ATTRIBUTE2;
-            };
-
-            struct VertexOutput
-            {
-                float4 position : SV_Position;
-                float3 color : COLOR0;
-                float2 texture_coordinate : TEXCOORD0;
-            };
-
-            VertexOutput VSMain(VertexInput input)
-            {
-                VertexOutput output;
-                output.position = mul(
-                    float4(input.position, 1.0f), world_view_projection);
-                output.color = input.color;
-                output.texture_coordinate = input.texture_coordinate;
-                return output;
-            }
-
-            float4 PSMain(VertexOutput input) : SV_Target0
-            {
-                float4 sampled = albedo_texture.Sample(
-                    albedo_sampler, input.texture_coordinate);
-                float3 tint = lerp(float3(1.0f, 1.0f, 1.0f), input.color, 0.35f);
-                return sampled * float4(tint, 1.0f) * color_tint;
-            }
-        )";
-
         try
         {
+            const std::filesystem::path shader_path =
+                shader_directory / "examples" / "rotating_cube.hlsl";
+            const std::filesystem::path skybox_shader_path =
+                shader_directory / "examples" / "skybox.hlsl";
+            const std::filesystem::path asset_directory =
+                shader_directory.parent_path() / "Assets";
+
             RHIMeshDescription mesh;
             mesh.handle = CubeMesh;
             mesh.vertices.assign(vertices.begin(), vertices.end());
@@ -208,6 +264,15 @@ namespace GE::Render::Examples
                 std::byte{255}, std::byte{255}, std::byte{255}, std::byte{255}};
             out_scene.textures.push_back(std::move(texture));
 
+            RHITextureDescription skybox_texture;
+            if (!LoadPiccoloSkybox(
+                    asset_directory, skybox_texture, out_error))
+            {
+                out_scene = {};
+                return false;
+            }
+            out_scene.textures.push_back(std::move(skybox_texture));
+
             out_scene.materials.push_back({
                 .handle = CubeMaterial,
                 .albedo_texture = CheckerboardTexture,
@@ -217,6 +282,35 @@ namespace GE::Render::Examples
                     .address_v = RHI::SamplerAddressMode::Repeat,
                     .address_w = RHI::SamplerAddressMode::Repeat}});
             out_scene.shader_format = RHI::ShaderBytecodeFormat::D3DBytecode;
+
+            if (!CompileShader(shader_path, "VSMain", "vs_5_0",
+                    out_scene.vertex_shader, out_error)
+                || !CompileShader(shader_path, "PSMain", "ps_5_0",
+                    out_scene.pixel_shader, out_error))
+            {
+                out_scene = {};
+                return false;
+            }
+
+            RHISkyboxDescription skybox;
+            skybox.cubemap_texture = SkyboxTexture;
+            skybox.sampler = {
+                .filter = RHI::SamplerFilter::Linear,
+                .address_u = RHI::SamplerAddressMode::ClampToEdge,
+                .address_v = RHI::SamplerAddressMode::ClampToEdge,
+                .address_w = RHI::SamplerAddressMode::ClampToEdge};
+            skybox.intensity = 1.0F;
+            skybox.exposure = 1.0F;
+            if (!CompileShader(skybox_shader_path, "SkyboxVS", "vs_5_0",
+                    skybox.vertex_shader, out_error)
+                || !CompileShader(skybox_shader_path, "SkyboxPS", "ps_5_0",
+                    skybox.pixel_shader, out_error))
+            {
+                out_scene = {};
+                return false;
+            }
+            out_scene.skybox = std::move(skybox);
+            return true;
         }
         catch (const std::exception& exception)
         {
@@ -224,16 +318,6 @@ namespace GE::Render::Examples
             out_scene = {};
             return false;
         }
-
-        if (!CompileShader(shader_source, "VSMain", "vs_5_0",
-                out_scene.vertex_shader, out_error)
-            || !CompileShader(shader_source, "PSMain", "ps_5_0",
-                out_scene.pixel_shader, out_error))
-        {
-            out_scene = {};
-            return false;
-        }
-        return true;
     }
 
     void BuildRotatingCubeRenderFrame(

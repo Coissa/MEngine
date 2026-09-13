@@ -2,6 +2,9 @@ add_executable(MEngineGame
     GameMain.cpp
 )
 
+mengine_package_shaders(MEngineGame)
+mengine_package_assets(MEngineGame)
+
 if(MSVC)
     target_compile_options(MEngineGame
         PRIVATE

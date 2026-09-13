@@ -4,12 +4,14 @@
 
 #include <Engine/RenderCore/RenderFrame.h>
 
+#include <filesystem>
 #include <string>
 
 namespace GE::Render::Examples
 {
-    // 构造立方体纯值数据并把 HLSL 编译成 D3D bytecode；不创建任何 GPU 对象。
+    // 构造立方体纯值数据并从打包目录编译 HLSL；不创建任何 GPU 对象。
     [[nodiscard]] bool BuildD3D12RotatingCubeScene(
+        const std::filesystem::path& shader_directory,
         RHIRenderScene& out_scene,
         std::string& out_error) noexcept;
 

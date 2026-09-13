@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <limits>
@@ -41,12 +42,81 @@ namespace GE::Render
 
         static_assert(sizeof(Matrix4) == sizeof(float) * 16);
         static_assert(sizeof(ObjectConstants) == sizeof(float) * 20);
+        static_assert(sizeof(RenderCore::GizmoVertex) == sizeof(float) * 5);
+        static_assert(offsetof(RenderCore::GizmoVertex, color)
+            == sizeof(float) * 4);
 
         struct UIConstants final
         {
             std::array<float, 2> scale{};
             std::array<float, 2> translate{};
         };
+
+        struct SkyboxConstants final
+        {
+            Matrix4 view_projection;
+            float intensity = 1.0F;
+            float exposure = 1.0F;
+            std::array<float, 2> padding{};
+        };
+
+        struct SkyboxVertex final
+        {
+            std::array<float, 3> position{};
+        };
+
+        [[nodiscard]] constexpr std::uint32_t BytesPerTexel(
+            RHI::RHIFormat format) noexcept
+        {
+            switch (format)
+            {
+            case RHI::RHIFormat::R8G8B8A8_UNorm:
+            case RHI::RHIFormat::B8G8R8A8_UNorm:
+                return 4;
+            case RHI::RHIFormat::R32G32B32A32_Float:
+                return 16;
+            default:
+                return 0;
+            }
+        }
+
+        [[nodiscard]] bool TryGetTightTextureDataSize(
+            const RHITextureDescription& texture,
+            std::uint64_t& out_size) noexcept
+        {
+            out_size = 0;
+            const std::uint32_t bytes_per_texel = BytesPerTexel(texture.format);
+            if (texture.width == 0 || texture.height == 0
+                || texture.array_layers == 0 || texture.mip_levels == 0
+                || bytes_per_texel == 0)
+            {
+                return false;
+            }
+            for (std::uint32_t layer = 0; layer < texture.array_layers; ++layer)
+            {
+                for (std::uint32_t mip = 0; mip < texture.mip_levels; ++mip)
+                {
+                    const std::uint64_t width = mip < 32
+                        ? (std::max)(1u, texture.width >> mip) : 1u;
+                    const std::uint64_t height = mip < 32
+                        ? (std::max)(1u, texture.height >> mip) : 1u;
+                    if (width > (std::numeric_limits<std::uint64_t>::max)()
+                            / height / bytes_per_texel)
+                    {
+                        return false;
+                    }
+                    const std::uint64_t subresource_size =
+                        width * height * bytes_per_texel;
+                    if (subresource_size
+                        > (std::numeric_limits<std::uint64_t>::max)() - out_size)
+                    {
+                        return false;
+                    }
+                    out_size += subresource_size;
+                }
+            }
+            return true;
+        }
 
         [[nodiscard]] std::uint64_t AlignUp(
             std::uint64_t value,
@@ -88,6 +158,14 @@ namespace GE::Render
                 ui_enabled = true;
                 ui_font_texture = scene.ui_composition->font_atlas_texture;
             }
+            gizmo_enabled = scene.gizmo_composition.has_value();
+            skybox_enabled = scene.skybox.has_value();
+            if (scene.skybox.has_value())
+            {
+                skybox_texture = scene.skybox->cubemap_texture;
+                skybox_intensity = scene.skybox->intensity;
+                skybox_exposure = scene.skybox->exposure;
+            }
         }
 
         enum class State
@@ -110,6 +188,10 @@ namespace GE::Render
             std::unique_ptr<RHI::Buffer> ui_constant_buffer;
             std::unique_ptr<RHI::Buffer> ui_vertex_buffer;
             std::unique_ptr<RHI::Buffer> ui_index_buffer;
+            std::unique_ptr<RHI::Buffer> gizmo_vertex_buffer;
+            std::unique_ptr<RHI::Buffer> gizmo_index_buffer;
+            std::unique_ptr<RHI::Buffer> skybox_constant_buffer;
+            std::unique_ptr<RHI::ResourceSet> skybox_resource_set;
             // ResourceSet 借用常量槽、纹理 View 和 Sampler，至少活到该帧 Fence 完成。
             std::vector<std::unique_ptr<RHI::ResourceSet>> resource_sets;
             std::vector<std::unique_ptr<RHI::ResourceSet>> ui_resource_sets;
@@ -146,6 +228,8 @@ namespace GE::Render
         static constexpr std::size_t InitialObjectCapacity = 16;
         static constexpr std::size_t InitialUIVertexCapacity = 8'192;
         static constexpr std::size_t InitialUIIndexCapacity = 16'384;
+        static constexpr std::size_t InitialGizmoVertexCapacity = 128;
+        static constexpr std::size_t InitialGizmoIndexCapacity = 384;
 
         [[nodiscard]] bool CreateAttachments();
         [[nodiscard]] bool CreateSceneAttachments(
@@ -153,16 +237,29 @@ namespace GE::Render
         [[nodiscard]] bool ValidateSceneDescription() const noexcept;
         [[nodiscard]] bool CreateSceneResources();
         [[nodiscard]] bool CreateUIResources();
+        [[nodiscard]] bool CreateGizmoResources();
+        [[nodiscard]] bool CreateSkyboxResources();
         [[nodiscard]] bool CreateFrameResources();
         [[nodiscard]] bool CreateObjectConstantBuffer(
             FrameResource& frame_resource,
             std::size_t frame_index,
             std::size_t object_capacity);
+        [[nodiscard]] bool CreateSkyboxFrameResources(
+            FrameResource& frame_resource,
+            std::size_t frame_index);
         [[nodiscard]] bool EnsureObjectCapacity(std::size_t required_capacity);
         [[nodiscard]] bool EnsureUICapacity(
             std::size_t required_vertices,
             std::size_t required_indices);
         [[nodiscard]] bool CreateUIBuffers(
+            FrameResource& frame_resource,
+            std::size_t frame_index,
+            std::size_t vertex_capacity,
+            std::size_t index_capacity);
+        [[nodiscard]] bool EnsureGizmoCapacity(
+            std::size_t required_vertices,
+            std::size_t required_indices);
+        [[nodiscard]] bool CreateGizmoBuffers(
             FrameResource& frame_resource,
             std::size_t frame_index,
             std::size_t vertex_capacity,
@@ -198,8 +295,15 @@ namespace GE::Render
         std::size_t object_capacity = 0;
         std::size_t ui_vertex_capacity = 0;
         std::size_t ui_index_capacity = 0;
+        std::size_t gizmo_vertex_capacity = 0;
+        std::size_t gizmo_index_capacity = 0;
         bool ui_enabled = false;
+        bool gizmo_enabled = false;
+        bool skybox_enabled = false;
         RenderCore::TextureHandle ui_font_texture;
+        RenderCore::TextureHandle skybox_texture;
+        float skybox_intensity = 1.0F;
+        float skybox_exposure = 1.0F;
         RenderCore::RenderExtent scene_extent;
 
         std::unique_ptr<RHI::Device> device;
@@ -229,6 +333,20 @@ namespace GE::Render
         std::unique_ptr<RHI::PipelineLayout> ui_pipeline_layout;
         std::unique_ptr<RHI::GraphicsPipeline> ui_pipeline;
         std::unique_ptr<RHI::Sampler> ui_sampler;
+        std::unique_ptr<RHI::Shader> gizmo_vertex_shader;
+        std::unique_ptr<RHI::Shader> gizmo_visible_pixel_shader;
+        std::unique_ptr<RHI::Shader> gizmo_occluded_pixel_shader;
+        std::unique_ptr<RHI::PipelineLayout> gizmo_pipeline_layout;
+        std::unique_ptr<RHI::GraphicsPipeline> gizmo_visible_pipeline;
+        std::unique_ptr<RHI::GraphicsPipeline> gizmo_occluded_pipeline;
+        std::unique_ptr<RHI::Shader> skybox_vertex_shader;
+        std::unique_ptr<RHI::Shader> skybox_pixel_shader;
+        std::unique_ptr<RHI::PipelineLayout> skybox_pipeline_layout;
+        std::unique_ptr<RHI::GraphicsPipeline> skybox_pipeline;
+        std::unique_ptr<RHI::Sampler> skybox_sampler;
+        std::unique_ptr<RHI::Buffer> skybox_vertex_buffer;
+        std::unique_ptr<RHI::Buffer> skybox_index_buffer;
+        std::uint32_t skybox_index_count = 0;
     };
 
     bool RHIRenderer::Impl::ValidateSceneDescription() const noexcept
@@ -260,20 +378,25 @@ namespace GE::Render
         for (std::size_t index = 0; index < scene.textures.size(); ++index)
         {
             const RHITextureDescription& texture = scene.textures[index];
-            const bool supported_format =
-                texture.format == RHI::RHIFormat::R8G8B8A8_UNorm
-                || texture.format == RHI::RHIFormat::B8G8R8A8_UNorm;
+            std::uint64_t expected_bytes = 0;
+            const bool valid_view =
+                (texture.view.dimension
+                        == RHI::SampledTextureViewDimension::Texture2D
+                    && texture.array_layers == 1)
+                || (texture.view.dimension
+                        == RHI::SampledTextureViewDimension::TextureCube
+                    && texture.array_layers == 6
+                    && texture.width == texture.height);
             if (!texture.handle.IsValid() || texture.width == 0
-                || texture.height == 0 || !supported_format
-                || texture.width
-                    > (std::numeric_limits<std::uint64_t>::max)()
-                        / texture.height / 4u)
+                || texture.height == 0 || !valid_view
+                || texture.view.base_mip_level >= texture.mip_levels
+                || (texture.view.mip_level_count != 0
+                    && texture.view.mip_level_count
+                        > texture.mip_levels - texture.view.base_mip_level)
+                || !TryGetTightTextureDataSize(texture, expected_bytes))
             {
                 return false;
             }
-            const std::uint64_t expected_bytes =
-                static_cast<std::uint64_t>(texture.width)
-                * texture.height * 4u;
             if (expected_bytes != texture.pixels.size()
                 || std::any_of(
                     scene.textures.begin()
@@ -315,6 +438,37 @@ namespace GE::Render
                 { return texture.handle == ui.font_atlas_texture; });
             if (!ui.font_atlas_texture.IsValid() || !font_exists
                 || ui.vertex_shader.empty() || ui.pixel_shader.empty())
+            {
+                return false;
+            }
+        }
+
+        if (scene.gizmo_composition.has_value())
+        {
+            const RHIGizmoCompositionDescription& gizmo =
+                *scene.gizmo_composition;
+            if (gizmo.vertex_shader.empty()
+                || gizmo.visible_pixel_shader.empty()
+                || gizmo.occluded_pixel_shader.empty())
+            {
+                return false;
+            }
+        }
+
+        if (scene.skybox.has_value())
+        {
+            const RHISkyboxDescription& skybox = *scene.skybox;
+            const auto texture = std::find_if(
+                scene.textures.begin(), scene.textures.end(),
+                [&skybox](const RHITextureDescription& candidate)
+                { return candidate.handle == skybox.cubemap_texture; });
+            if (!skybox.cubemap_texture.IsValid()
+                || texture == scene.textures.end()
+                || texture->view.dimension
+                    != RHI::SampledTextureViewDimension::TextureCube
+                || skybox.vertex_shader.empty() || skybox.pixel_shader.empty()
+                || !std::isfinite(skybox.intensity) || skybox.intensity < 0.0F
+                || !std::isfinite(skybox.exposure) || skybox.exposure <= 0.0F)
             {
                 return false;
             }
@@ -512,7 +666,7 @@ namespace GE::Render
                 *scene_color_texture, scene_color_view),
                 "Create scene color attachment view")
             || !Check(device->CreateSampledTextureView(
-                *scene_color_texture, scene_sampled_view),
+                *scene_color_texture, {}, scene_sampled_view),
                 "Create scene sampled view")
             || !resource_states.TrackTexture(
                 *scene_color_texture, RHI::TextureState::ColorAttachment)
@@ -545,7 +699,7 @@ namespace GE::Render
         struct TextureUploadBuffer final
         {
             std::unique_ptr<RHI::Buffer> buffer;
-            RHI::TextureUploadLayout layout;
+            std::vector<RHI::TextureUploadLayout> layouts;
         };
 
         std::vector<MeshUploadBuffers> mesh_uploads;
@@ -668,6 +822,8 @@ namespace GE::Render
             const RHI::TextureDescription description{
                 .width = source.width,
                 .height = source.height,
+                .array_layers = source.array_layers,
+                .mip_levels = source.mip_levels,
                 .format = source.format,
                 .usage = RHI::TextureUsage::Sampled
                     | RHI::TextureUsage::CopyDestination};
@@ -676,14 +832,43 @@ namespace GE::Render
             GpuTexture texture;
             texture.handle = source.handle;
 
-            if (!Check(device->GetTextureUploadLayout(
-                    description, {}, 0, upload.layout),
-                    "Get texture upload layout")
-                || !Check(device->CreateTexture(
+            std::uint64_t upload_size = 0;
+            try
+            {
+                upload.layouts.reserve(
+                    static_cast<std::size_t>(source.array_layers)
+                        * source.mip_levels);
+            }
+            catch (...)
+            {
+                return false;
+            }
+            for (std::uint32_t layer = 0;
+                 layer < source.array_layers;
+                 ++layer)
+            {
+                for (std::uint32_t mip = 0; mip < source.mip_levels; ++mip)
+                {
+                    RHI::TextureUploadLayout layout;
+                    if (!Check(device->GetTextureUploadLayout(
+                            description,
+                            {.mip_level = mip, .array_layer = layer},
+                            upload_size,
+                            layout),
+                            "Get texture upload layout"))
+                    {
+                        return false;
+                    }
+                    upload_size = layout.required_buffer_size;
+                    upload.layouts.push_back(layout);
+                }
+            }
+
+            if (!Check(device->CreateTexture(
                     description, RHI::TextureState::CopyDestination,
                     texture.texture), "Create sampled texture")
                 || !Check(device->CreateBuffer(
-                    {.size = upload.layout.required_buffer_size,
+                    {.size = upload_size,
                      .usage = RHI::BufferUsage::CopySource,
                      .memory = RHI::MemoryType::Upload,
                      .debug_name = "Renderer.Texture." + suffix + ".Upload"},
@@ -699,33 +884,44 @@ namespace GE::Render
 
             void* mapped = nullptr;
             if (!Check(upload.buffer->Map(
-                    0, upload.layout.required_buffer_size, mapped),
+                    0, upload_size, mapped),
                     "Map texture upload buffer"))
             {
                 return false;
             }
             auto* mapped_bytes = static_cast<std::byte*>(mapped);
-            for (std::uint32_t row = 0; row < upload.layout.row_count; ++row)
+            std::uint64_t source_offset = 0;
+            for (const RHI::TextureUploadLayout& layout : upload.layouts)
             {
-                std::memcpy(
-                    mapped_bytes + upload.layout.buffer_offset
-                        + static_cast<std::uint64_t>(row)
-                            * upload.layout.row_pitch,
-                    source.pixels.data()
-                        + static_cast<std::uint64_t>(row)
-                            * upload.layout.row_size,
-                    static_cast<std::size_t>(upload.layout.row_size));
+                for (std::uint32_t row = 0; row < layout.row_count; ++row)
+                {
+                    std::memcpy(
+                        mapped_bytes + layout.buffer_offset
+                            + static_cast<std::uint64_t>(row)
+                                * layout.row_pitch,
+                        source.pixels.data() + source_offset
+                            + static_cast<std::uint64_t>(row)
+                                * layout.row_size,
+                        static_cast<std::size_t>(layout.row_size));
+                }
+                source_offset += layout.row_size * layout.row_count;
             }
-            upload.buffer->Unmap(0, upload.layout.required_buffer_size);
-            if (!Check(upload_command_list->CopyBufferToTexture(
-                    *upload.buffer, *texture.texture, upload.layout),
-                    "Copy texture upload buffer")
-                || !TransitionTrackedTexture(
+            upload.buffer->Unmap(0, upload_size);
+            for (const RHI::TextureUploadLayout& layout : upload.layouts)
+            {
+                if (!Check(upload_command_list->CopyBufferToTexture(
+                        *upload.buffer, *texture.texture, layout),
+                        "Copy texture upload buffer"))
+                {
+                    return false;
+                }
+            }
+            if (!TransitionTrackedTexture(
                     *upload_command_list, *texture.texture,
                     RHI::TextureState::ShaderRead,
                     "Transition sampled texture")
                 || !Check(device->CreateSampledTextureView(
-                    *texture.texture, texture.view),
+                    *texture.texture, source.view, texture.view),
                     "Create sampled texture view"))
             {
                 return false;
@@ -817,7 +1013,15 @@ namespace GE::Render
             return false;
         }
 
+        if (skybox_enabled && !CreateSkyboxResources())
+        {
+            return false;
+        }
         if (ui_enabled && !CreateUIResources())
+        {
+            return false;
+        }
+        if (gizmo_enabled && !CreateGizmoResources())
         {
             return false;
         }
@@ -895,7 +1099,7 @@ namespace GE::Render
         constexpr std::array<RHI::ResourceBindingLayout, 3> bindings{{
             {.binding = 0,
              .type = RHI::ResourceBindingType::ConstantBuffer,
-             .visibility = RHI::ShaderVisibility::Vertex},
+             .visibility = RHI::ShaderVisibility::All},
             {.binding = 1,
              .type = RHI::ResourceBindingType::SampledTexture,
              .visibility = RHI::ShaderVisibility::Pixel},
@@ -933,6 +1137,210 @@ namespace GE::Render
                  .depth = {},
                  .blend = {.alpha_blending_enabled = true}},
                 ui_pipeline), "Create UI graphics pipeline");
+    }
+
+    bool RHIRenderer::Impl::CreateGizmoResources()
+    {
+        if (!scene.gizmo_composition.has_value())
+        {
+            return false;
+        }
+        const RHIGizmoCompositionDescription& gizmo =
+            *scene.gizmo_composition;
+        if (!Check(device->CreateShader(
+                {.stage = RHI::ShaderStage::Vertex,
+                 .format = gizmo.shader_format,
+                 .bytecode = gizmo.vertex_shader,
+                 .debug_name = "Renderer.Gizmo.VS"},
+                gizmo_vertex_shader), "Create Gizmo vertex shader")
+            || !Check(device->CreateShader(
+                {.stage = RHI::ShaderStage::Pixel,
+                 .format = gizmo.shader_format,
+                 .bytecode = gizmo.visible_pixel_shader,
+                 .debug_name = "Renderer.Gizmo.Visible.PS"},
+                gizmo_visible_pixel_shader),
+                "Create visible Gizmo pixel shader")
+            || !Check(device->CreateShader(
+                {.stage = RHI::ShaderStage::Pixel,
+                 .format = gizmo.shader_format,
+                 .bytecode = gizmo.occluded_pixel_shader,
+                 .debug_name = "Renderer.Gizmo.Occluded.PS"},
+                gizmo_occluded_pixel_shader),
+                "Create occluded Gizmo pixel shader")
+            || !Check(device->CreatePipelineLayout(
+                {}, gizmo_pipeline_layout), "Create Gizmo pipeline layout"))
+        {
+            return false;
+        }
+
+        constexpr std::array<RHI::VertexAttribute, 2> attributes{{
+            {.location = 0,
+             .format = RHI::RHIFormat::R32G32B32A32_Float,
+             .offset = 0},
+            {.location = 1,
+             .format = RHI::RHIFormat::R8G8B8A8_UNorm,
+             .offset = 16}}};
+        const auto create_pipeline = [this, &attributes](
+            RHI::Shader& pixel_shader,
+            RHI::CompareOperation compare,
+            std::unique_ptr<RHI::GraphicsPipeline>& out_pipeline,
+            const char* operation)
+        {
+            return Check(device->CreateGraphicsPipeline(
+                {.layout = gizmo_pipeline_layout.get(),
+                 .vertex_shader = gizmo_vertex_shader.get(),
+                 .pixel_shader = &pixel_shader,
+                 .vertex_attributes = attributes,
+                 .vertex_stride = sizeof(RenderCore::GizmoVertex),
+                 .topology = RHI::PrimitiveTopology::TriangleList,
+                 .cull_mode = RHI::CullMode::None,
+                 .front_face = RHI::FrontFace::CounterClockwise,
+                 .color_format = ColorFormat,
+                 .depth_format = DepthFormat,
+                 .depth = {.test_enabled = true,
+                           .write_enabled = false,
+                           .compare = compare},
+                 .blend = {.alpha_blending_enabled = true}},
+                out_pipeline), operation);
+        };
+
+        return create_pipeline(
+                *gizmo_occluded_pixel_shader,
+                RHI::CompareOperation::Greater,
+                gizmo_occluded_pipeline,
+                "Create occluded Gizmo pipeline")
+            && create_pipeline(
+                *gizmo_visible_pixel_shader,
+                RHI::CompareOperation::LessEqual,
+                gizmo_visible_pipeline,
+                "Create visible Gizmo pipeline");
+    }
+
+    bool RHIRenderer::Impl::CreateSkyboxResources()
+    {
+        if (!scene.skybox.has_value())
+        {
+            return false;
+        }
+        const RHISkyboxDescription& skybox = *scene.skybox;
+        GpuTexture* cubemap = FindTexture(skybox.cubemap_texture);
+        if (cubemap == nullptr)
+        {
+            return false;
+        }
+
+        constexpr std::array<SkyboxVertex, 8> vertices{{
+            {{{-1.0F, -1.0F, -1.0F}}},
+            {{{-1.0F,  1.0F, -1.0F}}},
+            {{{ 1.0F,  1.0F, -1.0F}}},
+            {{{ 1.0F, -1.0F, -1.0F}}},
+            {{{-1.0F, -1.0F,  1.0F}}},
+            {{{-1.0F,  1.0F,  1.0F}}},
+            {{{ 1.0F,  1.0F,  1.0F}}},
+            {{{ 1.0F, -1.0F,  1.0F}}}
+        }};
+        constexpr std::array<std::uint16_t, 36> indices{{
+            0, 1, 2, 0, 2, 3,
+            4, 6, 5, 4, 7, 6,
+            0, 4, 5, 0, 5, 1,
+            3, 2, 6, 3, 6, 7,
+            1, 5, 6, 1, 6, 2,
+            0, 3, 7, 0, 7, 4
+        }};
+
+        const std::uint64_t vertex_bytes = sizeof(vertices);
+        const std::uint64_t index_bytes = sizeof(indices);
+        if (!Check(device->CreateShader(
+                {.stage = RHI::ShaderStage::Vertex,
+                 .format = skybox.shader_format,
+                 .bytecode = skybox.vertex_shader,
+                 .debug_name = "Renderer.Skybox.VS"},
+                skybox_vertex_shader), "Create Skybox vertex shader")
+            || !Check(device->CreateShader(
+                {.stage = RHI::ShaderStage::Pixel,
+                 .format = skybox.shader_format,
+                 .bytecode = skybox.pixel_shader,
+                 .debug_name = "Renderer.Skybox.PS"},
+                skybox_pixel_shader), "Create Skybox pixel shader"))
+        {
+            return false;
+        }
+
+        constexpr std::array<RHI::ResourceBindingLayout, 3> bindings{{
+            {.binding = 0,
+             .type = RHI::ResourceBindingType::ConstantBuffer,
+             .visibility = RHI::ShaderVisibility::All},
+            {.binding = 1,
+             .type = RHI::ResourceBindingType::SampledTexture,
+             .visibility = RHI::ShaderVisibility::Pixel},
+            {.binding = 2,
+             .type = RHI::ResourceBindingType::Sampler,
+             .visibility = RHI::ShaderVisibility::Pixel}
+        }};
+        constexpr std::array<RHI::VertexAttribute, 1> attributes{{
+            {.location = 0,
+             .format = RHI::RHIFormat::R32G32B32_Float,
+             .offset = 0}
+        }};
+        if (!Check(device->CreatePipelineLayout(
+                {.bindings = bindings}, skybox_pipeline_layout),
+                "Create Skybox pipeline layout")
+            || !Check(device->CreateGraphicsPipeline(
+                {.layout = skybox_pipeline_layout.get(),
+                 .vertex_shader = skybox_vertex_shader.get(),
+                 .pixel_shader = skybox_pixel_shader.get(),
+                 .vertex_attributes = attributes,
+                 .vertex_stride = sizeof(SkyboxVertex),
+                 .topology = RHI::PrimitiveTopology::TriangleList,
+                 .cull_mode = RHI::CullMode::None,
+                 .front_face = RHI::FrontFace::Clockwise,
+                 .color_format = ColorFormat,
+                 .depth_format = DepthFormat,
+                 .depth = {.test_enabled = true,
+                           .write_enabled = false,
+                           .compare = RHI::CompareOperation::LessEqual}},
+                skybox_pipeline), "Create Skybox graphics pipeline")
+            || !Check(device->CreateSampler(
+                skybox.sampler, skybox_sampler), "Create Skybox sampler")
+            || !Check(device->CreateBuffer(
+                {.size = vertex_bytes,
+                 .usage = RHI::BufferUsage::Vertex,
+                 .memory = RHI::MemoryType::Upload,
+                 .debug_name = "Renderer.Skybox.Vertices"},
+                RHI::BufferState::Vertex,
+                skybox_vertex_buffer), "Create Skybox vertex buffer")
+            || !Check(device->CreateBuffer(
+                {.size = index_bytes,
+                 .usage = RHI::BufferUsage::Index,
+                 .memory = RHI::MemoryType::Upload,
+                 .debug_name = "Renderer.Skybox.Indices"},
+                RHI::BufferState::Index,
+                skybox_index_buffer), "Create Skybox index buffer")
+            || !resource_states.TrackBuffer(
+                *skybox_vertex_buffer, RHI::BufferState::Vertex)
+            || !resource_states.TrackBuffer(
+                *skybox_index_buffer, RHI::BufferState::Index))
+        {
+            return false;
+        }
+
+        void* mapped = nullptr;
+        if (!Check(skybox_vertex_buffer->Map(
+                0, vertex_bytes, mapped), "Map Skybox vertices"))
+        {
+            return false;
+        }
+        std::memcpy(mapped, vertices.data(), static_cast<std::size_t>(vertex_bytes));
+        skybox_vertex_buffer->Unmap(0, vertex_bytes);
+        if (!Check(skybox_index_buffer->Map(
+                0, index_bytes, mapped), "Map Skybox indices"))
+        {
+            return false;
+        }
+        std::memcpy(mapped, indices.data(), static_cast<std::size_t>(index_bytes));
+        skybox_index_buffer->Unmap(0, index_bytes);
+        skybox_index_count = static_cast<std::uint32_t>(indices.size());
+        return true;
     }
 
     RHIRenderer::Impl::GpuMesh* RHIRenderer::Impl::FindMesh(
@@ -983,11 +1391,18 @@ namespace GE::Render
             FrameResource& frame_resource = frame_resources[index];
             if (!CreateObjectConstantBuffer(
                     frame_resource, index, InitialObjectCapacity)
+                || (skybox_enabled && !CreateSkyboxFrameResources(
+                    frame_resource, index))
                 || (ui_enabled && !CreateUIBuffers(
                     frame_resource,
                     index,
                     InitialUIVertexCapacity,
                     InitialUIIndexCapacity))
+                || (gizmo_enabled && !CreateGizmoBuffers(
+                    frame_resource,
+                    index,
+                    InitialGizmoVertexCapacity,
+                    InitialGizmoIndexCapacity))
                 || !Check(device->CreateCommandAllocator(
                     frame_resource.command_allocator),
                     "Create frame command allocator")
@@ -1007,7 +1422,62 @@ namespace GE::Render
             ui_vertex_capacity = InitialUIVertexCapacity;
             ui_index_capacity = InitialUIIndexCapacity;
         }
+        if (gizmo_enabled)
+        {
+            gizmo_vertex_capacity = InitialGizmoVertexCapacity;
+            gizmo_index_capacity = InitialGizmoIndexCapacity;
+        }
         return true;
+    }
+
+    bool RHIRenderer::Impl::CreateSkyboxFrameResources(
+        FrameResource& frame_resource,
+        std::size_t frame_index)
+    {
+        if (!scene.skybox.has_value() || skybox_pipeline_layout == nullptr
+            || skybox_sampler == nullptr)
+        {
+            return false;
+        }
+        GpuTexture* cubemap = FindTexture(skybox_texture);
+        if (cubemap == nullptr || cubemap->view == nullptr)
+        {
+            return false;
+        }
+        if (!Check(device->CreateBuffer(
+                {.size = sizeof(SkyboxConstants),
+                 .usage = RHI::BufferUsage::Constant,
+                 .memory = RHI::MemoryType::Upload,
+                 .debug_name = "Renderer.Skybox.Constants."
+                    + std::to_string(frame_index)},
+                RHI::BufferState::Constant,
+                frame_resource.skybox_constant_buffer),
+                "Create Skybox constant buffer")
+            || !resource_states.TrackBuffer(
+                *frame_resource.skybox_constant_buffer,
+                RHI::BufferState::Constant))
+        {
+            return false;
+        }
+
+        const std::array<RHI::BufferBinding, 1> buffers{{
+            {.binding = 0,
+             .buffer = frame_resource.skybox_constant_buffer.get(),
+             .size = sizeof(SkyboxConstants)}
+        }};
+        const std::array<RHI::TextureBinding, 1> textures{{
+            {.binding = 1, .view = cubemap->view.get()}
+        }};
+        const std::array<RHI::SamplerBinding, 1> samplers{{
+            {.binding = 2, .sampler = skybox_sampler.get()}
+        }};
+        return Check(device->CreateResourceSet(
+            {.layout = skybox_pipeline_layout.get(),
+             .buffers = buffers,
+             .textures = textures,
+             .samplers = samplers},
+            frame_resource.skybox_resource_set),
+            "Create Skybox resource set");
     }
 
     bool RHIRenderer::Impl::CreateUIBuffers(
@@ -1119,6 +1589,103 @@ namespace GE::Render
         }
         ui_vertex_capacity = new_vertex_capacity;
         ui_index_capacity = new_index_capacity;
+        return true;
+    }
+
+    bool RHIRenderer::Impl::CreateGizmoBuffers(
+        FrameResource& frame_resource,
+        std::size_t frame_index,
+        std::size_t vertex_capacity,
+        std::size_t index_capacity)
+    {
+        if (vertex_capacity == 0 || index_capacity == 0
+            || vertex_capacity
+                > (std::numeric_limits<std::uint64_t>::max)()
+                    / sizeof(RenderCore::GizmoVertex)
+            || index_capacity
+                > (std::numeric_limits<std::uint64_t>::max)()
+                    / sizeof(std::uint32_t))
+        {
+            return false;
+        }
+        if (frame_resource.gizmo_vertex_buffer != nullptr)
+        {
+            resource_states.ForgetBuffer(*frame_resource.gizmo_vertex_buffer);
+        }
+        if (frame_resource.gizmo_index_buffer != nullptr)
+        {
+            resource_states.ForgetBuffer(*frame_resource.gizmo_index_buffer);
+        }
+        frame_resource.gizmo_vertex_buffer.reset();
+        frame_resource.gizmo_index_buffer.reset();
+
+        const std::string suffix = std::to_string(frame_index);
+        if (!Check(device->CreateBuffer(
+                {.size = vertex_capacity * sizeof(RenderCore::GizmoVertex),
+                 .usage = RHI::BufferUsage::Vertex,
+                 .memory = RHI::MemoryType::Upload,
+                 .debug_name = "Renderer.Gizmo.Vertices." + suffix},
+                RHI::BufferState::Vertex,
+                frame_resource.gizmo_vertex_buffer),
+                "Create Gizmo vertex buffer")
+            || !Check(device->CreateBuffer(
+                {.size = index_capacity * sizeof(std::uint32_t),
+                 .usage = RHI::BufferUsage::Index,
+                 .memory = RHI::MemoryType::Upload,
+                 .debug_name = "Renderer.Gizmo.Indices." + suffix},
+                RHI::BufferState::Index,
+                frame_resource.gizmo_index_buffer),
+                "Create Gizmo index buffer")
+            || !resource_states.TrackBuffer(
+                *frame_resource.gizmo_vertex_buffer, RHI::BufferState::Vertex)
+            || !resource_states.TrackBuffer(
+                *frame_resource.gizmo_index_buffer, RHI::BufferState::Index))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    bool RHIRenderer::Impl::EnsureGizmoCapacity(
+        std::size_t required_vertices,
+        std::size_t required_indices)
+    {
+        if (!gizmo_enabled
+            || (required_vertices <= gizmo_vertex_capacity
+                && required_indices <= gizmo_index_capacity))
+        {
+            return true;
+        }
+        if (!WaitForAllFrameResources())
+        {
+            return false;
+        }
+
+        std::size_t new_vertex_capacity = gizmo_vertex_capacity;
+        std::size_t new_index_capacity = gizmo_index_capacity;
+        while (new_vertex_capacity < required_vertices)
+        {
+            new_vertex_capacity = new_vertex_capacity
+                > (std::numeric_limits<std::size_t>::max)() / 2
+                ? required_vertices : new_vertex_capacity * 2;
+        }
+        while (new_index_capacity < required_indices)
+        {
+            new_index_capacity = new_index_capacity
+                > (std::numeric_limits<std::size_t>::max)() / 2
+                ? required_indices : new_index_capacity * 2;
+        }
+        for (std::size_t index = 0; index < frame_resources.size(); ++index)
+        {
+            if (!CreateGizmoBuffers(
+                    frame_resources[index], index,
+                    new_vertex_capacity, new_index_capacity))
+            {
+                return false;
+            }
+        }
+        gizmo_vertex_capacity = new_vertex_capacity;
+        gizmo_index_capacity = new_index_capacity;
         return true;
     }
 
@@ -1320,6 +1887,27 @@ namespace GE::Render
             state = State::Failed;
             return false;
         }
+        if ((!frame.gizmo.vertices.empty() || !frame.gizmo.indices.empty())
+            && (!gizmo_enabled
+                || frame.gizmo.vertices.empty()
+                || frame.gizmo.indices.empty()
+                || frame.gizmo.indices.size()
+                    > (std::numeric_limits<std::uint32_t>::max)()
+                || std::any_of(
+                    frame.gizmo.indices.begin(), frame.gizmo.indices.end(),
+                    [&frame](std::uint32_t index)
+                    { return index >= frame.gizmo.vertices.size(); })))
+        {
+            std::fprintf(stderr, "[Renderer] Invalid Gizmo render data\n");
+            state = State::Failed;
+            return false;
+        }
+        if (!EnsureGizmoCapacity(
+                frame.gizmo.vertices.size(), frame.gizmo.indices.size()))
+        {
+            state = State::Failed;
+            return false;
+        }
         if (ui_enabled)
         {
             const RenderCore::RenderExtent requested_scene_extent =
@@ -1428,6 +2016,28 @@ namespace GE::Render
             frame_resource.constant_buffer->Unmap(0, mapped_size);
         }
 
+        if (skybox_enabled)
+        {
+            Matrix4 rotation_only_view = frame.main_view.view;
+            rotation_only_view.At(3, 0) = 0.0F;
+            rotation_only_view.At(3, 1) = 0.0F;
+            rotation_only_view.At(3, 2) = 0.0F;
+            const SkyboxConstants constants{
+                .view_projection =
+                    rotation_only_view * frame.main_view.projection,
+                .intensity = skybox_intensity,
+                .exposure = skybox_exposure};
+            void* mapped = nullptr;
+            if (!Check(frame_resource.skybox_constant_buffer->Map(
+                    0, sizeof(constants), mapped), "Map Skybox constants"))
+            {
+                state = State::Failed;
+                return false;
+            }
+            std::memcpy(mapped, &constants, sizeof(constants));
+            frame_resource.skybox_constant_buffer->Unmap(0, sizeof(constants));
+        }
+
         frame_resource.ui_resource_sets.clear();
         if (ui_enabled && !frame.ui.IsEmpty())
         {
@@ -1516,6 +2126,33 @@ namespace GE::Render
             }
         }
 
+        if (!frame.gizmo.IsEmpty())
+        {
+            const std::uint64_t vertex_bytes = frame.gizmo.vertices.size()
+                * sizeof(RenderCore::GizmoVertex);
+            const std::uint64_t index_bytes = frame.gizmo.indices.size()
+                * sizeof(std::uint32_t);
+            void* mapped = nullptr;
+            if (!Check(frame_resource.gizmo_vertex_buffer->Map(
+                    0, vertex_bytes, mapped), "Map Gizmo vertices"))
+            {
+                state = State::Failed;
+                return false;
+            }
+            std::memcpy(mapped, frame.gizmo.vertices.data(),
+                static_cast<std::size_t>(vertex_bytes));
+            frame_resource.gizmo_vertex_buffer->Unmap(0, vertex_bytes);
+            if (!Check(frame_resource.gizmo_index_buffer->Map(
+                    0, index_bytes, mapped), "Map Gizmo indices"))
+            {
+                state = State::Failed;
+                return false;
+            }
+            std::memcpy(mapped, frame.gizmo.indices.data(),
+                static_cast<std::size_t>(index_bytes));
+            frame_resource.gizmo_index_buffer->Unmap(0, index_bytes);
+        }
+
         const std::uint32_t image_index = swapchain->GetCurrentImageIndex();
         if (image_index >= color_views.size()
             || !Check(frame_resource.command_allocator->Reset(),
@@ -1577,6 +2214,48 @@ namespace GE::Render
                     *mesh.index_buffer, 0, RHI::RHIFormat::R16_UInt),
                     "SetIndexBuffer")
                 && Check(command_list.DrawIndexed(mesh.index_count), "DrawIndexed");
+        }
+        if (recorded && skybox_enabled)
+        {
+            recorded = Check(command_list.SetGraphicsPipeline(
+                    *skybox_pipeline), "Set Skybox pipeline")
+                && Check(command_list.SetResourceSet(
+                    *frame_resource.skybox_resource_set),
+                    "Set Skybox resource set")
+                && Check(command_list.SetVertexBuffer(
+                    *skybox_vertex_buffer, 0, sizeof(SkyboxVertex)),
+                    "Set Skybox vertex buffer")
+                && Check(command_list.SetIndexBuffer(
+                    *skybox_index_buffer, 0, RHI::RHIFormat::R16_UInt),
+                    "Set Skybox index buffer")
+                && Check(command_list.DrawIndexed(skybox_index_count),
+                    "Draw Skybox");
+        }
+        if (recorded && !frame.gizmo.IsEmpty())
+        {
+            const std::uint32_t gizmo_index_count =
+                static_cast<std::uint32_t>(frame.gizmo.indices.size());
+            recorded = Check(command_list.SetVertexBuffer(
+                    *frame_resource.gizmo_vertex_buffer,
+                    0,
+                    sizeof(RenderCore::GizmoVertex)),
+                    "Set Gizmo vertex buffer")
+                && Check(command_list.SetIndexBuffer(
+                    *frame_resource.gizmo_index_buffer,
+                    0,
+                    RHI::RHIFormat::R32_UInt),
+                    "Set Gizmo index buffer")
+                // 两个 Pass 都不写深度，因此只和场景比较，轴之间不会互相遮挡。
+                && Check(command_list.SetGraphicsPipeline(
+                    *gizmo_occluded_pipeline),
+                    "Set occluded Gizmo pipeline")
+                && Check(command_list.DrawIndexed(gizmo_index_count),
+                    "Draw occluded Gizmo")
+                && Check(command_list.SetGraphicsPipeline(
+                    *gizmo_visible_pipeline),
+                    "Set visible Gizmo pipeline")
+                && Check(command_list.DrawIndexed(gizmo_index_count),
+                    "Draw visible Gizmo");
         }
         if (recorded && ui_enabled)
         {
@@ -1746,13 +2425,31 @@ namespace GE::Render
             frame_resource.command_allocator.reset();
             frame_resource.resource_sets.clear();
             frame_resource.ui_resource_sets.clear();
+            frame_resource.skybox_resource_set.reset();
             frame_resource.constant_buffer.reset();
+            frame_resource.skybox_constant_buffer.reset();
             frame_resource.ui_index_buffer.reset();
             frame_resource.ui_vertex_buffer.reset();
             frame_resource.ui_constant_buffer.reset();
+            frame_resource.gizmo_index_buffer.reset();
+            frame_resource.gizmo_vertex_buffer.reset();
             frame_resource.fence_value = 0;
         }
         next_frame_resource_index = 0;
+        skybox_pipeline.reset();
+        skybox_pipeline_layout.reset();
+        skybox_pixel_shader.reset();
+        skybox_vertex_shader.reset();
+        skybox_sampler.reset();
+        skybox_index_buffer.reset();
+        skybox_vertex_buffer.reset();
+        skybox_index_count = 0;
+        gizmo_occluded_pipeline.reset();
+        gizmo_visible_pipeline.reset();
+        gizmo_pipeline_layout.reset();
+        gizmo_occluded_pixel_shader.reset();
+        gizmo_visible_pixel_shader.reset();
+        gizmo_vertex_shader.reset();
         ui_pipeline.reset();
         ui_pipeline_layout.reset();
         ui_pixel_shader.reset();
@@ -1770,6 +2467,8 @@ namespace GE::Render
         object_capacity = 0;
         ui_vertex_capacity = 0;
         ui_index_capacity = 0;
+        gizmo_vertex_capacity = 0;
+        gizmo_index_capacity = 0;
         scene_sampled_view.reset();
         scene_color_view.reset();
         depth_view.reset();

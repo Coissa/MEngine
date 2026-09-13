@@ -23,7 +23,6 @@
 #include <array>
 #include <cstring>
 #include <cmath>
-#include <limits>
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(
     HWND window, UINT message, WPARAM word_parameter, LPARAM long_parameter);
@@ -73,7 +72,7 @@ namespace GE::Editor
             return x * x + y * y;
         }
 
-        [[nodiscard]] ImU32 GizmoColor(
+        [[nodiscard]] std::uint32_t GizmoColor(
             EditorGizmoAxis axis,
             bool highlighted) noexcept
         {
@@ -236,6 +235,7 @@ namespace GE::Editor
         }
         try
         {
+            out_frame.gizmo = {};
             ImGui::SetCurrentContext(static_cast<ImGuiContext*>(m_context));
             ImGui_ImplWin32_NewFrame();
             ImGui::NewFrame();
@@ -368,6 +368,7 @@ namespace GE::Editor
 
             EditorGizmoAxis hovered_axis = EditorGizmoAxis::None;
             std::array<TranslationGizmoAxisProjection, 3> axis_projections{};
+            std::array<bool, 3> axis_projection_valid{};
             constexpr std::array<EditorGizmoAxis, 3> GizmoAxes{
                 EditorGizmoAxis::X,
                 EditorGizmoAxis::Y,
@@ -384,9 +385,6 @@ namespace GE::Editor
                 {
                     const GE::Math::Mat4 view_projection =
                         gizmo_view.view * gizmo_view.projection;
-                    const ImVec2 mouse = ImGui::GetMousePos();
-                    float closest_axis_distance_squared = 64.0F;
-                    ImDrawList* draw_list = ImGui::GetWindowDrawList();
                     for (std::size_t axis_index = 0;
                         axis_index < GizmoAxes.size(); ++axis_index)
                     {
@@ -402,31 +400,93 @@ namespace GE::Editor
                         {
                             continue;
                         }
-                        const ImVec2 origin{
-                            image_min.x + projection.origin_pixels[0],
-                            image_min.y + projection.origin_pixels[1]};
-                        const ImVec2 endpoint{
-                            origin.x + projection.screen_direction[0] * 72.0F,
-                            origin.y + projection.screen_direction[1] * 72.0F};
-                        const float distance_squared =
-                            DistanceToSegmentSquared(mouse, origin, endpoint);
-                        if (image_hovered
-                            && distance_squared < closest_axis_distance_squared)
+                        axis_projection_valid[axis_index] = true;
+                    }
+
+                    // 裁剪空间深度和投影比例只生成一份公共世界缩放；三轴不会再被
+                    // 分别拉成等长，朝向镜头的轴会保留自然的透视缩短。
+                    float gizmo_world_length = 0.0F;
+                    bool has_gizmo_world_length = false;
+                    for (std::size_t axis_index = 0;
+                        axis_index < GizmoAxes.size(); ++axis_index)
+                    {
+                        if (!axis_projection_valid[axis_index])
                         {
-                            closest_axis_distance_squared = distance_squared;
-                            hovered_axis = axis;
+                            continue;
                         }
-                        const bool highlighted = axis == hovered_axis
-                            || axis == m_gizmo_drag_axis;
-                        draw_list->AddLine(
-                            origin,
-                            endpoint,
-                            GizmoColor(axis, highlighted),
-                            highlighted ? 5.0F : 3.0F);
-                        draw_list->AddCircleFilled(
-                            endpoint,
-                            highlighted ? 6.0F : 4.0F,
-                            GizmoColor(axis, highlighted));
+                        if (ComputeTranslationGizmoWorldLength(
+                                axis_projections[axis_index].origin_clip,
+                                gizmo_view.projection,
+                                out_frame.scene_extent,
+                                72.0F,
+                                gizmo_world_length))
+                        {
+                            has_gizmo_world_length = true;
+                            break;
+                        }
+                    }
+
+                    std::array<float, 3> axis_screen_lengths{};
+                    if (has_gizmo_world_length)
+                    {
+                        const ImVec2 mouse = ImGui::GetMousePos();
+                        float closest_axis_distance_squared = 64.0F;
+                        for (std::size_t axis_index = 0;
+                            axis_index < GizmoAxes.size(); ++axis_index)
+                        {
+                            if (!axis_projection_valid[axis_index]
+                                || !ComputeTranslationGizmoScreenLength(
+                                    axis_projections[axis_index],
+                                    out_frame.scene_extent,
+                                    gizmo_world_length,
+                                    axis_screen_lengths[axis_index]))
+                            {
+                                axis_projection_valid[axis_index] = false;
+                                continue;
+                            }
+                            const TranslationGizmoAxisProjection& projection =
+                                axis_projections[axis_index];
+                            const ImVec2 origin{
+                                image_min.x + projection.origin_pixels[0],
+                                image_min.y + projection.origin_pixels[1]};
+                            const ImVec2 endpoint{
+                                origin.x + projection.screen_direction[0]
+                                    * axis_screen_lengths[axis_index],
+                                origin.y + projection.screen_direction[1]
+                                    * axis_screen_lengths[axis_index]};
+                            const float distance_squared =
+                                DistanceToSegmentSquared(mouse, origin, endpoint);
+                            if (image_hovered
+                                && distance_squared
+                                    < closest_axis_distance_squared)
+                            {
+                                closest_axis_distance_squared = distance_squared;
+                                hovered_axis = GizmoAxes[axis_index];
+                            }
+                        }
+
+                        for (std::size_t axis_index = 0;
+                            axis_index < GizmoAxes.size(); ++axis_index)
+                        {
+                            if (!axis_projection_valid[axis_index])
+                            {
+                                continue;
+                            }
+                            const EditorGizmoAxis axis = GizmoAxes[axis_index];
+                            const bool highlighted = axis == hovered_axis
+                                || axis == m_gizmo_drag_axis;
+                            if (!AppendTranslationGizmoAxisGeometry(
+                                axis_projections[axis_index],
+                                out_frame.scene_extent,
+                                gizmo_world_length,
+                                highlighted ? 5.0F : 3.0F,
+                                highlighted ? 6.0F : 4.0F,
+                                GizmoColor(axis, highlighted),
+                                out_frame.gizmo))
+                            {
+                                return false;
+                            }
+                        }
                     }
                 }
             }
@@ -801,6 +861,7 @@ namespace GE::Editor
         }
         catch (...)
         {
+            out_frame.gizmo = {};
             out_frame.ui = {};
             return false;
         }
