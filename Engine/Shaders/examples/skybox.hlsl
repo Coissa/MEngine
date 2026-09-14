@@ -27,7 +27,7 @@ VertexOutput SkyboxVS(VertexInput input)
 
     // D3D 的远平面深度为 1。配合 LessEqual 和关闭深度写入，天空只填背景。
     output.position = clip_position.xyww;
-    // Piccolo 在 Z-up 世界中采样前交换 Y/Z；MEngine 本身是 Y-up，直接采样即可。
+    // 新天空盒资源按 MEngine 的 Y-up 坐标系与 D3D 标准面顺序导出。
     output.sample_direction = input.position;
     return output;
 }

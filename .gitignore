@@ -55,3 +55,7 @@ Testing/
 
 # Third-party documents kept outside source-only commits
 /Engine/ThirdParty/imgui/LICENSE.txt
+
+# Skybox authoring sources and previews; runtime uses the HDR cube faces only
+/Engine/Assets/Textures/Sky/GeneratedDayBlack_v1/*.png
+/Engine/Assets/Textures/Sky/GeneratedDayBlack_v1/SOURCE.md

@@ -140,6 +140,11 @@ namespace GE::Editor
         out_view.view = GE::Runtime::MakeSceneViewMatrix(m_transform);
         out_view.projection =
             GE::Runtime::MakeSceneProjectionMatrix(m_projection, aspect);
+        out_view.camera_world_position = {
+            m_transform.translation[0],
+            m_transform.translation[1],
+            m_transform.translation[2],
+            1.0F};
         return true;
     }
 

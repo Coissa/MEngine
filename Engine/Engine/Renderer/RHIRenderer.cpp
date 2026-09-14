@@ -34,14 +34,22 @@ namespace GE::Render
 
         using Matrix4 = RenderCore::RenderMatrix4;
 
+        struct FrameConstants final
+        {
+            Matrix4 view_projection;
+            std::array<float, 4> camera_world_position{};
+        };
+
         struct ObjectConstants final
         {
-            Matrix4 world_view_projection;
+            Matrix4 world;
+            Matrix4 normal_matrix;
             std::array<float, 4> color_tint{};
         };
 
         static_assert(sizeof(Matrix4) == sizeof(float) * 16);
-        static_assert(sizeof(ObjectConstants) == sizeof(float) * 20);
+        static_assert(sizeof(FrameConstants) == sizeof(float) * 20);
+        static_assert(sizeof(ObjectConstants) == sizeof(float) * 36);
         static_assert(sizeof(RenderCore::GizmoVertex) == sizeof(float) * 5);
         static_assert(offsetof(RenderCore::GizmoVertex, color)
             == sizeof(float) * 4);
@@ -184,7 +192,8 @@ namespace GE::Render
         struct FrameResource final
         {
             // 每个在途帧独占 CPU 可写常量和命令录制内存。
-            std::unique_ptr<RHI::Buffer> constant_buffer;
+            std::unique_ptr<RHI::Buffer> frame_constant_buffer;
+            std::unique_ptr<RHI::Buffer> object_constant_buffer;
             std::unique_ptr<RHI::Buffer> ui_constant_buffer;
             std::unique_ptr<RHI::Buffer> ui_vertex_buffer;
             std::unique_ptr<RHI::Buffer> ui_index_buffer;
@@ -240,6 +249,9 @@ namespace GE::Render
         [[nodiscard]] bool CreateGizmoResources();
         [[nodiscard]] bool CreateSkyboxResources();
         [[nodiscard]] bool CreateFrameResources();
+        [[nodiscard]] bool CreateFrameConstantBuffer(
+            FrameResource& frame_resource,
+            std::size_t frame_index);
         [[nodiscard]] bool CreateObjectConstantBuffer(
             FrameResource& frame_resource,
             std::size_t frame_index,
@@ -725,7 +737,7 @@ namespace GE::Render
         for (const RHIMeshDescription& source : scene.meshes)
         {
             const std::uint64_t vertex_bytes = source.vertices.size()
-                * sizeof(PositionColorTextureVertex);
+                * sizeof(PositionNormalColorTextureVertex);
             const std::uint64_t index_bytes = source.indices.size()
                 * sizeof(std::uint16_t);
             const std::string suffix = std::to_string(source.handle.value);
@@ -964,15 +976,18 @@ namespace GE::Render
             return false;
         }
 
-        constexpr std::array<RHI::ResourceBindingLayout, 3> bindings{{
+        constexpr std::array<RHI::ResourceBindingLayout, 4> bindings{{
             {.binding = 0,
              .type = RHI::ResourceBindingType::ConstantBuffer,
-             // 同一逐物体常量由 VS 读取矩阵、PS 读取颜色。
-             .visibility = RHI::ShaderVisibility::All},
+             .visibility = RHI::ShaderVisibility::Vertex},
             {.binding = 1,
+             .type = RHI::ResourceBindingType::ConstantBuffer,
+             // World/Normal Matrix 由 VS 读取；tint 为后续材质着色保留。
+             .visibility = RHI::ShaderVisibility::All},
+            {.binding = 2,
              .type = RHI::ResourceBindingType::SampledTexture,
              .visibility = RHI::ShaderVisibility::Pixel},
-            {.binding = 2,
+            {.binding = 3,
              .type = RHI::ResourceBindingType::Sampler,
              .visibility = RHI::ShaderVisibility::Pixel}}};
         if (!Check(device->CreatePipelineLayout(
@@ -982,7 +997,7 @@ namespace GE::Render
             return false;
         }
 
-        constexpr std::array<RHI::VertexAttribute, 3> attributes{{
+        constexpr std::array<RHI::VertexAttribute, 4> attributes{{
             {.location = 0,
              .format = RHI::RHIFormat::R32G32B32_Float,
              .offset = 0},
@@ -990,14 +1005,17 @@ namespace GE::Render
              .format = RHI::RHIFormat::R32G32B32_Float,
              .offset = 12},
             {.location = 2,
+             .format = RHI::RHIFormat::R32G32B32_Float,
+             .offset = 24},
+            {.location = 3,
              .format = RHI::RHIFormat::R32G32_Float,
-             .offset = 24}}};
+             .offset = 36}}};
         if (!Check(device->CreateGraphicsPipeline(
                 {.layout = pipeline_layout.get(),
                  .vertex_shader = vertex_shader.get(),
                  .pixel_shader = pixel_shader.get(),
                  .vertex_attributes = attributes,
-                 .vertex_stride = sizeof(PositionColorTextureVertex),
+                 .vertex_stride = sizeof(PositionNormalColorTextureVertex),
                  .topology = RHI::PrimitiveTopology::TriangleList,
                  // 示例网格从外部观察时在 D3D 屏幕坐标中为顺时针正面。
                  .cull_mode = RHI::CullMode::Back,
@@ -1389,7 +1407,8 @@ namespace GE::Render
         for (std::size_t index = 0; index < frame_resources.size(); ++index)
         {
             FrameResource& frame_resource = frame_resources[index];
-            if (!CreateObjectConstantBuffer(
+            if (!CreateFrameConstantBuffer(frame_resource, index)
+                || !CreateObjectConstantBuffer(
                     frame_resource, index, InitialObjectCapacity)
                 || (skybox_enabled && !CreateSkyboxFrameResources(
                     frame_resource, index))
@@ -1428,6 +1447,24 @@ namespace GE::Render
             gizmo_index_capacity = InitialGizmoIndexCapacity;
         }
         return true;
+    }
+
+    bool RHIRenderer::Impl::CreateFrameConstantBuffer(
+        FrameResource& frame_resource,
+        std::size_t frame_index)
+    {
+        return Check(device->CreateBuffer(
+                {.size = sizeof(FrameConstants),
+                 .usage = RHI::BufferUsage::Constant,
+                 .memory = RHI::MemoryType::Upload,
+                 .debug_name = "Renderer.FrameConstants."
+                    + std::to_string(frame_index)},
+                RHI::BufferState::Constant,
+                frame_resource.frame_constant_buffer),
+                "Create frame constant buffer")
+            && resource_states.TrackBuffer(
+                *frame_resource.frame_constant_buffer,
+                RHI::BufferState::Constant);
     }
 
     bool RHIRenderer::Impl::CreateSkyboxFrameResources(
@@ -1709,10 +1746,11 @@ namespace GE::Render
                  .memory = RHI::MemoryType::Upload,
                  .debug_name = debug_name},
                 RHI::BufferState::Constant,
-                frame_resource.constant_buffer),
+                frame_resource.object_constant_buffer),
                 "Create object constant buffer")
             && resource_states.TrackBuffer(
-                *frame_resource.constant_buffer, RHI::BufferState::Constant);
+                *frame_resource.object_constant_buffer,
+                RHI::BufferState::Constant);
     }
 
     bool RHIRenderer::Impl::EnsureObjectCapacity(std::size_t required_capacity)
@@ -1741,10 +1779,11 @@ namespace GE::Render
         {
             FrameResource& frame_resource = frame_resources[index];
             frame_resource.resource_sets.clear();
-            if (frame_resource.constant_buffer != nullptr)
+            if (frame_resource.object_constant_buffer != nullptr)
             {
-                resource_states.ForgetBuffer(*frame_resource.constant_buffer);
-                frame_resource.constant_buffer.reset();
+                resource_states.ForgetBuffer(
+                    *frame_resource.object_constant_buffer);
+                frame_resource.object_constant_buffer.reset();
             }
             if (!CreateObjectConstantBuffer(frame_resource, index, new_capacity))
             {
@@ -1882,6 +1921,19 @@ namespace GE::Render
                 return false;
             }
         }
+        std::vector<Matrix4> normal_matrices(frame.render_items.size());
+        for (std::size_t index = 0; index < frame.render_items.size(); ++index)
+        {
+            if (!Math::TryMakeNormalMatrix(
+                    frame.render_items[index].local_to_world,
+                    normal_matrices[index]))
+            {
+                std::fprintf(stderr,
+                    "[Renderer] RenderItem has a singular world transform\n");
+                state = State::Failed;
+                return false;
+            }
+        }
         if (!EnsureObjectCapacity(frame.render_items.size()))
         {
             state = State::Failed;
@@ -1963,15 +2015,18 @@ namespace GE::Render
             }
 
             const std::uint64_t constant_offset = object_constant_stride * index;
-            const std::array<RHI::BufferBinding, 1> resources{{
+            const std::array<RHI::BufferBinding, 2> resources{{
                 {.binding = 0,
-                 .buffer = frame_resource.constant_buffer.get(),
+                 .buffer = frame_resource.frame_constant_buffer.get(),
+                 .size = sizeof(FrameConstants)},
+                {.binding = 1,
+                 .buffer = frame_resource.object_constant_buffer.get(),
                  .offset = constant_offset,
                  .size = sizeof(ObjectConstants)}}};
             const std::array<RHI::TextureBinding, 1> texture_bindings{{
-                {.binding = 1, .view = texture->view.get()}}};
+                {.binding = 2, .view = texture->view.get()}}};
             const std::array<RHI::SamplerBinding, 1> samplers{{
-                {.binding = 2, .sampler = material->sampler.get()}}};
+                {.binding = 3, .sampler = material->sampler.get()}}};
             std::unique_ptr<RHI::ResourceSet> resource_set;
             if (!Check(device->CreateResourceSet(
                     {.layout = pipeline_layout.get(),
@@ -1988,12 +2043,29 @@ namespace GE::Render
             submissions.push_back({mesh});
         }
 
+        const FrameConstants frame_constants{
+            .view_projection = view_projection,
+            .camera_world_position =
+                frame.main_view.camera_world_position};
+        void* mapped_frame_constants = nullptr;
+        if (!Check(frame_resource.frame_constant_buffer->Map(
+                0, sizeof(frame_constants), mapped_frame_constants),
+                "Map frame constants"))
+        {
+            state = State::Failed;
+            return false;
+        }
+        std::memcpy(mapped_frame_constants, &frame_constants,
+            sizeof(frame_constants));
+        frame_resource.frame_constant_buffer->Unmap(
+            0, sizeof(frame_constants));
+
         if (!frame.render_items.empty())
         {
             const std::uint64_t mapped_size =
                 object_constant_stride * frame.render_items.size();
             void* mapped = nullptr;
-            if (!Check(frame_resource.constant_buffer->Map(
+            if (!Check(frame_resource.object_constant_buffer->Map(
                     0, mapped_size, mapped),
                     "Map object constants"))
             {
@@ -2004,16 +2076,15 @@ namespace GE::Render
             for (std::size_t index = 0; index < frame.render_items.size(); ++index)
             {
                 const ObjectConstants constants{
-                    .world_view_projection =
-                        frame.render_items[index].local_to_world
-                            * view_projection,
+                    .world = frame.render_items[index].local_to_world,
+                    .normal_matrix = normal_matrices[index],
                     .color_tint = frame.render_items[index].color_tint};
                 std::memcpy(
                     mapped_bytes + object_constant_stride * index,
                     &constants,
                     sizeof(constants));
             }
-            frame_resource.constant_buffer->Unmap(0, mapped_size);
+            frame_resource.object_constant_buffer->Unmap(0, mapped_size);
         }
 
         if (skybox_enabled)
@@ -2208,7 +2279,8 @@ namespace GE::Render
             recorded = Check(command_list.SetResourceSet(
                     *frame_resource.resource_sets[index]), "SetResourceSet")
                 && Check(command_list.SetVertexBuffer(
-                    *mesh.vertex_buffer, 0, sizeof(PositionColorTextureVertex)),
+                    *mesh.vertex_buffer, 0,
+                    sizeof(PositionNormalColorTextureVertex)),
                     "SetVertexBuffer")
                 && Check(command_list.SetIndexBuffer(
                     *mesh.index_buffer, 0, RHI::RHIFormat::R16_UInt),
@@ -2426,7 +2498,8 @@ namespace GE::Render
             frame_resource.resource_sets.clear();
             frame_resource.ui_resource_sets.clear();
             frame_resource.skybox_resource_set.reset();
-            frame_resource.constant_buffer.reset();
+            frame_resource.object_constant_buffer.reset();
+            frame_resource.frame_constant_buffer.reset();
             frame_resource.skybox_constant_buffer.reset();
             frame_resource.ui_index_buffer.reset();
             frame_resource.ui_vertex_buffer.reset();

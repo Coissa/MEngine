@@ -99,21 +99,22 @@ namespace GE::Render::Examples
             return true;
         }
 
-        [[nodiscard]] bool LoadPiccoloSkybox(
+        [[nodiscard]] bool LoadGeneratedSkybox(
             const std::filesystem::path& asset_directory,
             RHITextureDescription& out_texture,
             std::string& out_error)
         {
             constexpr std::array<const char*, 6> face_names{{
-                "skybox_specular_X+.hdr",
-                "skybox_specular_X-.hdr",
-                "skybox_specular_Y+.hdr",
-                "skybox_specular_Y-.hdr",
-                "skybox_specular_Z+.hdr",
-                "skybox_specular_Z-.hdr"
+                "skybox_X+.hdr",
+                "skybox_X-.hdr",
+                "skybox_Y+.hdr",
+                "skybox_Y-.hdr",
+                "skybox_Z+.hdr",
+                "skybox_Z-.hdr"
             }};
             const std::filesystem::path sky_directory =
-                asset_directory / "Textures" / "Sky" / "Piccolo";
+                asset_directory / "Textures" / "Sky"
+                / "GeneratedDayBlack_v1";
             int expected_width = 0;
             int expected_height = 0;
             out_texture = {};
@@ -197,37 +198,37 @@ namespace GE::Render::Examples
         out_error.clear();
 
         // 每个面独占 4 个顶点，因为同一空间角点在不同面上需要不同 UV。
-        constexpr std::array<PositionColorTextureVertex, 24> vertices{{
+        constexpr std::array<PositionNormalColorTextureVertex, 24> vertices{{
             // 后面
-            {{{-1.0F, -1.0F, -1.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
-            {{{-1.0F,  1.0F, -1.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
-            {{{ 1.0F,  1.0F, -1.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
-            {{{ 1.0F, -1.0F, -1.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}},
+            {{{-1.0F, -1.0F, -1.0F}}, {{0.0F, 0.0F, -1.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
+            {{{-1.0F,  1.0F, -1.0F}}, {{0.0F, 0.0F, -1.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
+            {{{ 1.0F,  1.0F, -1.0F}}, {{0.0F, 0.0F, -1.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
+            {{{ 1.0F, -1.0F, -1.0F}}, {{0.0F, 0.0F, -1.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}},
             // 前面
-            {{{-1.0F, -1.0F,  1.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
-            {{{ 1.0F, -1.0F,  1.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}},
-            {{{ 1.0F,  1.0F,  1.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
-            {{{-1.0F,  1.0F,  1.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
+            {{{-1.0F, -1.0F,  1.0F}}, {{0.0F, 0.0F, 1.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
+            {{{ 1.0F, -1.0F,  1.0F}}, {{0.0F, 0.0F, 1.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}},
+            {{{ 1.0F,  1.0F,  1.0F}}, {{0.0F, 0.0F, 1.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
+            {{{-1.0F,  1.0F,  1.0F}}, {{0.0F, 0.0F, 1.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
             // 左面
-            {{{-1.0F, -1.0F,  1.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
-            {{{-1.0F,  1.0F,  1.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
-            {{{-1.0F,  1.0F, -1.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
-            {{{-1.0F, -1.0F, -1.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}},
+            {{{-1.0F, -1.0F,  1.0F}}, {{-1.0F, 0.0F, 0.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
+            {{{-1.0F,  1.0F,  1.0F}}, {{-1.0F, 0.0F, 0.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
+            {{{-1.0F,  1.0F, -1.0F}}, {{-1.0F, 0.0F, 0.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
+            {{{-1.0F, -1.0F, -1.0F}}, {{-1.0F, 0.0F, 0.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}},
             // 右面
-            {{{ 1.0F, -1.0F, -1.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
-            {{{ 1.0F,  1.0F, -1.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
-            {{{ 1.0F,  1.0F,  1.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
-            {{{ 1.0F, -1.0F,  1.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}},
+            {{{ 1.0F, -1.0F, -1.0F}}, {{1.0F, 0.0F, 0.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
+            {{{ 1.0F,  1.0F, -1.0F}}, {{1.0F, 0.0F, 0.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
+            {{{ 1.0F,  1.0F,  1.0F}}, {{1.0F, 0.0F, 0.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
+            {{{ 1.0F, -1.0F,  1.0F}}, {{1.0F, 0.0F, 0.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}},
             // 上面
-            {{{-1.0F,  1.0F, -1.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
-            {{{-1.0F,  1.0F,  1.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
-            {{{ 1.0F,  1.0F,  1.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
-            {{{ 1.0F,  1.0F, -1.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}},
+            {{{-1.0F,  1.0F, -1.0F}}, {{0.0F, 1.0F, 0.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
+            {{{-1.0F,  1.0F,  1.0F}}, {{0.0F, 1.0F, 0.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
+            {{{ 1.0F,  1.0F,  1.0F}}, {{0.0F, 1.0F, 0.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
+            {{{ 1.0F,  1.0F, -1.0F}}, {{0.0F, 1.0F, 0.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}},
             // 下面
-            {{{-1.0F, -1.0F,  1.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
-            {{{-1.0F, -1.0F, -1.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
-            {{{ 1.0F, -1.0F, -1.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
-            {{{ 1.0F, -1.0F,  1.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}}
+            {{{-1.0F, -1.0F,  1.0F}}, {{0.0F, -1.0F, 0.0F}}, {{0.95F, 0.35F, 0.35F}}, {{0.0F, 1.0F}}},
+            {{{-1.0F, -1.0F, -1.0F}}, {{0.0F, -1.0F, 0.0F}}, {{0.35F, 0.95F, 0.45F}}, {{0.0F, 0.0F}}},
+            {{{ 1.0F, -1.0F, -1.0F}}, {{0.0F, -1.0F, 0.0F}}, {{0.35F, 0.50F, 1.00F}}, {{1.0F, 0.0F}}},
+            {{{ 1.0F, -1.0F,  1.0F}}, {{0.0F, -1.0F, 0.0F}}, {{1.00F, 0.80F, 0.35F}}, {{1.0F, 1.0F}}}
         }};
         constexpr std::array<std::uint16_t, 36> indices{{
             0, 1, 2, 0, 2, 3,
@@ -237,6 +238,18 @@ namespace GE::Render::Examples
             16, 17, 18, 16, 18, 19,
             20, 21, 22, 20, 22, 23
         }};
+        static_assert(vertices[0].normal
+            == std::array<float, 3>{0.0F, 0.0F, -1.0F});
+        static_assert(vertices[4].normal
+            == std::array<float, 3>{0.0F, 0.0F, 1.0F});
+        static_assert(vertices[8].normal
+            == std::array<float, 3>{-1.0F, 0.0F, 0.0F});
+        static_assert(vertices[12].normal
+            == std::array<float, 3>{1.0F, 0.0F, 0.0F});
+        static_assert(vertices[16].normal
+            == std::array<float, 3>{0.0F, 1.0F, 0.0F});
+        static_assert(vertices[20].normal
+            == std::array<float, 3>{0.0F, -1.0F, 0.0F});
         try
         {
             const std::filesystem::path shader_path =
@@ -265,7 +278,7 @@ namespace GE::Render::Examples
             out_scene.textures.push_back(std::move(texture));
 
             RHITextureDescription skybox_texture;
-            if (!LoadPiccoloSkybox(
+            if (!LoadGeneratedSkybox(
                     asset_directory, skybox_texture, out_error))
             {
                 out_scene = {};
@@ -330,12 +343,17 @@ namespace GE::Render::Examples
             : 1.0F;
         frame.main_view = {
             .view = MakeViewMatrix(),
-            .projection = MakeProjectionMatrix(aspect)};
+            .projection = MakeProjectionMatrix(aspect),
+            .camera_world_position = {0.0F, 0.0F, -5.0F, 1.0F}};
 
-        const auto make_transform = [](float angle, float x) noexcept
+        const auto make_transform = [](
+            float angle,
+            float x,
+            Math::Vec3 scale) noexcept
         {
             // row-vector 约定：平移位于最后一行，与 HLSL mul(position, matrix) 一致。
-            return Math::RotationYMatrix(Math::Radians{angle})
+            return Math::ScaleMatrix(scale)
+                * Math::RotationYMatrix(Math::Radians{angle})
                 * Math::TranslationMatrix({x, 0.0F, 0.0F});
         };
 
@@ -345,12 +363,19 @@ namespace GE::Render::Examples
             frame.render_items.push_back({
                 .mesh = CubeMesh,
                 .material = CubeMaterial,
-                .local_to_world = make_transform(elapsed_seconds * 0.75F, -1.35F),
+                .local_to_world = make_transform(
+                    elapsed_seconds * 0.75F,
+                    -1.35F,
+                    {1.0F, 1.0F, 1.0F}),
                 .color_tint = {1.0F, 0.82F, 0.82F, 1.0F}});
             frame.render_items.push_back({
                 .mesh = CubeMesh,
                 .material = CubeMaterial,
-                .local_to_world = make_transform(-elapsed_seconds * 0.55F, 1.35F),
+                // 第二个对象刻意使用非均匀缩放，持续展示 Normal Matrix 路径。
+                .local_to_world = make_transform(
+                    -elapsed_seconds * 0.55F,
+                    1.35F,
+                    {0.70F, 1.20F, 1.45F}),
                 .color_tint = {0.78F, 0.88F, 1.0F, 1.0F}});
         }
         catch (...)

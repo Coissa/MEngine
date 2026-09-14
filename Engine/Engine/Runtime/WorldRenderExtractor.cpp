@@ -58,6 +58,10 @@ namespace GE::Runtime
                 MakeSceneViewMatrix(selected_camera_object->GetTransform());
             out_frame.main_view.projection =
                 MakeSceneProjectionMatrix(*selected_camera, aspect);
+            const Math::Vec3& camera_position =
+                selected_camera_object->GetTransform().translation;
+            out_frame.main_view.camera_world_position = {
+                camera_position[0], camera_position[1], camera_position[2], 1.0F};
             return true;
         }
 

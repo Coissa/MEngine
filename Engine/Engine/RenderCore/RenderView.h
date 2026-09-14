@@ -2,6 +2,8 @@
 
 #include <Engine/Core/Math/matrix4.h>
 
+#include <array>
+
 namespace GE::RenderCore
 {
     using RenderMatrix4 = Math::Mat4;
@@ -20,6 +22,10 @@ namespace GE::RenderCore
             1.0F, 0.0F, 0.0F, 0.0F,
             0.0F, 1.0F, 0.0F, 0.0F,
             0.0F, 0.0F, 1.0F, 0.0F,
+            0.0F, 0.0F, 0.0F, 1.0F};
+
+        // 帧级纯值；w 固定为 1，便于按 16 字节对齐上传到常量缓冲。
+        std::array<float, 4> camera_world_position{
             0.0F, 0.0F, 0.0F, 1.0F};
     };
 }

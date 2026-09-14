@@ -19,18 +19,28 @@
 namespace GE::Render
 {
     // M2 的最小通用顶点契约；它属于 Renderer，不泄漏任何 D3D12 原生类型。
-    struct PositionColorTextureVertex final
+    struct PositionNormalColorTextureVertex final
     {
         std::array<float, 3> position{};
+        std::array<float, 3> normal{0.0F, 1.0F, 0.0F};
         std::array<float, 3> color{};
         std::array<float, 2> texture_coordinate{};
     };
+
+    static_assert(sizeof(PositionNormalColorTextureVertex) == sizeof(float) * 11);
+    static_assert(offsetof(PositionNormalColorTextureVertex, position) == 0);
+    static_assert(offsetof(PositionNormalColorTextureVertex, normal)
+        == sizeof(float) * 3);
+    static_assert(offsetof(PositionNormalColorTextureVertex, color)
+        == sizeof(float) * 6);
+    static_assert(offsetof(PositionNormalColorTextureVertex, texture_coordinate)
+        == sizeof(float) * 9);
 
     // 启动期 Mesh 数据；Renderer 上传后独占对应 GPU Buffer。
     struct RHIMeshDescription final
     {
         RenderCore::MeshHandle handle;
-        std::vector<PositionColorTextureVertex> vertices;
+        std::vector<PositionNormalColorTextureVertex> vertices;
         std::vector<std::uint16_t> indices;
     };
 

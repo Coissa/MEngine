@@ -132,6 +132,58 @@ namespace GE::Math
         return result;
     }
 
+    // 行向量约定下，表面法线必须乘以 Local-to-World 线性部分的逆转置。
+    // 平移不会影响方向，因此结果保持为一个只含线性变换的 4x4 矩阵。
+    [[nodiscard]] inline bool TryMakeNormalMatrix(
+        const Mat4& local_to_world,
+        Mat4& out_normal_matrix) noexcept
+    {
+        const float a = local_to_world.At(0, 0);
+        const float b = local_to_world.At(0, 1);
+        const float c = local_to_world.At(0, 2);
+        const float d = local_to_world.At(1, 0);
+        const float e = local_to_world.At(1, 1);
+        const float f = local_to_world.At(1, 2);
+        const float g = local_to_world.At(2, 0);
+        const float h = local_to_world.At(2, 1);
+        const float i = local_to_world.At(2, 2);
+        const float determinant = a * (e * i - f * h)
+            - b * (d * i - f * g)
+            + c * (d * h - e * g);
+        constexpr float MinimumDeterminantMagnitude = 1.0e-8F;
+        if (!std::isfinite(determinant)
+            || std::abs(determinant) <= MinimumDeterminantMagnitude)
+        {
+            out_normal_matrix = {};
+            return false;
+        }
+
+        const float inverse_determinant = 1.0F / determinant;
+        out_normal_matrix = {
+            (e * i - f * h) * inverse_determinant,
+            (f * g - d * i) * inverse_determinant,
+            (d * h - e * g) * inverse_determinant,
+            0.0F,
+            (c * h - b * i) * inverse_determinant,
+            (a * i - c * g) * inverse_determinant,
+            (b * g - a * h) * inverse_determinant,
+            0.0F,
+            (b * f - c * e) * inverse_determinant,
+            (c * d - a * f) * inverse_determinant,
+            (a * e - b * d) * inverse_determinant,
+            0.0F,
+            0.0F, 0.0F, 0.0F, 1.0F};
+        for (std::size_t index = 0; index < 16; ++index)
+        {
+            if (!std::isfinite(out_normal_matrix[index]))
+            {
+                out_normal_matrix = {};
+                return false;
+            }
+        }
+        return true;
+    }
+
     [[nodiscard]] inline Mat4 PerspectiveFovLH_ZO(
         Radians vertical_field_of_view,
         float aspect,

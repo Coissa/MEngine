@@ -74,7 +74,7 @@ namespace
         }
         out_bounds.minimum = {first[0], first[1], first[2]};
         out_bounds.maximum = out_bounds.minimum;
-        for (const GE::Render::PositionColorTextureVertex& vertex
+        for (const GE::Render::PositionNormalColorTextureVertex& vertex
             : mesh.vertices)
         {
             for (std::size_t axis = 0; axis < 3; ++axis)
