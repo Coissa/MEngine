@@ -1,114 +1,69 @@
 #include "BuiltinTypeRegistration.h"
+
+#include <memory>
+#include <new>
 #include <string>
-#include <utility>
+#include <type_traits>
 
 namespace GE::Reflection
 {
-
-    [[nodiscard]] GE::Reflection::TypeRegistry::RegisterTypeResult RegisterBuiltinTypes(GE::Reflection::TypeRegistry& registry)
+    namespace
     {
-        TypeInfo void_type(MakeTypeId("void"), TypeKind::Void, "void", 0, 0);
-        TypeInfo bool_type(MakeTypeId("bool"), TypeKind::Primitive, "bool", sizeof(bool), alignof(bool));
-        TypeInfo char_type(MakeTypeId("char"), TypeKind::Primitive, "char", sizeof(char), alignof(char));
-        TypeInfo signed_char_type(MakeTypeId("signed char"), TypeKind::Primitive, "signed char", sizeof(signed char), alignof(signed char));
-        TypeInfo unsigned_char_type(MakeTypeId("unsigned char"), TypeKind::Primitive, "unsigned char", sizeof(unsigned char), alignof(unsigned char));
-        TypeInfo short_type(MakeTypeId("short"), TypeKind::Primitive, "short", sizeof(short), alignof(short));
-        TypeInfo unsigned_short_type(MakeTypeId("unsigned short"), TypeKind::Primitive, "unsigned short", sizeof(unsigned short), alignof(unsigned short));
-        TypeInfo int_type(MakeTypeId("int"), TypeKind::Primitive, "int", sizeof(int), alignof(int));
-        TypeInfo unsigned_int_type(MakeTypeId("unsigned int"), TypeKind::Primitive, "unsigned int", sizeof(unsigned int), alignof(unsigned int));
-        TypeInfo long_type(MakeTypeId("long"), TypeKind::Primitive, "long", sizeof(long), alignof(long));
-        TypeInfo unsigned_long_type(MakeTypeId("unsigned long"), TypeKind::Primitive, "unsigned long", sizeof(unsigned long), alignof(unsigned long));
-        TypeInfo long_long_type(MakeTypeId("long long"), TypeKind::Primitive, "long long", sizeof(long long), alignof(long long));
-        TypeInfo unsigned_long_long_type(MakeTypeId("unsigned long long"), TypeKind::Primitive, "unsigned long long", sizeof(unsigned long long), alignof(unsigned long long));
-        TypeInfo float_type(MakeTypeId("float"), TypeKind::Primitive, "float", sizeof(float), alignof(float));
-        TypeInfo string_type(MakeTypeId("std::string"), TypeKind::String, "std::string", sizeof(std::string), alignof(std::string));
-        TypeInfo double_type(MakeTypeId("double"), TypeKind::Primitive, "double", sizeof(double), alignof(double));
-
-        TypeRegistry::RegisterTypeResult result;
-
-        result = registry.RegisterType(std::move(void_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
+        template<typename T>
+        void DefaultConstruct(void* storage)
         {
-            return result;
+            std::construct_at(static_cast<T*>(storage));
         }
 
-        result = registry.RegisterType(std::move(bool_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
+        template<typename T>
+        void Destroy(void* object) noexcept
         {
-            return result;
-        }
-        result = registry.RegisterType(std::move(char_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(signed_char_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(unsigned_char_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(short_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(unsigned_short_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(int_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(unsigned_int_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(long_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(unsigned_long_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(long_long_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(unsigned_long_long_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(float_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(string_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
-        }
-        result = registry.RegisterType(std::move(double_type));
-        if (result != TypeRegistry::RegisterTypeResult::Success)
-        {
-            return result;
+            std::destroy_at(static_cast<T*>(object));
         }
 
-        return TypeRegistry::RegisterTypeResult::Success;
+        template<typename T>
+        void CopyAssign(void* target, const void* source)
+        {
+            *static_cast<T*>(target) = *static_cast<const T*>(source);
+        }
 
+        template<typename T>
+        TypeOperations Operations() noexcept
+        {
+            return {&DefaultConstruct<T>, &Destroy<T>, &CopyAssign<T>};
+        }
+    }
+
+    Core::Result<void> RegisterBuiltinTypes(TypeRegistry& registry)
+    {
+        Core::Result<void> result = registry.RegisterType(TypeInfo(
+            MakeTypeId("void"), TypeKind::Void, "void", 0, 0));
+        if (!result) return result;
+
+#define MENGINE_REGISTER_BUILTIN(cpp_type, stable_name, kind) \
+        result = registry.RegisterType(TypeInfo( \
+            MakeTypeId(stable_name), kind, stable_name, \
+            sizeof(cpp_type), alignof(cpp_type), {}, {}, TypeFlags::None, \
+            Operations<cpp_type>())); \
+        if (!result) return result
+
+        MENGINE_REGISTER_BUILTIN(bool, "bool", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(char, "char", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(signed char, "signed char", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(unsigned char, "unsigned char", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(short, "short", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(unsigned short, "unsigned short", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(int, "int", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(unsigned int, "unsigned int", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(long, "long", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(unsigned long, "unsigned long", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(long long, "long long", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(unsigned long long, "unsigned long long", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(float, "float", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(double, "double", TypeKind::Primitive);
+        MENGINE_REGISTER_BUILTIN(std::string, "std::string", TypeKind::String);
+
+#undef MENGINE_REGISTER_BUILTIN
+        return Core::Result<void>::Success();
     }
 }

@@ -5,6 +5,12 @@
 
 #include <string>
 #include <filesystem>
+#include <cstdint>
+
+namespace GE::Runtime
+{
+    class ComponentRegistry;
+}
 
 namespace GE::Editor
 {
@@ -18,10 +24,9 @@ namespace GE::Editor
         PreviewTransformEdit,
         CommitTransformEdit,
         CancelTransformEdit,
-        SetMeshRenderer,
-        RemoveMeshRenderer,
-        SetCamera,
-        RemoveCamera,
+        AddComponent,
+        RemoveComponent,
+        PatchComponent,
         NewScene,
         LoadScene,
         SaveScene,
@@ -39,7 +44,14 @@ namespace GE::Editor
         std::string name;
         std::filesystem::path path;
         GE::Runtime::TransformComponent transform;
-        GE::Runtime::MeshRendererComponent mesh_renderer;
-        GE::Runtime::CameraComponent camera;
+        GE::Reflection::TypeId component_type_id;
+        std::uint32_t component_version = 0;
+        std::string component_payload;
     };
+
+    [[nodiscard]] bool SetComponentPayload(
+        EditorCommand& command,
+        const GE::Runtime::Component& component,
+        const GE::Runtime::ComponentRegistry& registry,
+        std::string& out_error);
 }

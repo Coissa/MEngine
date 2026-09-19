@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GameObjectHandle.h"
+#include "ComponentRegistry.h"
 
 #include <cstdint>
 #include <memory>
@@ -14,7 +15,7 @@ namespace GE::Runtime
     class World final
     {
     public:
-        explicit World(std::int32_t scene_state) noexcept;
+        World(std::int32_t scene_state, const ComponentRegistry& registry) noexcept;
         ~World() noexcept;
         World(const World& world) = delete;
         World& operator=(const World& world) = delete;
@@ -22,7 +23,10 @@ namespace GE::Runtime
         World& operator=(World&& world) = delete;
 
         [[nodiscard]] bool Initialize();
+        [[nodiscard]] bool StartGameplay();
+        void FixedTick(float delta_seconds);
         void Tick(float delta_seconds);
+        void StopGameplay() noexcept;
         void Shutdown() noexcept;
         [[nodiscard]] bool IsInitialized() const noexcept;
         [[nodiscard]] std::int32_t GetSceneState() const noexcept;
@@ -33,7 +37,8 @@ namespace GE::Runtime
         // 仅供场景导入等身份恢复路径使用；拒绝 0、重复或耗尽的 ID。
         [[nodiscard]] GameObjectHandle CreateGameObjectWithId(
             GameObjectId id,
-            std::string name);
+            std::string name,
+            bool create_transform = true);
         [[nodiscard]] bool DestroyGameObject(GameObjectHandle handle) noexcept;
         [[nodiscard]] GameObject* FindGameObject(GameObjectHandle handle) noexcept;
         [[nodiscard]] const GameObject* FindGameObject(
@@ -46,6 +51,12 @@ namespace GE::Runtime
         [[nodiscard]] std::size_t GetGameObjectCount() const noexcept;
 
         [[nodiscard]] std::unique_ptr<World> CreatePIECopy() const;
+        [[nodiscard]] bool IsDispatchingLifecycle() const noexcept;
+        [[nodiscard]] bool IsGameplayStarted() const noexcept;
+        [[nodiscard]] const ComponentRegistry& GetComponentRegistry() const noexcept;
+        [[nodiscard]] Component* AddConfiguredComponent(
+            GameObjectHandle handle,
+            std::unique_ptr<Component> component);
     private:
         enum class State
         {
@@ -58,6 +69,9 @@ namespace GE::Runtime
         State m_state = State::Created;
         std::int32_t m_scene_state;
         std::uint64_t m_tick_count = 0;
+        const ComponentRegistry& m_component_registry;
+        bool m_dispatching_lifecycle = false;
+        bool m_gameplay_started = false;
 
         struct ObjectSlot final
         {
@@ -68,7 +82,8 @@ namespace GE::Runtime
         [[nodiscard]] bool CanEditObjects() const noexcept;
         [[nodiscard]] GameObjectHandle CreateGameObjectInternal(
             GameObjectId id,
-            std::string name);
+            std::string name,
+            bool create_transform = true);
 
         std::vector<ObjectSlot> m_object_slots;
         std::vector<std::uint32_t> m_free_object_indices;

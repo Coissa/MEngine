@@ -3,8 +3,15 @@ add_library(MEngineRuntime STATIC
     BuiltinScene.h
     Component.cpp
     Component.h
+    ComponentRegistry.cpp
+    ComponentRegistry.h
     Engine.cpp
     Engine.h
+    EngineServices.h
+    FixedStepScheduler.cpp
+    FixedStepScheduler.h
+    Generated/Reflection/RuntimeReflection.generated.cpp
+    Generated/Reflection/RuntimeReflection.generated.h
     GameObject.cpp
     GameObject.h
     GameObjectHandle.h
@@ -32,7 +39,10 @@ target_include_directories(MEngineRuntime
 
 target_link_libraries(MEngineRuntime
     PUBLIC
+        MEngineAsset
         MEngineCore
+        MEngineReflection
+        MEngineSerialization
         MEngineRenderCore
 )
 

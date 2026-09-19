@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
@@ -208,6 +209,18 @@ namespace GE::Reflection::Generator
             "mengine.reflect.field";
         constexpr llvm::StringLiteral ReflectedFunctionAnnotation =
             "mengine.reflect.function";
+        constexpr llvm::StringLiteral ReflectedEnumAnnotation =
+            "mengine.reflect.enum";
+        constexpr llvm::StringLiteral StableNameAnnotationPrefix =
+            "mengine.reflect.stable_name:";
+        constexpr llvm::StringLiteral SerializableAnnotation =
+            "mengine.reflect.serializable";
+        constexpr llvm::StringLiteral SerializedNameAnnotationPrefix =
+            "mengine.reflect.serialized_name:";
+        constexpr llvm::StringLiteral RequiredAnnotation =
+            "mengine.reflect.required";
+        constexpr llvm::StringLiteral TransientAnnotation =
+            "mengine.reflect.transient";
 
         bool HasAnnotation(
             const clang::Decl& declaration,
@@ -223,6 +236,19 @@ namespace GE::Reflection::Generator
             }
 
             return false;
+        }
+
+        std::optional<std::string> GetAnnotationValue(
+            const clang::Decl& declaration,
+            llvm::StringRef prefix)
+        {
+            for (const clang::AnnotateAttr* annotation :
+                 declaration.specific_attrs<clang::AnnotateAttr>())
+            {
+                llvm::StringRef value = annotation->getAnnotation();
+                if (value.consume_front(prefix)) return value.str();
+            }
+            return std::nullopt;
         }
 
         ClangFieldAccess ConvertFieldAccess(clang::AccessSpecifier access)
@@ -282,7 +308,14 @@ namespace GE::Reflection::Generator
                     source_position->column,
                     ConvertFieldAccess(field->getAccess()),
                     field->getType().isConstQualified(),
-                    field->isBitField()});
+                    field->isBitField(),
+                    GetAnnotationValue(*field, SerializedNameAnnotationPrefix)
+                        .value_or(std::string{}),
+                    HasAnnotation(*field, RequiredAnnotation),
+                    HasAnnotation(*field, TransientAnnotation),
+                    field->getType()->isPointerType(),
+                    field->getType()->isReferenceType(),
+                    field->getType()->isArrayType()});
             }
 
             return fields;
@@ -390,9 +423,11 @@ namespace GE::Reflection::Generator
         public:
             HeaderRecordVisitor(
                 clang::SourceManager& source_manager,
-                std::vector<ClangRecordDeclaration>& records)
+                std::vector<ClangRecordDeclaration>& records,
+                std::vector<ClangEnumDeclaration>& enums)
                 : source_manager_(source_manager),
-                  records_(records)
+                  records_(records),
+                  enums_(enums)
             {
             }
 
@@ -438,14 +473,61 @@ namespace GE::Reflection::Generator
                     source_position->line,
                     source_position->column,
                     std::move(fields),
-                    std::move(functions)});
+                    std::move(functions),
+                    GetAnnotationValue(*declaration, StableNameAnnotationPrefix)
+                        .value_or(declaration->getQualifiedNameAsString()),
+                    HasAnnotation(*declaration, SerializableAnnotation),
+                    GetAnnotationValue(*declaration, StableNameAnnotationPrefix)
+                        .has_value()});
 
+                return true;
+            }
+
+            bool VisitEnumDecl(clang::EnumDecl* declaration)
+            {
+                if (declaration == nullptr
+                    || !declaration->isThisDeclarationADefinition()
+                    || declaration->isImplicit()
+                    || !HasAnnotation(*declaration, ReflectedEnumAnnotation))
+                    return true;
+
+                const clang::SourceLocation expansion_location =
+                    source_manager_.getExpansionLoc(declaration->getLocation());
+                if (expansion_location.isInvalid()
+                    || !source_manager_.isWrittenInMainFile(expansion_location))
+                    return true;
+                const std::optional<SourcePosition> source_position =
+                    GetSourcePosition(source_manager_, expansion_location);
+                if (!source_position.has_value()) return true;
+
+                const clang::PrintingPolicy printing_policy =
+                    declaration->getASTContext().getPrintingPolicy();
+                std::vector<ClangEnumValueDeclaration> values;
+                values.reserve(std::distance(
+                    declaration->enumerator_begin(), declaration->enumerator_end()));
+                for (const clang::EnumConstantDecl* enumerator :
+                     declaration->enumerators())
+                {
+                    values.push_back({
+                        enumerator->getNameAsString(),
+                        enumerator->getInitVal().getZExtValue()});
+                }
+                enums_.push_back(ClangEnumDeclaration{
+                    declaration->getQualifiedNameAsString(),
+                    declaration->getIntegerType().getAsString(printing_policy),
+                    source_position->source_file,
+                    source_position->line,
+                    source_position->column,
+                    std::move(values),
+                    GetAnnotationValue(*declaration, StableNameAnnotationPrefix)
+                        .value_or(declaration->getQualifiedNameAsString())});
                 return true;
             }
 
         private:
             clang::SourceManager& source_manager_;
             std::vector<ClangRecordDeclaration>& records_;
+            std::vector<ClangEnumDeclaration>& enums_;
         };
 
         class HeaderASTConsumer final : public clang::ASTConsumer
@@ -453,8 +535,9 @@ namespace GE::Reflection::Generator
         public:
             HeaderASTConsumer(
                 clang::SourceManager& source_manager,
-                std::vector<ClangRecordDeclaration>& records)
-                : visitor_(source_manager, records)
+                std::vector<ClangRecordDeclaration>& records,
+                std::vector<ClangEnumDeclaration>& enums)
+                : visitor_(source_manager, records, enums)
             {
             }
 
@@ -472,8 +555,10 @@ namespace GE::Reflection::Generator
         public:
             HeaderFrontendAction(
                 std::vector<ClangRecordDeclaration>& records,
+                std::vector<ClangEnumDeclaration>& enums,
                 bool& consumer_created)
                 : records_(records),
+                  enums_(enums),
                   consumer_created_(consumer_created)
             {
             }
@@ -485,11 +570,12 @@ namespace GE::Reflection::Generator
                 consumer_created_ = true;
                 return std::make_unique<HeaderASTConsumer>(
                     compiler.getSourceManager(),
-                    records_);
+                    records_, enums_);
             }
 
         private:
             std::vector<ClangRecordDeclaration>& records_;
+            std::vector<ClangEnumDeclaration>& enums_;
             bool& consumer_created_;
         };
 
@@ -596,6 +682,7 @@ namespace GE::Reflection::Generator
         }
 
         std::vector<ClangRecordDeclaration> records;
+        std::vector<ClangEnumDeclaration> enums;
         std::vector<ClangDiagnostic> diagnostics;
         bool consumer_created = false;
 
@@ -608,6 +695,7 @@ namespace GE::Reflection::Generator
 
         auto frontend_action = std::make_unique<HeaderFrontendAction>(
             records,
+            enums,
             consumer_created);
         CollectingDiagnosticConsumer diagnostic_consumer(diagnostics);
 
@@ -635,7 +723,8 @@ namespace GE::Reflection::Generator
             invocation.job.module_name,
             invocation.job.header_path,
             std::move(records),
-            std::move(diagnostics)};
+            std::move(diagnostics),
+            std::move(enums)};
     }
 
 }

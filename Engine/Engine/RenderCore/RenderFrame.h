@@ -23,7 +23,7 @@ namespace GE::RenderCore
         RenderView main_view;
 
         // 从本次 Run 开始累计的逻辑时间；Renderer 只消费值快照，不读取 World。
-        float elapsed_seconds = 0.0F;
+        double real_elapsed_seconds = 0.0;
 
         // 本帧逐物体绘制快照；包被移动给 Renderer，内部不含 World/Object 指针。
         std::vector<RenderItem> render_items;

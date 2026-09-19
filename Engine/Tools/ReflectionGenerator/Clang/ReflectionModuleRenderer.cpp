@@ -221,7 +221,7 @@ namespace GE::Reflection::Generator
                << "namespace GE::Reflection\n"
                << "{\n"
                << "    [[nodiscard]]\n"
-               << "    TypeRegistry::RegisterTypeResult "
+               << "    Core::Result<void> "
                << module_function_name << "(\n"
                << "        TypeRegistry& registry);\n"
                << "}\n";
@@ -242,7 +242,7 @@ namespace GE::Reflection::Generator
         source << "\n"
                << "namespace GE::Reflection\n"
                << "{\n"
-               << "    TypeRegistry::RegisterTypeResult "
+               << "    Core::Result<void> "
                << module_function_name << "(\n"
                << "        TypeRegistry& registry)\n"
                << "    {\n";
@@ -251,19 +251,16 @@ namespace GE::Reflection::Generator
              input.header_registrations)
         {
             source << "        {\n"
-                   << "            const TypeRegistry::RegisterTypeResult result =\n"
+                   << "            Core::Result<void> result =\n"
                    << "                "
                    << registration.registration_function_name
                    << "(registry);\n"
-                   << "            if (result != TypeRegistry::RegisterTypeResult::Success)\n"
-                   << "            {\n"
-                   << "                return result;\n"
-                   << "            }\n"
+                   << "            if (!result) return result;\n"
                    << "        }\n";
         }
 
         source << "\n"
-               << "        return TypeRegistry::RegisterTypeResult::Success;\n"
+               << "        return Core::Result<void>::Success();\n"
                << "    }\n"
                << "}\n";
 

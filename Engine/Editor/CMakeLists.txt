@@ -2,6 +2,7 @@ add_library(MEngineEditorRuntime STATIC
     EditorCamera.cpp
     EditorCamera.h
     EditorCommand.h
+    EditorCommand.cpp
     EditorEngine.cpp
     EditorEngine.h
     EditorGizmo.cpp
@@ -12,6 +13,8 @@ add_library(MEngineEditorRuntime STATIC
     EditorTransaction.h
     EditorUserInterface.cpp
     EditorUserInterface.h
+    InspectorRegistry.cpp
+    InspectorRegistry.h
 )
 
 target_include_directories(MEngineEditorRuntime

@@ -1,4 +1,5 @@
 add_subdirectory(ThirdParty/imgui)
+add_subdirectory(ThirdParty/stduuid)
 
 set(MENGINE_SHADER_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Shaders")
 set(MENGINE_ASSET_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Assets")
@@ -73,6 +74,11 @@ endfunction()
 
 add_subdirectory(Engine/Core)
 add_subdirectory(Engine/Core/Reflection)
+add_subdirectory(Engine/Serialization)
+add_subdirectory(Engine/FileSystem)
+add_subdirectory(Engine/Asset)
+add_subdirectory(Engine/Cook)
+add_subdirectory(Engine/AssetFormats)
 add_subdirectory(Engine/RHI)
 add_subdirectory(Engine/RHI/D3D12)
 add_subdirectory(Engine/RenderCore)

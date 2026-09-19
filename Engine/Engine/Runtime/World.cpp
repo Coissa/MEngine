@@ -10,8 +10,10 @@
 
 namespace GE::Runtime
 {
-    World::World(std::int32_t scene_state) noexcept
-        : m_scene_state(scene_state)
+    World::World(
+        std::int32_t scene_state,
+        const ComponentRegistry& registry) noexcept
+        : m_scene_state(scene_state), m_component_registry(registry)
     {
     }
 
@@ -52,11 +54,17 @@ namespace GE::Runtime
 
     bool World::CanEditObjects() const noexcept
     {
-        return m_state == State::Created || m_state == State::Initialized;
+        return !m_dispatching_lifecycle
+            && (m_state == State::Created || m_state == State::Initialized);
     }
 
     GameObjectHandle World::CreateGameObject(std::string name)
     {
+        if (m_dispatching_lifecycle)
+        {
+            std::cerr << "[World] Object creation rejected during lifecycle dispatch\n";
+            return {};
+        }
         if (!CanEditObjects()
             || m_next_object_id == (std::numeric_limits<std::uint64_t>::max)())
         {
@@ -75,7 +83,8 @@ namespace GE::Runtime
 
     GameObjectHandle World::CreateGameObjectWithId(
         GameObjectId id,
-        std::string name)
+        std::string name,
+        bool create_transform)
     {
         if (!CanEditObjects() || !id.IsValid()
             || id.value == (std::numeric_limits<std::uint64_t>::max)()
@@ -85,7 +94,7 @@ namespace GE::Runtime
         }
 
         const GameObjectHandle result =
-            CreateGameObjectInternal(id, std::move(name));
+            CreateGameObjectInternal(id, std::move(name), create_transform);
         if (result.IsValid() && m_next_object_id <= id.value)
         {
             m_next_object_id = id.value + 1;
@@ -95,7 +104,8 @@ namespace GE::Runtime
 
     GameObjectHandle World::CreateGameObjectInternal(
         GameObjectId id,
-        std::string name)
+        std::string name,
+        bool create_transform)
     {
 
         std::uint32_t index = 0;
@@ -118,17 +128,39 @@ namespace GE::Runtime
         ObjectSlot& slot = m_object_slots[index];
         const GameObjectHandle handle{index, slot.generation};
         slot.object = std::unique_ptr<GameObject>(
-            new GameObject(id, handle, std::move(name)));
+            new GameObject(*this, m_component_registry, id, handle,
+                std::move(name)));
+        if (create_transform)
+        {
+            (void)slot.object->AddComponent<TransformComponent>();
+        }
+        if (create_transform
+            && slot.object->GetComponent<TransformComponent>() == nullptr)
+        {
+            slot.object.reset();
+            m_free_object_indices.push_back(index);
+            return {};
+        }
         return handle;
     }
 
     bool World::DestroyGameObject(GameObjectHandle handle) noexcept
     {
+        if (m_dispatching_lifecycle)
+        {
+            try
+            {
+                std::cerr << "[World] Object destruction rejected during lifecycle dispatch\n";
+            }
+            catch (...) {}
+            return false;
+        }
         if (!CanEditObjects() || FindGameObject(handle) == nullptr)
         {
             return false;
         }
         ObjectSlot& slot = m_object_slots[handle.index];
+        slot.object->DetachComponents();
         slot.object.reset();
         if (slot.generation != (std::numeric_limits<std::uint32_t>::max)())
         {
@@ -198,6 +230,47 @@ namespace GE::Runtime
             [](const ObjectSlot& slot) { return slot.object != nullptr; }));
     }
 
+    bool World::StartGameplay()
+    {
+        if (m_state != State::Initialized || m_gameplay_started)
+        {
+            return false;
+        }
+        m_dispatching_lifecycle = true;
+        std::size_t completed_slot = 0;
+        for (; completed_slot < m_object_slots.size(); ++completed_slot)
+        {
+            auto& slot = m_object_slots[completed_slot];
+            if (slot.object != nullptr && !slot.object->StartComponents())
+            {
+                while (completed_slot > 0)
+                {
+                    auto& rollback = m_object_slots[--completed_slot];
+                    if (rollback.object != nullptr) rollback.object->StopComponents();
+                }
+                m_dispatching_lifecycle = false;
+                return false;
+            }
+        }
+        m_dispatching_lifecycle = false;
+        m_gameplay_started = true;
+        return true;
+    }
+
+    void World::FixedTick(float delta_seconds)
+    {
+        if (m_state != State::Initialized || !m_gameplay_started)
+        {
+            throw std::logic_error{"World::FixedTick called outside gameplay"};
+        }
+        m_dispatching_lifecycle = true;
+        for (auto& slot : m_object_slots)
+        {
+            if (slot.object != nullptr) slot.object->FixedTickComponents(delta_seconds);
+        }
+        m_dispatching_lifecycle = false;
+    }
+
     void World::Tick(float delta_seconds)
     {
         if (m_state != State::Initialized)
@@ -214,8 +287,30 @@ namespace GE::Runtime
             };
         }
 
+        if (!m_gameplay_started)
+        {
+            throw std::logic_error{"World::Tick called outside gameplay"};
+        }
+        m_dispatching_lifecycle = true;
+        for (auto& slot : m_object_slots)
+        {
+            if (slot.object != nullptr) slot.object->TickComponents(delta_seconds);
+        }
+        m_dispatching_lifecycle = false;
         std::cout << "[World] Tick\n";
         ++m_tick_count;
+    }
+
+    void World::StopGameplay() noexcept
+    {
+        if (!m_gameplay_started) return;
+        m_dispatching_lifecycle = true;
+        for (auto it = m_object_slots.rbegin(); it != m_object_slots.rend(); ++it)
+        {
+            if (it->object != nullptr) it->object->StopComponents();
+        }
+        m_dispatching_lifecycle = false;
+        m_gameplay_started = false;
     }
 
     void World::Shutdown() noexcept
@@ -225,6 +320,13 @@ namespace GE::Runtime
             return;
         }
 
+        StopGameplay();
+        m_dispatching_lifecycle = true;
+        for (auto it = m_object_slots.rbegin(); it != m_object_slots.rend(); ++it)
+        {
+            if (it->object != nullptr) it->object->DetachComponents();
+        }
+        m_dispatching_lifecycle = false;
         m_state = State::Shutdown;
         try
         {
@@ -244,7 +346,7 @@ namespace GE::Runtime
         }
 
         std::cout << "[World] Create PIE copy\n";
-        auto copy = std::make_unique<World>(m_scene_state);
+        auto copy = std::make_unique<World>(m_scene_state, m_component_registry);
         copy->m_object_slots.resize(m_object_slots.size());
         copy->m_free_object_indices = m_free_object_indices;
         copy->m_next_object_id = m_next_object_id;
@@ -255,10 +357,47 @@ namespace GE::Runtime
             target_slot.generation = source_slot.generation;
             if (source_slot.object != nullptr)
             {
-                target_slot.object = source_slot.object->Clone(
-                    {static_cast<std::uint32_t>(index), target_slot.generation});
+                const GameObjectHandle target_handle{
+                    static_cast<std::uint32_t>(index), target_slot.generation};
+                target_slot.object = std::unique_ptr<GameObject>(new GameObject(
+                    *copy, m_component_registry, source_slot.object->GetId(),
+                    target_handle, source_slot.object->GetName()));
+                for (const Component* component
+                    : source_slot.object->EnumerateComponents())
+                {
+                    if (target_slot.object->InsertConfiguredComponent(
+                            m_component_registry.CloneConfiguration(*component))
+                        == nullptr)
+                    {
+                        return nullptr;
+                    }
+                }
             }
         }
         return copy;
+    }
+
+    bool World::IsDispatchingLifecycle() const noexcept
+    {
+        return m_dispatching_lifecycle;
+    }
+
+    bool World::IsGameplayStarted() const noexcept
+    {
+        return m_gameplay_started;
+    }
+
+    const ComponentRegistry& World::GetComponentRegistry() const noexcept
+    {
+        return m_component_registry;
+    }
+
+    Component* World::AddConfiguredComponent(
+        GameObjectHandle handle,
+        std::unique_ptr<Component> component)
+    {
+        GameObject* object = FindGameObject(handle);
+        return object == nullptr ? nullptr
+            : object->InsertConfiguredComponent(std::move(component));
     }
 }

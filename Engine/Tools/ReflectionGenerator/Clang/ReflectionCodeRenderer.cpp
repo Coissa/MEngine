@@ -147,7 +147,8 @@ namespace GE::Reflection::Generator
                        << "    {\n"
                        << "        static constexpr std::string_view StableName =\n"
                        << "            \""
-                       << EscapeCppStringLiteral(record.qualified_name)
+                       << EscapeCppStringLiteral(record.stable_name.empty()
+                              ? record.qualified_name : record.stable_name)
                        << "\";\n"
                        << "    };\n\n"
                        << "    template <>\n"
@@ -192,8 +193,23 @@ namespace GE::Reflection::Generator
                 output << "    };\n\n";
             }
 
+            for (const ClangEnumDeclaration& enum_declaration : scan_output.enums)
+            {
+                output << "    template <>\n"
+                       << "    struct TypeTraits<"
+                       << GlobalTypeName(enum_declaration.qualified_name) << ">\n"
+                       << "    {\n"
+                       << "        static constexpr std::string_view StableName =\n"
+                       << "            \""
+                       << EscapeCppStringLiteral(enum_declaration.stable_name.empty()
+                              ? enum_declaration.qualified_name
+                              : enum_declaration.stable_name)
+                       << "\";\n"
+                       << "    };\n\n";
+            }
+
             output << "    [[nodiscard]]\n"
-                   << "    TypeRegistry::RegisterTypeResult "
+                   << "    Core::Result<void> "
                    << registration_function_name << "(\n"
                    << "        TypeRegistry& registry);\n"
                    << "}\n";
@@ -338,8 +354,19 @@ namespace GE::Reflection::Generator
                        << ">(),\n"
                        << "                \""
                        << EscapeCppStringLiteral(field.name) << "\",\n"
-                       << "                FieldInfo::FieldFlags::"
-                       << (field.is_const ? "ReadOnly" : "None") << ",\n";
+                       << "                ";
+                bool has_flag = false;
+                const auto render_flag = [&](std::string_view name)
+                {
+                    if (has_flag) output << " | ";
+                    output << "FieldInfo::FieldFlags::" << name;
+                    has_flag = true;
+                };
+                if (field.is_const) render_flag("ReadOnly");
+                if (field.is_transient) render_flag("Transient");
+                if (field.is_required) render_flag("Required");
+                if (!has_flag) render_flag("None");
+                output << ",\n";
 
                 if (field.is_const)
                 {
@@ -353,7 +380,10 @@ namespace GE::Reflection::Generator
                 }
 
                 output << "                &GeneratedTypeAccess<" << type_name
-                       << ">::GetField" << field_index << "Const);\n";
+                       << ">::GetField" << field_index << "Const,\n"
+                       << "                \""
+                       << EscapeCppStringLiteral(field.serialized_name)
+                       << "\");\n";
             }
 
             if (!record.functions.empty())
@@ -411,7 +441,7 @@ namespace GE::Reflection::Generator
             }
 
             output << "\n"
-                   << "            const TypeRegistry::RegisterTypeResult result =\n"
+                   << "            Core::Result<void> result =\n"
                    << "                registry.RegisterType(TypeInfo(\n"
                    << "                    owner_type_id,\n"
                    << "                    TypeKind::"
@@ -424,16 +454,51 @@ namespace GE::Reflection::Generator
                    << "                    sizeof(" << type_name << "),\n"
                    << "                    alignof(" << type_name << "),\n"
                    << "                    std::move(fields)";
+            output << ",\n";
             if (!record.functions.empty())
+                output << "                    std::move(functions),\n";
+            else
+                output << "                    {},\n";
+            output << "                    TypeFlags::"
+                   << (record.is_serializable ? "Serializable" : "None")
+                   << ",\n"
+                   << "                    MakeTypeOperations<" << type_name
+                   << ">()));\n"
+                   << "            if (!result) return result;\n"
+                   << "        }\n";
+        }
+
+        void RenderEnumRegistration(
+            std::ostringstream& output,
+            const ClangEnumDeclaration& enum_declaration)
+        {
+            const std::string type_name =
+                GlobalTypeName(enum_declaration.qualified_name);
+            output << "        {\n"
+                   << "            EnumInfo enum_info;\n"
+                   << "            enum_info.underlying_type_id = GetTypeId<"
+                   << enum_declaration.underlying_type_spelling << ">();\n"
+                   << "            enum_info.values = {";
+            for (std::size_t index = 0; index < enum_declaration.values.size(); ++index)
             {
-                output << ",\n"
-                       << "                    std::move(functions)";
+                if (index != 0) output << ", ";
+                output << "{\""
+                       << EscapeCppStringLiteral(enum_declaration.values[index].name)
+                       << "\", " << enum_declaration.values[index].raw_value << "ull}";
             }
-            output << "));\n"
-                   << "            if (result != TypeRegistry::RegisterTypeResult::Success)\n"
-                   << "            {\n"
-                   << "                return result;\n"
-                   << "            }\n"
+            output << "};\n"
+                   << "            enum_info.read_raw_value = &ReadEnumRaw<"
+                   << type_name << ">;\n"
+                   << "            enum_info.write_raw_value = &WriteEnumRaw<"
+                   << type_name << ">;\n"
+                   << "            Core::Result<void> result = registry.RegisterType(TypeInfo(\n"
+                   << "                GetTypeId<" << type_name << ">(), TypeKind::Enum,\n"
+                   << "                std::string(GetStableTypeName<" << type_name << ">()),\n"
+                   << "                sizeof(" << type_name << "), alignof(" << type_name
+                   << "), {}, {}, TypeFlags::None,\n"
+                   << "                MakeTypeOperations<" << type_name
+                   << ">(), std::move(enum_info)));\n"
+                   << "            if (!result) return result;\n"
                    << "        }\n";
         }
 
@@ -454,16 +519,56 @@ namespace GE::Reflection::Generator
                        << "#include \"ParameterInfo.h\"\n";
             }
             output << "#include \"TypeInfo.h\"\n\n"
+                   << "#include <limits>\n"
                    << "#include <memory>\n"
+                   << "#include <new>\n"
                    << "#include <string>\n";
             if (has_functions)
             {
                 output << "#include <type_traits>\n";
             }
-            output << "#include <utility>\n"
+            output << "#include <type_traits>\n"
+                   << "#include <utility>\n"
                    << "#include <vector>\n\n"
                    << "namespace GE::Reflection\n"
-                   << "{\n";
+                   << "{\n"
+                   << "    namespace\n"
+                   << "    {\n"
+                   << "        template<typename T>\n"
+                   << "        void DefaultConstruct(void* storage)\n"
+                   << "        { std::construct_at(static_cast<T*>(storage)); }\n"
+                   << "        template<typename T>\n"
+                   << "        void Destroy(void* object) noexcept\n"
+                   << "        { std::destroy_at(static_cast<T*>(object)); }\n"
+                   << "        template<typename T>\n"
+                   << "        void CopyAssign(void* target, const void* source)\n"
+                   << "        { *static_cast<T*>(target) = *static_cast<const T*>(source); }\n"
+                   << "        template<typename T>\n"
+                   << "        TypeOperations MakeTypeOperations() noexcept\n"
+                   << "        {\n"
+                   << "            if constexpr (std::is_default_constructible_v<T>\n"
+                   << "                && std::is_destructible_v<T>\n"
+                   << "                && std::is_copy_assignable_v<T>)\n"
+                   << "                return {&DefaultConstruct<T>, &Destroy<T>, &CopyAssign<T>};\n"
+                   << "            return {};\n"
+                   << "        }\n"
+                   << "        template<typename T>\n"
+                   << "        std::uint64_t ReadEnumRaw(const void* value) noexcept\n"
+                   << "        {\n"
+                   << "            using U = std::make_unsigned_t<std::underlying_type_t<T>>;\n"
+                   << "            return static_cast<std::uint64_t>(\n"
+                   << "                static_cast<U>(*static_cast<const T*>(value)));\n"
+                   << "        }\n"
+                   << "        template<typename T>\n"
+                   << "        bool WriteEnumRaw(void* value, std::uint64_t raw) noexcept\n"
+                   << "        {\n"
+                   << "            using U = std::make_unsigned_t<std::underlying_type_t<T>>;\n"
+                   << "            if (raw > static_cast<std::uint64_t>((std::numeric_limits<U>::max)()))\n"
+                   << "                return false;\n"
+                   << "            *static_cast<T*>(value) = static_cast<T>(static_cast<U>(raw));\n"
+                   << "            return true;\n"
+                   << "        }\n"
+                   << "    }\n\n";
 
             for (const ClangRecordDeclaration& record : scan_output.records)
             {
@@ -471,12 +576,12 @@ namespace GE::Reflection::Generator
                 RenderFunctionInvokers(output, record);
             }
 
-            output << "    TypeRegistry::RegisterTypeResult "
+            output << "    Core::Result<void> "
                    << registration_function_name << "(\n"
                    << "        TypeRegistry& registry)\n"
                    << "    {\n";
 
-            if (scan_output.records.empty())
+            if (scan_output.records.empty() && scan_output.enums.empty())
             {
                 output << "        static_cast<void>(registry);\n";
             }
@@ -486,8 +591,13 @@ namespace GE::Reflection::Generator
                 RenderTypeRegistration(output, record);
             }
 
+            for (const ClangEnumDeclaration& enum_declaration : scan_output.enums)
+            {
+                RenderEnumRegistration(output, enum_declaration);
+            }
+
             output << "\n"
-                   << "        return TypeRegistry::RegisterTypeResult::Success;\n"
+                   << "        return Core::Result<void>::Success();\n"
                    << "    }\n"
                    << "}\n";
             return output.str();

@@ -1,21 +1,24 @@
 #include "GameObject.h"
+#include "World.h"
 
 #include <algorithm>
+#include <iostream>
 #include <utility>
 
 namespace GE::Runtime
 {
     GameObject::GameObject(
+        World& world,
+        const ComponentRegistry& registry,
         GameObjectId id,
         GameObjectHandle handle,
         std::string name)
-        : m_id(id), m_handle(handle), m_name(std::move(name))
+        : m_world(world), m_registry(registry), m_id(id), m_handle(handle), m_name(std::move(name))
     {
         if (m_name.empty())
         {
             m_name = "GameObject";
         }
-        m_components.push_back(std::make_unique<TransformComponent>());
     }
 
     GameObjectId GameObject::GetId() const noexcept
@@ -38,122 +41,226 @@ namespace GE::Runtime
         m_name = name.empty() ? "GameObject" : std::move(name);
     }
 
-    Component* GameObject::FindComponent(ComponentType type) noexcept
+    Component* GameObject::GetComponent(Reflection::TypeId type) noexcept
     {
         const auto component = std::find_if(
             m_components.begin(), m_components.end(),
             [type](const std::unique_ptr<Component>& candidate)
-            { return candidate->GetType() == type; });
+            { return candidate->GetTypeId() == type; });
         return component == m_components.end() ? nullptr : component->get();
     }
 
-    const Component* GameObject::FindComponent(ComponentType type) const noexcept
+    const Component* GameObject::GetComponent(Reflection::TypeId type) const noexcept
     {
         const auto component = std::find_if(
             m_components.begin(), m_components.end(),
             [type](const std::unique_ptr<Component>& candidate)
-            { return candidate->GetType() == type; });
+            { return candidate->GetTypeId() == type; });
         return component == m_components.end() ? nullptr : component->get();
     }
 
     TransformComponent& GameObject::GetTransform() noexcept
     {
         return *static_cast<TransformComponent*>(
-            FindComponent(ComponentType::Transform));
+            GetComponent(TransformComponent::StaticTypeId));
     }
 
     const TransformComponent& GameObject::GetTransform() const noexcept
     {
         return *static_cast<const TransformComponent*>(
-            FindComponent(ComponentType::Transform));
+            GetComponent(TransformComponent::StaticTypeId));
     }
 
     MeshRendererComponent* GameObject::AddMeshRenderer()
     {
-        if (MeshRendererComponent* existing = GetMeshRenderer())
-        {
-            return existing;
-        }
-        auto component = std::make_unique<MeshRendererComponent>();
-        MeshRendererComponent* result = component.get();
-        m_components.push_back(std::move(component));
-        return result;
+        return AddComponent<MeshRendererComponent>();
     }
 
     MeshRendererComponent* GameObject::GetMeshRenderer() noexcept
     {
         return static_cast<MeshRendererComponent*>(
-            FindComponent(ComponentType::MeshRenderer));
+            GetComponent(MeshRendererComponent::StaticTypeId));
     }
 
     const MeshRendererComponent* GameObject::GetMeshRenderer() const noexcept
     {
         return static_cast<const MeshRendererComponent*>(
-            FindComponent(ComponentType::MeshRenderer));
+            GetComponent(MeshRendererComponent::StaticTypeId));
     }
 
     bool GameObject::RemoveMeshRenderer() noexcept
     {
-        return RemoveComponent(ComponentType::MeshRenderer);
+        return RemoveComponent(MeshRendererComponent::StaticTypeId);
     }
 
     CameraComponent* GameObject::AddCamera()
     {
-        if (CameraComponent* existing = GetCamera())
-        {
-            return existing;
-        }
-        auto component = std::make_unique<CameraComponent>();
-        CameraComponent* result = component.get();
-        m_components.push_back(std::move(component));
-        return result;
+        return AddComponent<CameraComponent>();
     }
 
     CameraComponent* GameObject::GetCamera() noexcept
     {
-        return static_cast<CameraComponent*>(FindComponent(ComponentType::Camera));
+        return static_cast<CameraComponent*>(GetComponent(CameraComponent::StaticTypeId));
     }
 
     const CameraComponent* GameObject::GetCamera() const noexcept
     {
         return static_cast<const CameraComponent*>(
-            FindComponent(ComponentType::Camera));
+            GetComponent(CameraComponent::StaticTypeId));
     }
 
     bool GameObject::RemoveCamera() noexcept
     {
-        return RemoveComponent(ComponentType::Camera);
+        return RemoveComponent(CameraComponent::StaticTypeId);
     }
 
-    bool GameObject::RemoveComponent(ComponentType type) noexcept
+    Component* GameObject::AddComponent(Reflection::TypeId type)
     {
-        if (type == ComponentType::Transform)
+        return InsertConfiguredComponent(m_registry.Create(type));
+    }
+
+    Component* GameObject::InsertConfiguredComponent(
+        std::unique_ptr<Component> component)
+    {
+        if (component == nullptr) return nullptr;
+        if (m_world.IsDispatchingLifecycle())
         {
+            std::cerr << "[GameObject] Component Add rejected during lifecycle dispatch\n";
+            return nullptr;
+        }
+        if (GetComponent(component->GetTypeId()) != nullptr)
+        {
+            return nullptr;
+        }
+        Component* result = component.get();
+        result->BindOwner(&m_world, m_handle);
+        m_components.push_back(std::move(component));
+        result->OnValidate();
+        if (!result->OnAttach())
+        {
+            result->ClearOwner();
+            m_components.pop_back();
+            return nullptr;
+        }
+        result->SetAttached(true);
+        if (m_world.IsGameplayStarted() && !result->OnStart())
+        {
+            result->OnDetach();
+            result->ClearOwner();
+            m_components.pop_back();
+            return nullptr;
+        }
+        if (m_world.IsGameplayStarted())
+        {
+            result->SetStarted(true);
+        }
+        return result;
+    }
+
+    bool GameObject::RemoveComponent(Reflection::TypeId type) noexcept
+    {
+        if (type == TransformComponent::StaticTypeId
+            || m_world.IsDispatchingLifecycle())
+        {
+            if (m_world.IsDispatchingLifecycle())
+                std::cerr << "[GameObject] Component Remove rejected during lifecycle dispatch\n";
             return false;
         }
         const auto component = std::find_if(
             m_components.begin(), m_components.end(),
             [type](const std::unique_ptr<Component>& candidate)
-            { return candidate->GetType() == type; });
+            { return candidate->GetTypeId() == type; });
         if (component == m_components.end())
         {
             return false;
         }
+        Component& value = **component;
+        if (value.IsStarted())
+        {
+            value.OnStop();
+            value.SetStarted(false);
+        }
+        if (value.IsAttached())
+        {
+            value.OnDetach();
+            value.SetAttached(false);
+        }
+        value.ClearOwner();
         m_components.erase(component);
         return true;
     }
 
-    std::unique_ptr<GameObject> GameObject::Clone(
-        GameObjectHandle target_handle) const
+    std::vector<Component*> GameObject::EnumerateComponents() noexcept
     {
-        auto result = std::unique_ptr<GameObject>(
-            new GameObject(m_id, target_handle, m_name));
-        result->m_components.clear();
-        result->m_components.reserve(m_components.size());
-        for (const std::unique_ptr<Component>& component : m_components)
-        {
-            result->m_components.push_back(component->Clone());
-        }
+        std::vector<Component*> result;
+        result.reserve(m_components.size());
+        for (auto& component : m_components) result.push_back(component.get());
         return result;
     }
+
+    std::vector<const Component*> GameObject::EnumerateComponents() const
+    {
+        std::vector<const Component*> result;
+        result.reserve(m_components.size());
+        for (const auto& component : m_components) result.push_back(component.get());
+        return result;
+    }
+
+    bool GameObject::StartComponents()
+    {
+        std::size_t started = 0;
+        for (; started < m_components.size(); ++started)
+        {
+            Component& component = *m_components[started];
+            if (!component.OnStart())
+            {
+                while (started > 0)
+                {
+                    Component& rollback = *m_components[--started];
+                    rollback.OnStop();
+                    rollback.SetStarted(false);
+                }
+                return false;
+            }
+            component.SetStarted(true);
+        }
+        return true;
+    }
+
+    void GameObject::FixedTickComponents(float delta_seconds)
+    {
+        for (auto& component : m_components) component->FixedTick(delta_seconds);
+    }
+
+    void GameObject::TickComponents(float delta_seconds)
+    {
+        for (auto& component : m_components) component->Tick(delta_seconds);
+    }
+
+    void GameObject::StopComponents() noexcept
+    {
+        for (auto it = m_components.rbegin(); it != m_components.rend(); ++it)
+        {
+            if ((*it)->IsStarted())
+            {
+                (*it)->OnStop();
+                (*it)->SetStarted(false);
+            }
+        }
+    }
+
+    void GameObject::DetachComponents() noexcept
+    {
+        StopComponents();
+        for (auto it = m_components.rbegin(); it != m_components.rend(); ++it)
+        {
+            if ((*it)->IsAttached())
+            {
+                (*it)->OnDetach();
+                (*it)->SetAttached(false);
+            }
+            (*it)->ClearOwner();
+        }
+    }
+
 }

@@ -19,6 +19,7 @@ target_link_libraries(MEngineLaunch
     PUBLIC
         MEngineRenderCore
     PRIVATE
+        MEngineAsset
         MEngineCore
         MEnginePlatform
         MEngineReflection

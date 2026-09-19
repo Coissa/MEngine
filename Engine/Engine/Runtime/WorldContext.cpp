@@ -1,7 +1,6 @@
 #include "WorldContext.h"
 #include "GameInstance.h"
 #include "World.h"
-
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -11,174 +10,133 @@ namespace GE::Runtime
 {
     namespace
     {
-        [[nodiscard]] const char* GetWorldTypeName(WorldType world_type) noexcept
+        const char* WorldTypeName(WorldType type) noexcept
         {
-            switch (world_type)
+            switch (type)
             {
-            case WorldType::Game:
-                return "Game";
-            case WorldType::Editor:
-                return "Editor";
-            case WorldType::PIE:
-                return "PIE";
-            case WorldType::None:
-            default:
-                return "None";
+            case WorldType::Game: return "Game";
+            case WorldType::Editor: return "Editor";
+            case WorldType::PIE: return "PIE";
+            default: return "None";
             }
         }
     }
 
-    WorldContext::WorldContext(
-        WorldType world_type,
-        std::unique_ptr<World> world,
-        std::unique_ptr<GameInstance> game_instance
-    ) noexcept
-        : m_world_type(world_type)
-        , m_world(std::move(world))
-        , m_game_instance(std::move(game_instance))
+    WorldContext::WorldContext(WorldType world_type, std::unique_ptr<World> world,
+        std::unique_ptr<GameInstance> game_instance, FixedStepSettings settings)
+        : m_world_type(world_type), m_world(std::move(world)),
+          m_game_instance(std::move(game_instance))
     {
+        if (world_type == WorldType::Game || world_type == WorldType::PIE)
+            m_scheduler = std::make_unique<FixedStepScheduler>(settings);
     }
 
-    WorldContext::~WorldContext() noexcept
-    {
-        Shutdown();
-    }
+    WorldContext::~WorldContext() noexcept { Shutdown(); }
 
-    [[nodiscard]] bool WorldContext::Initialize()
+    bool WorldContext::Initialize()
     {
-        if (m_state != State::Created)
-        {
-            std::cerr << "[WorldContext " << GetWorldTypeName(m_world_type)
-                      << "] Initialize called in invalid state\n";
-            return false;
-        }
-
+        if (m_state != State::Created || !HasValidObjectCombination()) return false;
         m_state = State::Failed;
-        if (!HasValidObjectCombination())
-        {
-            std::cerr << "[WorldContext " << GetWorldTypeName(m_world_type)
-                      << "] Initialize called with invalid object combination\n";
-            return false;
-        }
-
-        std::cout << "[WorldContext " << GetWorldTypeName(m_world_type)
+        std::cout << "[WorldContext " << WorldTypeName(m_world_type)
                   << "] Initialize\n";
-
         if (m_game_instance != nullptr && !m_game_instance->Initialize())
         {
             m_game_instance->Shutdown();
             return false;
         }
-
         if (!m_world->Initialize())
         {
-            m_world->Shutdown();
-            if (m_game_instance != nullptr)
-            {
-                m_game_instance->Shutdown();
-            }
+            if (m_game_instance != nullptr) m_game_instance->Shutdown();
             return false;
         }
-
+        if (m_world_type != WorldType::Editor && !m_world->StartGameplay())
+        {
+            m_world->Shutdown();
+            if (m_game_instance != nullptr) m_game_instance->Shutdown();
+            return false;
+        }
         m_state = State::Initialized;
         return true;
     }
 
-    void WorldContext::Tick(float delta_seconds)
+    void WorldContext::Tick(double real_delta_seconds, double real_elapsed_seconds)
     {
         if (m_state != State::Initialized)
+            throw std::logic_error("WorldContext::Tick called before initialization");
+        if (!std::isfinite(real_delta_seconds) || real_delta_seconds < 0.0)
+            throw std::invalid_argument("real delta must be finite and non-negative");
+        if (!std::isfinite(real_elapsed_seconds) || real_elapsed_seconds < 0.0)
+            throw std::invalid_argument("real elapsed must be finite and non-negative");
+        m_real_delta_seconds = real_delta_seconds;
+        m_real_elapsed_seconds = real_elapsed_seconds;
+        std::cout << "[WorldContext " << WorldTypeName(m_world_type)
+                  << "] Tick\n";
+        if (m_world_type == WorldType::Editor)
         {
-            std::cerr << "[WorldContext " << GetWorldTypeName(m_world_type)
-                      << "] Tick called in invalid state\n";
-            throw std::logic_error{
-                "WorldContext::Tick called before successful initialization"
-            };
-        }
-        if (!std::isfinite(delta_seconds) || delta_seconds < 0.0F)
-        {
-            throw std::invalid_argument{
-                "delta_seconds must be finite and non-negative"
-            };
+            m_game_delta_seconds = 0.0;
+            m_executed_substep_count = 0;
+            return;
         }
 
-        std::cout << "[WorldContext " << GetWorldTypeName(m_world_type)
-                  << "] Tick\n";
-        if (m_game_instance != nullptr)
+        const FixedStepFrame frame = m_scheduler->Advance(real_delta_seconds);
+        m_game_delta_seconds = frame.game_delta_seconds;
+        m_game_elapsed_seconds += frame.game_delta_seconds;
+        m_executed_substep_count = frame.substep_count;
+        m_simulation_elapsed_seconds += frame.fixed_delta_seconds * frame.substep_count;
+        m_interpolation_alpha = frame.interpolation_alpha;
+        m_dropped_time_seconds += frame.dropped_seconds;
+
+        for (std::uint32_t step = 0; step < frame.substep_count; ++step)
+            m_world->FixedTick(static_cast<float>(frame.fixed_delta_seconds));
+
+        if (!m_scheduler->IsPaused() || frame.single_step)
         {
-            m_game_instance->Tick(delta_seconds);
+            const float delta = static_cast<float>(
+                frame.single_step ? frame.fixed_delta_seconds : frame.game_delta_seconds);
+            if (m_game_instance != nullptr) m_game_instance->Tick(delta);
+            m_world->Tick(delta);
         }
-        m_world->Tick(delta_seconds);
     }
 
     void WorldContext::Shutdown() noexcept
     {
-        if (m_state == State::Shutdown)
-        {
-            return;
-        }
-
+        if (m_state == State::Shutdown) return;
         m_state = State::Shutdown;
         try
         {
-            std::cout << "[WorldContext " << GetWorldTypeName(m_world_type)
+            std::cout << "[WorldContext " << WorldTypeName(m_world_type)
                       << "] Shutdown\n";
         }
-        catch (...)
-        {
-        }
-
-        if (m_world != nullptr)
-        {
-            m_world->Shutdown();
-        }
-        if (m_game_instance != nullptr)
-        {
-            m_game_instance->Shutdown();
-        }
+        catch (...) {}
+        if (m_world != nullptr) m_world->Shutdown();
+        if (m_game_instance != nullptr) m_game_instance->Shutdown();
     }
+    void WorldContext::SetPaused(bool value) noexcept
+    { if (m_scheduler != nullptr) m_scheduler->SetPaused(value); }
+    bool WorldContext::IsPaused() const noexcept
+    { return m_scheduler != nullptr && m_scheduler->IsPaused(); }
+    bool WorldContext::RequestSingleStep() noexcept
+    { return m_scheduler != nullptr && m_scheduler->RequestSingleStep(); }
+    bool WorldContext::IsInitialized() const noexcept { return m_state == State::Initialized; }
+    WorldType WorldContext::GetWorldType() const noexcept { return m_world_type; }
+    const World* WorldContext::GetWorld() const noexcept { return m_world.get(); }
+    World* WorldContext::GetWorld() noexcept { return m_world.get(); }
+    const GameInstance* WorldContext::GetGameInstance() const noexcept { return m_game_instance.get(); }
+    double WorldContext::GetGameDeltaSeconds() const noexcept { return m_game_delta_seconds; }
+    double WorldContext::GetRealDeltaSeconds() const noexcept { return m_real_delta_seconds; }
+    double WorldContext::GetRealElapsedSeconds() const noexcept { return m_real_elapsed_seconds; }
+    double WorldContext::GetGameElapsedSeconds() const noexcept { return m_game_elapsed_seconds; }
+    double WorldContext::GetSimulationElapsedSeconds() const noexcept { return m_simulation_elapsed_seconds; }
+    double WorldContext::GetInterpolationAlpha() const noexcept { return m_interpolation_alpha; }
+    std::uint32_t WorldContext::GetExecutedSubstepCount() const noexcept { return m_executed_substep_count; }
+    double WorldContext::GetDroppedTimeSeconds() const noexcept { return m_dropped_time_seconds; }
 
-    [[nodiscard]] bool WorldContext::IsInitialized() const noexcept
+    bool WorldContext::HasValidObjectCombination() const noexcept
     {
-        return m_state == State::Initialized;
-    }
-
-    [[nodiscard]] WorldType WorldContext::GetWorldType() const noexcept
-    {
-        return m_world_type;
-    }
-
-    [[nodiscard]] const World* WorldContext::GetWorld() const noexcept
-    {
-        return m_world.get();
-    }
-
-    [[nodiscard]] World* WorldContext::GetWorld() noexcept
-    {
-        return m_world.get();
-    }
-
-    [[nodiscard]] const GameInstance* WorldContext::GetGameInstance() const noexcept
-    {
-        return m_game_instance.get();
-    }
-
-    [[nodiscard]] bool WorldContext::HasValidObjectCombination() const noexcept
-    {
-        if (m_world == nullptr)
-        {
-            return false;
-        }
-
-        switch (m_world_type)
-        {
-        case WorldType::Game:
-        case WorldType::PIE:
-            return m_game_instance != nullptr;
-        case WorldType::Editor:
-            return m_game_instance == nullptr;
-        case WorldType::None:
-        default:
-            return false;
-        }
+        if (m_world == nullptr) return false;
+        if (m_world_type == WorldType::Editor)
+            return m_game_instance == nullptr && m_scheduler == nullptr;
+        return (m_world_type == WorldType::Game || m_world_type == WorldType::PIE)
+            && m_game_instance != nullptr && m_scheduler != nullptr;
     }
 }

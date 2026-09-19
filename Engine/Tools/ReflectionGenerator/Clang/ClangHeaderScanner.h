@@ -51,6 +51,12 @@ namespace GE::Reflection::Generator
         ClangFieldAccess access;
         bool is_const;
         bool is_bit_field;
+        std::string serialized_name;
+        bool is_required = false;
+        bool is_transient = false;
+        bool is_pointer = false;
+        bool is_reference = false;
+        bool is_array = false;
     };
 
     struct ClangParameterDeclaration
@@ -96,6 +102,26 @@ namespace GE::Reflection::Generator
         std::uint32_t column;
         std::vector<ClangFieldDeclaration> fields;
         std::vector<ClangFunctionDeclaration> functions;
+        std::string stable_name;
+        bool is_serializable = false;
+        bool has_explicit_stable_name = false;
+    };
+
+    struct ClangEnumValueDeclaration
+    {
+        std::string name;
+        std::uint64_t raw_value = 0;
+    };
+
+    struct ClangEnumDeclaration
+    {
+        std::string qualified_name;
+        std::string underlying_type_spelling;
+        std::filesystem::path source_file;
+        std::uint32_t line = 0;
+        std::uint32_t column = 0;
+        std::vector<ClangEnumValueDeclaration> values;
+        std::string stable_name;
     };
 
     struct ClangHeaderScanOutput
@@ -104,6 +130,7 @@ namespace GE::Reflection::Generator
         std::filesystem::path header_path;
         std::vector<ClangRecordDeclaration> records;
         std::vector<ClangDiagnostic> diagnostics;
+        std::vector<ClangEnumDeclaration> enums;
     };
 
     enum class ClangHeaderScanErrorCode

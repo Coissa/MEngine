@@ -58,6 +58,20 @@ namespace
         return directory / "Shaders";
     }
 
+    [[nodiscard]] std::filesystem::path FindAssetDirectory(
+        int argument_count,
+        char** arguments)
+    {
+        const std::filesystem::path executable =
+            argument_count > 0 && arguments != nullptr
+                && arguments[0] != nullptr && arguments[0][0] != '\0'
+            ? std::filesystem::absolute(arguments[0])
+            : std::filesystem::current_path();
+        const std::filesystem::path directory = executable.has_parent_path()
+            ? executable.parent_path() : std::filesystem::current_path();
+        return directory / "Assets";
+    }
+
     [[nodiscard]] bool BuildMeshBounds(
         const GE::Render::RHIMeshDescription& mesh,
         GE::Editor::EditorMeshBounds& out_bounds) noexcept
@@ -176,6 +190,7 @@ int main(int argument_count, char** arguments)
         application->Show();
         // Editor/PIE 共用该进程级 Renderer；回调只生成当前帧的值快照。
         GE::Launch::EngineLoop engine_loop{
+            FindAssetDirectory(argument_count, arguments),
             std::move(application),
             std::move(renderer)
         };

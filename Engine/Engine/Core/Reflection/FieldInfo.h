@@ -17,15 +17,16 @@ namespace GE::Reflection
             {
                 None      = 0,
                 ReadOnly  = 1u << 0, //可读 不可获取可写地址
-                Transient = 1u << 1  //反射但不序列化
+                Transient = 1u << 1, //反射但不序列化
+                Required  = 1u << 2
             };
 
             using MutableGetter = void* (*)(void* owner) noexcept;
             using ConstGetter = const void* (*)(const void* owner) noexcept;
 
             FieldInfo() = delete;
-            FieldInfo(TypeId owner_type_id, TypeId value_type_id, std::string name, FieldFlags flags, MutableGetter mutable_getter, ConstGetter const_getter)
-                : m_owner_type_id(owner_type_id), m_value_type_id(value_type_id), m_name(std::move(name)), m_flags(flags), m_mutable_getter(mutable_getter), m_const_getter(const_getter) {}
+            FieldInfo(TypeId owner_type_id, TypeId value_type_id, std::string name, FieldFlags flags, MutableGetter mutable_getter, ConstGetter const_getter, std::string serialized_name = {})
+                : m_owner_type_id(owner_type_id), m_value_type_id(value_type_id), m_name(std::move(name)), m_serialized_name(std::move(serialized_name)), m_flags(flags), m_mutable_getter(mutable_getter), m_const_getter(const_getter) {}
 
             [[nodiscard]] friend constexpr FieldFlags operator|(
                 FieldFlags lhs,
@@ -72,6 +73,16 @@ namespace GE::Reflection
                 return m_name;
             }
 
+            [[nodiscard]] std::string_view GetSerializedName() const noexcept
+            {
+                return m_serialized_name;
+            }
+
+            [[nodiscard]] bool IsRequired() const noexcept
+            {
+                return HasFlag(FieldFlags::Required);
+            }
+
             [[nodiscard]] FieldFlags GetFlags() const noexcept
             {
                 return m_flags;
@@ -102,6 +113,7 @@ namespace GE::Reflection
             TypeId m_owner_type_id;//字段所属类
             TypeId m_value_type_id;//字段类型
             std::string m_name;    //字段名
+            std::string m_serialized_name;
             FieldFlags m_flags;
 
 

@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Component.h"
+#include "ComponentRegistry.h"
 #include "GameObjectHandle.h"
 
 #include <memory>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -39,21 +41,56 @@ namespace GE::Runtime
         [[nodiscard]] const CameraComponent* GetCamera() const noexcept;
         [[nodiscard]] bool RemoveCamera() noexcept;
 
+        [[nodiscard]] Component* AddComponent(Reflection::TypeId type_id);
+        [[nodiscard]] Component* GetComponent(Reflection::TypeId type_id) noexcept;
+        [[nodiscard]] const Component* GetComponent(Reflection::TypeId type_id) const noexcept;
+        [[nodiscard]] bool RemoveComponent(Reflection::TypeId type_id) noexcept;
+        [[nodiscard]] std::vector<Component*> EnumerateComponents() noexcept;
+        [[nodiscard]] std::vector<const Component*> EnumerateComponents() const;
+
+        template<typename T>
+        [[nodiscard]] T* AddComponent()
+        {
+            return static_cast<T*>(AddComponent(T::StaticTypeId));
+        }
+
+        template<typename T>
+        [[nodiscard]] T* GetComponent() noexcept
+        {
+            return static_cast<T*>(GetComponent(T::StaticTypeId));
+        }
+
+        template<typename T>
+        [[nodiscard]] const T* GetComponent() const noexcept
+        {
+            return static_cast<const T*>(GetComponent(T::StaticTypeId));
+        }
+
+        template<typename T>
+        [[nodiscard]] bool RemoveComponent() noexcept
+        {
+            return RemoveComponent(T::StaticTypeId);
+        }
+
     private:
         friend class World;
 
         GameObject(
+            World& world,
+            const ComponentRegistry& registry,
             GameObjectId id,
             GameObjectHandle handle,
             std::string name);
 
-        [[nodiscard]] Component* FindComponent(ComponentType type) noexcept;
-        [[nodiscard]] const Component* FindComponent(
-            ComponentType type) const noexcept;
-        [[nodiscard]] bool RemoveComponent(ComponentType type) noexcept;
-        [[nodiscard]] std::unique_ptr<GameObject> Clone(
-            GameObjectHandle target_handle) const;
-
+        [[nodiscard]] Component* InsertConfiguredComponent(
+            std::unique_ptr<Component> component);
+        [[nodiscard]] bool StartComponents();
+        void FixedTickComponents(float delta_seconds);
+        void TickComponents(float delta_seconds);
+        void StopComponents() noexcept;
+        void DetachComponents() noexcept;
+        World& m_world;
+        const ComponentRegistry& m_registry;
         GameObjectId m_id;
         GameObjectHandle m_handle;
         std::string m_name;

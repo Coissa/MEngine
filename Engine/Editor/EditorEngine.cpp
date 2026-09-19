@@ -15,18 +15,21 @@
 #include <memory>
 #include <optional>
 #include <stdexcept>
+#include <sstream>
 #include <utility>
 
 namespace GE::Editor
 {
-    EditorEngine::EditorEngine(std::int32_t editor_scene_state) noexcept
-        : m_editor_scene_state(editor_scene_state)
+    EditorEngine::EditorEngine(std::int32_t editor_scene_state,
+        GE::Runtime::FixedStepSettings settings) noexcept
+        : m_editor_scene_state(editor_scene_state), m_fixed_step_settings(settings)
     {
     }
 
-    EditorEngine::EditorEngine(std::filesystem::path scene_path)
+    EditorEngine::EditorEngine(std::filesystem::path scene_path,
+        GE::Runtime::FixedStepSettings settings)
         : m_editor_scene_state(0),
-          m_initial_scene_path(std::move(scene_path))
+          m_initial_scene_path(std::move(scene_path)), m_fixed_step_settings(settings)
     {
     }
 
@@ -35,7 +38,7 @@ namespace GE::Editor
         Shutdown();
     }
 
-    bool EditorEngine::Initialize()
+    bool EditorEngine::Initialize(const GE::Runtime::EngineServices& services)
     {
         if (m_state != State::Created)
         {
@@ -44,6 +47,25 @@ namespace GE::Editor
         }
 
         m_state = State::Failed;
+        m_component_registry = &services.component_registry;
+        m_type_registry = &services.reflection_registry;
+        std::string settings_error;
+        if (!m_fixed_step_settings.Validate(settings_error))
+        {
+            std::cerr << "[EditorEngine] Invalid fixed-step settings: "
+                      << settings_error << '\n';
+            return false;
+        }
+        if (!m_inspector_registry.RegisterSpecialized(
+                GE::Runtime::TransformComponent::StaticTypeId)
+            || !m_inspector_registry.RegisterSpecialized(
+                GE::Runtime::MeshRendererComponent::StaticTypeId)
+            || !m_inspector_registry.RegisterSpecialized(
+                GE::Runtime::CameraComponent::StaticTypeId)
+            || !m_inspector_registry.Freeze())
+        {
+            return false;
+        }
         std::cout << "[EditorEngine] Initialize\n";
 
         std::unique_ptr<GE::Runtime::World> editor_world;
@@ -51,12 +73,13 @@ namespace GE::Editor
         if (!m_initial_scene_path.empty())
         {
             editor_world = GE::Runtime::SceneSerializer::LoadFromFile(
-                m_initial_scene_path, scene_error);
+                m_initial_scene_path, services.component_registry, scene_error);
         }
         else
         {
             editor_world =
-                std::make_unique<GE::Runtime::World>(m_editor_scene_state);
+                std::make_unique<GE::Runtime::World>(
+                    m_editor_scene_state, services.component_registry);
             if (!GE::Runtime::PopulateBuiltinScene(*editor_world))
             {
                 editor_world.reset();
@@ -88,7 +111,7 @@ namespace GE::Editor
         return true;
     }
 
-    void EditorEngine::Tick(float delta_seconds)
+    void EditorEngine::Tick(const GE::Runtime::EngineFrameTime& frame_time)
     {
         if (m_state != State::Initialized)
         {
@@ -97,7 +120,8 @@ namespace GE::Editor
                 "EditorEngine::Tick called before successful initialization"
             };
         }
-        if (!std::isfinite(delta_seconds) || delta_seconds < 0.0F)
+        if (!std::isfinite(frame_time.real_delta_seconds)
+            || frame_time.real_delta_seconds < 0.0)
         {
             throw std::invalid_argument{
                 "delta_seconds must be finite and non-negative"
@@ -107,10 +131,12 @@ namespace GE::Editor
         std::cout << "[EditorEngine] Tick\n";
 
         ApplyPendingCommands();
-        m_editor_world_context->Tick(delta_seconds);
+        m_editor_world_context->Tick(
+            frame_time.real_delta_seconds, frame_time.real_elapsed_seconds);
         if (m_pie_world_context != nullptr)
         {
-            m_pie_world_context->Tick(delta_seconds);
+            m_pie_world_context->Tick(
+                frame_time.real_delta_seconds, frame_time.real_elapsed_seconds);
         }
     }
 
@@ -181,7 +207,8 @@ namespace GE::Editor
             std::make_unique<GE::Runtime::WorldContext>(
                 GE::Runtime::WorldType::PIE,
                 std::move(pie_world),
-                std::move(game_instance)
+                std::move(game_instance),
+                m_fixed_step_settings
             );
         if (!pie_world_context->Initialize())
         {
@@ -217,6 +244,18 @@ namespace GE::Editor
         m_pie_world_context->Shutdown();
         m_pie_world_context.reset();
         m_pie_selected_object = {};
+    }
+
+    void EditorEngine::SetPlaySessionPaused(bool paused) noexcept
+    {
+        if (m_pie_world_context != nullptr)
+            m_pie_world_context->SetPaused(paused);
+    }
+
+    bool EditorEngine::RequestPlaySessionSingleStep() noexcept
+    {
+        return m_pie_world_context != nullptr
+            && m_pie_world_context->RequestSingleStep();
     }
 
     [[nodiscard]] bool EditorEngine::IsPlaySessionRunning() const noexcept
@@ -283,7 +322,8 @@ namespace GE::Editor
 
     bool EditorEngine::NewScene(std::string& out_error)
     {
-        auto world = std::make_unique<GE::Runtime::World>(0);
+        auto world = std::make_unique<GE::Runtime::World>(
+            0, *m_component_registry);
         if (!GE::Runtime::PopulateBuiltinScene(*world))
         {
             out_error = "Could not populate built-in scene";
@@ -297,7 +337,8 @@ namespace GE::Editor
         std::string& out_error)
     {
         std::unique_ptr<GE::Runtime::World> world =
-            GE::Runtime::SceneSerializer::LoadFromFile(path, out_error);
+            GE::Runtime::SceneSerializer::LoadFromFile(
+                path, *m_component_registry, out_error);
         return world != nullptr
             && ReplaceEditorWorld(std::move(world), out_error);
     }
@@ -473,6 +514,16 @@ namespace GE::Editor
     bool EditorEngine::IsSceneDirty() const noexcept
     {
         return m_scene_dirty;
+    }
+
+    const InspectorRegistry& EditorEngine::GetInspectorRegistry() const noexcept
+    {
+        return m_inspector_registry;
+    }
+
+    const GE::Reflection::TypeRegistry& EditorEngine::GetReflectionRegistry() const noexcept
+    {
+        return *m_type_registry;
     }
 
     bool EditorEngine::ReplaceEditorWorld(
@@ -706,6 +757,46 @@ namespace GE::Editor
             }
             switch (command.type)
             {
+            case EditorCommandType::AddComponent:
+            case EditorCommandType::PatchComponent:
+            {
+                const GE::Runtime::ComponentDescriptor* descriptor =
+                    m_component_registry->Find(command.component_type_id);
+                if (descriptor == nullptr
+                    || descriptor->version != command.component_version)
+                {
+                    break;
+                }
+                std::unique_ptr<GE::Runtime::Component> temporary =
+                    descriptor->factory();
+                std::istringstream payload(command.component_payload);
+                std::string error;
+                if (temporary == nullptr
+                    || !descriptor->load(*temporary, payload,
+                        command.component_version, error))
+                {
+                    break;
+                }
+                bool changed = false;
+                if (command.type == EditorCommandType::AddComponent)
+                {
+                    changed = world->AddConfiguredComponent(
+                        command.target, std::move(temporary)) != nullptr;
+                }
+                else if (GE::Runtime::Component* target =
+                    object->GetComponent(command.component_type_id))
+                {
+                    changed = m_component_registry->CopyConfiguration(
+                        *target, *temporary);
+                    if (changed) target->OnValidate();
+                }
+                if (changed) MarkUntrackedSceneEdit();
+                break;
+            }
+            case EditorCommandType::RemoveComponent:
+                if (object->RemoveComponent(command.component_type_id))
+                    MarkUntrackedSceneEdit();
+                break;
             case EditorCommandType::DeleteObject:
             {
                 const GE::Runtime::GameObjectId deleted_id = object->GetId();
@@ -738,33 +829,6 @@ namespace GE::Editor
                 break;
             case EditorCommandType::PreviewTransformEdit:
                 PreviewTransformEdit(*object, command.transform);
-                break;
-            case EditorCommandType::SetMeshRenderer:
-                if (GE::Runtime::MeshRendererComponent* mesh =
-                    object->AddMeshRenderer())
-                {
-                    *mesh = command.mesh_renderer;
-                    MarkUntrackedSceneEdit();
-                }
-                break;
-            case EditorCommandType::RemoveMeshRenderer:
-                if (object->RemoveMeshRenderer())
-                {
-                    MarkUntrackedSceneEdit();
-                }
-                break;
-            case EditorCommandType::SetCamera:
-                if (GE::Runtime::CameraComponent* camera = object->AddCamera())
-                {
-                    *camera = command.camera;
-                    MarkUntrackedSceneEdit();
-                }
-                break;
-            case EditorCommandType::RemoveCamera:
-                if (object->RemoveCamera())
-                {
-                    MarkUntrackedSceneEdit();
-                }
                 break;
             default:
                 break;

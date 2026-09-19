@@ -15,14 +15,15 @@
 
 namespace GE::Runtime
 {
-    GameEngine::GameEngine(std::int32_t initial_scene_state) noexcept
-        : m_initial_scene_state(initial_scene_state)
+    GameEngine::GameEngine(std::int32_t initial_scene_state,
+        FixedStepSettings settings) noexcept
+        : m_initial_scene_state(initial_scene_state), m_fixed_step_settings(settings)
     {
     }
 
-    GameEngine::GameEngine(std::filesystem::path scene_path)
+    GameEngine::GameEngine(std::filesystem::path scene_path, FixedStepSettings settings)
         : m_initial_scene_state(0),
-          m_initial_scene_path(std::move(scene_path))
+          m_initial_scene_path(std::move(scene_path)), m_fixed_step_settings(settings)
     {
     }
 
@@ -31,7 +32,7 @@ namespace GE::Runtime
         Shutdown();
     }
 
-    bool GameEngine::Initialize()
+    bool GameEngine::Initialize(const EngineServices& services)
     {
         if (m_state != State::Created)
         {
@@ -42,11 +43,20 @@ namespace GE::Runtime
         m_state = State::Failed;
         std::cout << "[GameEngine] Initialize\n";
 
+        std::string settings_error;
+        if (!m_fixed_step_settings.Validate(settings_error))
+        {
+            std::cerr << "[GameEngine] Invalid fixed-step settings: "
+                      << settings_error << '\n';
+            return false;
+        }
+
         std::unique_ptr<World> world;
         if (!m_initial_scene_path.empty())
         {
             std::string error;
-            world = SceneSerializer::LoadFromFile(m_initial_scene_path, error);
+            world = SceneSerializer::LoadFromFile(
+                m_initial_scene_path, services.component_registry, error);
             if (world == nullptr)
             {
                 std::cerr << "[GameEngine] Scene load failed: " << error << '\n';
@@ -55,7 +65,8 @@ namespace GE::Runtime
         }
         else
         {
-            world = std::make_unique<World>(m_initial_scene_state);
+            world = std::make_unique<World>(
+                m_initial_scene_state, services.component_registry);
         }
         if (m_initial_scene_path.empty() && !PopulateBuiltinScene(*world))
         {
@@ -66,7 +77,8 @@ namespace GE::Runtime
         auto world_context = std::make_unique<WorldContext>(
             WorldType::Game,
             std::move(world),
-            std::move(game_instance)
+            std::move(game_instance),
+            m_fixed_step_settings
         );
         if (!world_context->Initialize())
         {
@@ -78,7 +90,7 @@ namespace GE::Runtime
         return true;
     }
 
-    void GameEngine::Tick(float delta_seconds)
+    void GameEngine::Tick(const EngineFrameTime& frame_time)
     {
         if (m_state != State::Initialized)
         {
@@ -87,7 +99,8 @@ namespace GE::Runtime
                 "GameEngine::Tick called before successful initialization"
             };
         }
-        if (!std::isfinite(delta_seconds) || delta_seconds < 0.0F)
+        if (!std::isfinite(frame_time.real_delta_seconds)
+            || frame_time.real_delta_seconds < 0.0)
         {
             throw std::invalid_argument{
                 "delta_seconds must be finite and non-negative"
@@ -96,7 +109,8 @@ namespace GE::Runtime
 
         std::cout << "[GameEngine] Tick\n";
 
-        m_world_context->Tick(delta_seconds);
+        m_world_context->Tick(
+            frame_time.real_delta_seconds, frame_time.real_elapsed_seconds);
     }
 
     void GameEngine::Shutdown() noexcept
@@ -125,6 +139,17 @@ namespace GE::Runtime
     [[nodiscard]] const WorldContext* GameEngine::GetWorldContext() const noexcept
     {
         return m_world_context.get();
+    }
+
+    void GameEngine::SetPaused(bool paused) noexcept
+    {
+        if (m_world_context != nullptr) m_world_context->SetPaused(paused);
+    }
+
+    bool GameEngine::RequestSingleStep() noexcept
+    {
+        return m_world_context != nullptr
+            && m_world_context->RequestSingleStep();
     }
 
     bool GameEngine::BuildRenderFrame(

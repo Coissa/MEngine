@@ -1,6 +1,9 @@
 add_library(MEngineCore STATIC
+    Diagnostics/EngineError.cpp
+    Diagnostics/EngineError.h
     Diagnostics/Log.cpp
     Diagnostics/Log.h
+    Diagnostics/Result.h
     Math/angle.h
     Math/conventions.h
     Math/geometry.h

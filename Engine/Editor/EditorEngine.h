@@ -2,9 +2,11 @@
 
 #include "EditorCamera.h"
 #include <Engine/Runtime/Engine.h>
+#include <Engine/Runtime/FixedStepScheduler.h>
 #include "EditorCommand.h"
 #include "EditorScenePicker.h"
 #include "EditorTransaction.h"
+#include "InspectorRegistry.h"
 
 #include <array>
 #include <cstdint>
@@ -16,10 +18,13 @@
 
 namespace GE::Runtime
 {
+    class ComponentRegistry;
     class GameObject;
     class World;
     class WorldContext;
 }
+
+namespace GE::Reflection { class TypeRegistry; }
 
 namespace GE::Platform
 {
@@ -35,19 +40,24 @@ namespace GE::Editor
     {
     public:
         explicit EditorEngine(
-            std::int32_t editor_scene_state = 0
+            std::int32_t editor_scene_state = 0,
+            GE::Runtime::FixedStepSettings fixed_step_settings = {}
         ) noexcept;
-        explicit EditorEngine(std::filesystem::path scene_path);
+        explicit EditorEngine(std::filesystem::path scene_path,
+            GE::Runtime::FixedStepSettings fixed_step_settings = {});
         ~EditorEngine() noexcept override;
 
-        [[nodiscard]] bool Initialize() override;
-        void Tick(float delta_seconds) override;
+        [[nodiscard]] bool Initialize(
+            const GE::Runtime::EngineServices& services) override;
+        void Tick(const GE::Runtime::EngineFrameTime& frame_time) override;
         void Shutdown() noexcept override;
         [[nodiscard]] bool BuildRenderFrame(
             GE::RenderCore::RenderFrame& out_frame) noexcept override;
 
         [[nodiscard]] bool StartPlaySession();
         void StopPlaySession() noexcept;
+        void SetPlaySessionPaused(bool paused) noexcept;
+        [[nodiscard]] bool RequestPlaySessionSingleStep() noexcept;
 
         [[nodiscard]] bool IsPlaySessionRunning() const noexcept;
         [[nodiscard]] bool NewScene(std::string& out_error);
@@ -84,6 +94,8 @@ namespace GE::Editor
         [[nodiscard]] bool CanUndo() const noexcept;
         [[nodiscard]] bool CanRedo() const noexcept;
         [[nodiscard]] bool IsSceneDirty() const noexcept;
+        [[nodiscard]] const InspectorRegistry& GetInspectorRegistry() const noexcept;
+        [[nodiscard]] const GE::Reflection::TypeRegistry& GetReflectionRegistry() const noexcept;
         [[nodiscard]] const GE::Runtime::WorldContext*
         GetEditorWorldContext() const noexcept;
         [[nodiscard]] const GE::Runtime::WorldContext*
@@ -116,6 +128,10 @@ namespace GE::Editor
         GE::Runtime::GameObjectId m_pie_selected_object;
         std::string m_workflow_status;
         bool m_scene_dirty = false;
+        const GE::Runtime::ComponentRegistry* m_component_registry = nullptr;
+        const GE::Reflection::TypeRegistry* m_type_registry = nullptr;
+        GE::Runtime::FixedStepSettings m_fixed_step_settings;
+        InspectorRegistry m_inspector_registry;
         State m_state = State::Created;
 
         [[nodiscard]] bool ReplaceEditorWorld(

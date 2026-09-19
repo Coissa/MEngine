@@ -50,6 +50,20 @@ namespace
             ? executable.parent_path() : std::filesystem::current_path();
         return directory / "Shaders";
     }
+
+    [[nodiscard]] std::filesystem::path FindAssetDirectory(
+        int argument_count,
+        char** arguments)
+    {
+        const std::filesystem::path executable =
+            argument_count > 0 && arguments != nullptr
+                && arguments[0] != nullptr && arguments[0][0] != '\0'
+            ? std::filesystem::absolute(arguments[0])
+            : std::filesystem::current_path();
+        const std::filesystem::path directory = executable.has_parent_path()
+            ? executable.parent_path() : std::filesystem::current_path();
+        return directory / "Assets";
+    }
 }
 
 int main(int argument_count, char** arguments)
@@ -96,6 +110,7 @@ int main(int argument_count, char** arguments)
         application->Show();
         // 示例函数只生成值快照；EngineLoop 和 Renderer 都不拥有它引用的场景对象。
         GE::Launch::EngineLoop engine_loop{
+            FindAssetDirectory(argument_count, arguments),
             std::move(application),
             std::move(renderer)
         };

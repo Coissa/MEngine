@@ -96,6 +96,14 @@ namespace GE::Reflection::Generator
                     scan_output,
                     record));
             }
+            if (record.is_serializable && !record.has_explicit_stable_name)
+            {
+                errors.push_back(MakeRecordError(
+                    ClangDeclarationValidationErrorCode::
+                        SerializableTypeRequiresStableName,
+                    scan_output,
+                    record));
+            }
 
             std::unordered_set<std::string> field_names;
             field_names.reserve(record.fields.size());
@@ -148,6 +156,45 @@ namespace GE::Reflection::Generator
                         scan_output,
                         record,
                         field));
+                }
+
+                if (field.is_pointer)
+                {
+                    errors.push_back(MakeFieldError(
+                        ClangDeclarationValidationErrorCode::UnsupportedPointerField,
+                        scan_output, record, field));
+                }
+                if (field.is_reference)
+                {
+                    errors.push_back(MakeFieldError(
+                        ClangDeclarationValidationErrorCode::UnsupportedReferenceField,
+                        scan_output, record, field));
+                }
+                if (field.is_array)
+                {
+                    errors.push_back(MakeFieldError(
+                        ClangDeclarationValidationErrorCode::UnsupportedArrayField,
+                        scan_output, record, field));
+                }
+                if (record.is_serializable && !field.is_transient
+                    && field.serialized_name.empty())
+                {
+                    errors.push_back(MakeFieldError(
+                        ClangDeclarationValidationErrorCode::
+                            PersistentFieldRequiresSerializedName,
+                        scan_output, record, field));
+                }
+                if (field.is_required && field.is_transient)
+                {
+                    errors.push_back(MakeFieldError(
+                        ClangDeclarationValidationErrorCode::RequiredTransientField,
+                        scan_output, record, field));
+                }
+                if (record.is_serializable && !field.is_transient && field.is_const)
+                {
+                    errors.push_back(MakeFieldError(
+                        ClangDeclarationValidationErrorCode::PersistentReadOnlyField,
+                        scan_output, record, field));
                 }
             }
 

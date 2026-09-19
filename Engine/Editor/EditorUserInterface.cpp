@@ -13,6 +13,9 @@
 #include <Engine/Runtime/GameObject.h>
 #include <Engine/Runtime/World.h>
 #include <Engine/Runtime/WorldContext.h>
+#include <FieldInfo.h>
+#include <TypeInfo.h>
+#include <TypeRegistry.h>
 
 #include <Windows.h>
 #include <imgui.h>
@@ -699,7 +702,11 @@ namespace GE::Editor
                     "Scale", transform.scale.data(), 0.02F, 0.001F, 1000.0F);
 
                 if (GE::Runtime::MeshRendererComponent* mesh =
-                    selected->GetMeshRenderer())
+                    selected->GetMeshRenderer();
+                    mesh != nullptr
+                    && editor.GetInspectorRegistry().Resolve(
+                        mesh->GetTypeId(), editor.GetReflectionRegistry())
+                        == InspectorDrawMode::Specialized)
                 {
                     ImGui::Separator();
                     ImGui::TextUnformatted("Mesh Renderer");
@@ -714,36 +721,49 @@ namespace GE::Editor
                         && mesh_id > 0 && material_id > 0)
                     {
                         EditorCommand command{
-                            .type = EditorCommandType::SetMeshRenderer};
+                            .type = EditorCommandType::PatchComponent};
                         command.target = selected->GetHandle();
-                        command.mesh_renderer = *mesh;
-                        command.mesh_renderer.mesh.value =
+                        GE::Runtime::MeshRendererComponent value = *mesh;
+                        value.mesh.value =
                             static_cast<std::uint32_t>(mesh_id);
-                        command.mesh_renderer.material.value =
+                        value.material.value =
                             static_cast<std::uint32_t>(material_id);
-                        command.mesh_renderer.visible = visible;
-                        Queue(editor, std::move(command));
+                        value.visible = visible;
+                        std::string error;
+                        if (SetComponentPayload(command, value,
+                                world->GetComponentRegistry(), error))
+                            Queue(editor, std::move(command));
                     }
                     if (!editor.IsPlaySessionRunning()
                         && ImGui::Button("Remove Mesh Renderer"))
                     {
                         Queue(editor, {
-                            .type = EditorCommandType::RemoveMeshRenderer,
-                            .target = selected->GetHandle()});
+                            .type = EditorCommandType::RemoveComponent,
+                            .target = selected->GetHandle(),
+                            .component_type_id =
+                                GE::Runtime::MeshRendererComponent::StaticTypeId});
                     }
                 }
                 else if (!editor.IsPlaySessionRunning()
                     && ImGui::Button("Add Mesh Renderer"))
                 {
                     EditorCommand command{
-                        .type = EditorCommandType::SetMeshRenderer};
+                        .type = EditorCommandType::AddComponent};
                     command.target = selected->GetHandle();
-                    command.mesh_renderer.mesh.value = 1;
-                    command.mesh_renderer.material.value = 1;
-                    Queue(editor, std::move(command));
+                    GE::Runtime::MeshRendererComponent value;
+                    value.mesh.value = 1;
+                    value.material.value = 1;
+                    std::string error;
+                    if (SetComponentPayload(command, value,
+                            world->GetComponentRegistry(), error))
+                        Queue(editor, std::move(command));
                 }
 
-                if (GE::Runtime::CameraComponent* camera = selected->GetCamera())
+                if (GE::Runtime::CameraComponent* camera = selected->GetCamera();
+                    camera != nullptr
+                    && editor.GetInspectorRegistry().Resolve(
+                        camera->GetTypeId(), editor.GetReflectionRegistry())
+                        == InspectorDrawMode::Specialized)
                 {
                     ImGui::Separator();
                     ImGui::TextUnformatted("Camera");
@@ -763,25 +783,140 @@ namespace GE::Editor
                         value.near_plane = std::max(value.near_plane, 0.001F);
                         value.far_plane = std::max(
                             value.far_plane, value.near_plane + 0.001F);
-                        EditorCommand command{.type = EditorCommandType::SetCamera};
+                        EditorCommand command{.type = EditorCommandType::PatchComponent};
                         command.target = selected->GetHandle();
-                        command.camera = value;
-                        Queue(editor, std::move(command));
+                        std::string error;
+                        if (SetComponentPayload(command, value,
+                                world->GetComponentRegistry(), error))
+                            Queue(editor, std::move(command));
                     }
                     if (!editor.IsPlaySessionRunning()
                         && ImGui::Button("Remove Camera"))
                     {
                         Queue(editor, {
-                            .type = EditorCommandType::RemoveCamera,
-                            .target = selected->GetHandle()});
+                            .type = EditorCommandType::RemoveComponent,
+                            .target = selected->GetHandle(),
+                            .component_type_id =
+                                GE::Runtime::CameraComponent::StaticTypeId});
                     }
                 }
                 else if (!editor.IsPlaySessionRunning()
                     && ImGui::Button("Add Camera"))
                 {
-                    EditorCommand command{.type = EditorCommandType::SetCamera};
+                    EditorCommand command{.type = EditorCommandType::AddComponent};
                     command.target = selected->GetHandle();
-                    Queue(editor, std::move(command));
+                    GE::Runtime::CameraComponent value;
+                    std::string error;
+                    if (SetComponentPayload(command, value,
+                            world->GetComponentRegistry(), error))
+                        Queue(editor, std::move(command));
+                }
+
+                for (GE::Runtime::Component* component
+                    : selected->EnumerateComponents())
+                {
+                    if (component->GetTypeId()
+                            == GE::Runtime::TransformComponent::StaticTypeId
+                        || component->GetTypeId()
+                            == GE::Runtime::MeshRendererComponent::StaticTypeId
+                        || component->GetTypeId()
+                            == GE::Runtime::CameraComponent::StaticTypeId
+                        || editor.GetInspectorRegistry().Resolve(
+                            component->GetTypeId(),
+                            editor.GetReflectionRegistry())
+                            != InspectorDrawMode::ReflectionFallback)
+                    {
+                        continue;
+                    }
+
+                    const GE::Reflection::TypeInfo* type_info =
+                        editor.GetReflectionRegistry().FindType(
+                            component->GetTypeId());
+                    std::unique_ptr<GE::Runtime::Component> draft =
+                        world->GetComponentRegistry().CloneConfiguration(
+                            *component);
+                    if (type_info == nullptr || draft == nullptr) continue;
+
+                    ImGui::PushID(component);
+                    ImGui::Separator();
+                    ImGui::TextUnformatted(type_info->GetStableName().data());
+                    bool changed = false;
+                    const GE::Reflection::ValueView owner{
+                        draft.get(), draft->GetTypeId()};
+                    for (const GE::Reflection::FieldInfo& field
+                        : type_info->GetFields())
+                    {
+                        GE::Reflection::ValueView value = field.GetValue(owner);
+                        if (!value.IsValid()) continue;
+                        const std::string label(field.GetName());
+                        if (value.GetTypeId() == GE::Reflection::MakeTypeId("float"))
+                        {
+                            changed |= ImGui::DragFloat(label.c_str(),
+                                static_cast<float*>(value.Data()), 0.01F);
+                        }
+                        else if (value.GetTypeId() == GE::Reflection::MakeTypeId("bool"))
+                        {
+                            changed |= ImGui::Checkbox(label.c_str(),
+                                static_cast<bool*>(value.Data()));
+                        }
+                        else if (value.GetTypeId()
+                            == GE::Reflection::MakeTypeId("MEngine.Math.Vec3"))
+                        {
+                            changed |= ImGui::DragFloat3(label.c_str(),
+                                static_cast<GE::Math::Vec3*>(value.Data())->data(),
+                                0.01F);
+                        }
+                    }
+                    if (!editor.IsPlaySessionRunning() && changed)
+                    {
+                        EditorCommand command{
+                            .type = EditorCommandType::PatchComponent,
+                            .target = selected->GetHandle()};
+                        std::string error;
+                        if (SetComponentPayload(command, *draft,
+                                world->GetComponentRegistry(), error))
+                            Queue(editor, std::move(command));
+                    }
+                    if (!editor.IsPlaySessionRunning()
+                        && ImGui::Button("Remove Component"))
+                    {
+                        Queue(editor, {
+                            .type = EditorCommandType::RemoveComponent,
+                            .target = selected->GetHandle(),
+                            .component_type_id = component->GetTypeId()});
+                    }
+                    ImGui::PopID();
+                }
+
+                if (!editor.IsPlaySessionRunning())
+                {
+                    for (const GE::Runtime::ComponentDescriptor& descriptor
+                        : world->GetComponentRegistry().GetDescriptors())
+                    {
+                        if (descriptor.required
+                            || selected->GetComponent(descriptor.type_id) != nullptr
+                            || descriptor.type_id
+                                == GE::Runtime::MeshRendererComponent::StaticTypeId
+                            || descriptor.type_id
+                                == GE::Runtime::CameraComponent::StaticTypeId)
+                        {
+                            continue;
+                        }
+                        const std::string label = "Add " + descriptor.stable_name;
+                        if (ImGui::Button(label.c_str()))
+                        {
+                            std::unique_ptr<GE::Runtime::Component> value =
+                                descriptor.factory();
+                            EditorCommand command{
+                                .type = EditorCommandType::AddComponent,
+                                .target = selected->GetHandle()};
+                            std::string error;
+                            if (value != nullptr && SetComponentPayload(
+                                    command, *value,
+                                    world->GetComponentRegistry(), error))
+                                Queue(editor, std::move(command));
+                        }
+                    }
                 }
 
                 if (!editor.IsPlaySessionRunning())

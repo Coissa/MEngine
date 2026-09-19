@@ -46,7 +46,7 @@ Testing/
 
 # Local-only tests, smoke verification, and architecture documents
 /Engine/Tests/
-/docs/
+/Docs/
 /README.md
 
 # Local verification and hosting configuration

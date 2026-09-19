@@ -5,6 +5,6 @@
 namespace GE::Reflection
 {
     [[nodiscard]]
-    TypeRegistry::RegisterTypeResult RegisterBuiltinTypes(
+    Core::Result<void> RegisterBuiltinTypes(
         TypeRegistry& registry);
 }

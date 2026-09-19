@@ -32,7 +32,14 @@ namespace GE::Reflection::Generator
         EmptyParameterName,
         EmptyParameterTypeSpelling,
         UnsupportedNonConstReferenceParameter,
-        UnsupportedRValueReferenceParameter
+        UnsupportedRValueReferenceParameter,
+        SerializableTypeRequiresStableName,
+        PersistentFieldRequiresSerializedName,
+        RequiredTransientField,
+        PersistentReadOnlyField,
+        UnsupportedPointerField,
+        UnsupportedReferenceField,
+        UnsupportedArrayField
     };
 
     struct ClangDeclarationValidationError
