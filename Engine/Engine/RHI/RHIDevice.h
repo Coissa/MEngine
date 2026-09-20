@@ -92,6 +92,15 @@ namespace GE::RHI
             const GraphicsPipelineDescription& description,
             std::unique_ptr<GraphicsPipeline>& out_pipeline) = 0;
 
+        // 后端可选择不支持计算管线；默认实现保持旧后端源码兼容。
+        [[nodiscard]] virtual RHIResult CreateComputePipeline(
+            const ComputePipelineDescription&,
+            std::unique_ptr<ComputePipeline>& out_pipeline)
+        {
+            out_pipeline.reset();
+            return RHIResult::Unsupported;
+        }
+
         [[nodiscard]] virtual RHIResult CreateCommandAllocator(
             std::unique_ptr<CommandAllocator>& out_allocator) = 0;
 

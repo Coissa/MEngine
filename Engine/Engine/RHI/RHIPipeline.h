@@ -188,4 +188,28 @@ namespace GE::RHI
     protected:
         GraphicsPipeline() noexcept = default;
     };
+
+    struct ComputePipelineDescription final
+    {
+        PipelineLayout* layout = nullptr;
+        Shader* compute_shader = nullptr;
+
+        [[nodiscard]] constexpr bool IsValid() const noexcept
+        {
+            return layout != nullptr && compute_shader != nullptr;
+        }
+    };
+
+    class ComputePipeline
+    {
+    public:
+        virtual ~ComputePipeline() noexcept = default;
+        ComputePipeline(const ComputePipeline&) = delete;
+        ComputePipeline& operator=(const ComputePipeline&) = delete;
+        ComputePipeline(ComputePipeline&&) = delete;
+        ComputePipeline& operator=(ComputePipeline&&) = delete;
+
+    protected:
+        ComputePipeline() noexcept = default;
+    };
 }

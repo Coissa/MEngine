@@ -97,6 +97,12 @@ namespace GE::Render
         std::vector<std::byte> pixel_shader;
     };
 
+    struct RHIGpuDrivenDescription final
+    {
+        std::vector<std::byte> culling_compute_shader;
+        std::uint32_t max_instances = 4096;
+    };
+
     // 示例层提交一次性的纯值资源。Renderer 会取得这些容器的所有权。
     struct RHIRenderScene final
     {
@@ -117,6 +123,9 @@ namespace GE::Render
 
         // 静态天空环境；首轮只作为背景显示，不参与 IBL。
         std::optional<RHISkyboxDescription> skybox;
+
+        // 提供时启用 Compute Frustum Culling + ExecuteIndirect；省略则保留传统路径。
+        std::optional<RHIGpuDrivenDescription> gpu_driven;
     };
 
     struct RHIRendererCreateInfo final

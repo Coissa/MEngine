@@ -1189,6 +1189,37 @@ namespace GE::D3D12RHI
         return RHI::RHIResult::Success;
     }
 
+    RHI::RHIResult D3D12Device::CreateComputePipeline(
+        const RHI::ComputePipelineDescription& description,
+        std::unique_ptr<RHI::ComputePipeline>& out_pipeline)
+    {
+        out_pipeline.reset();
+        auto* layout = dynamic_cast<D3D12PipelineLayout*>(description.layout);
+        auto* shader = dynamic_cast<D3D12Shader*>(description.compute_shader);
+        if (!description.IsValid() || layout == nullptr || shader == nullptr
+            || shader->stage_ != RHI::ShaderStage::Compute)
+        {
+            return RHI::RHIResult::InvalidArgument;
+        }
+
+        D3D12_COMPUTE_PIPELINE_STATE_DESC native_desc{};
+        native_desc.pRootSignature = layout->root_signature_.Get();
+        native_desc.CS = {shader->bytecode_.data(), shader->bytecode_.size()};
+        Microsoft::WRL::ComPtr<ID3D12PipelineState> pipeline_state;
+        const HRESULT result = native_device_->CreateComputePipelineState(
+            &native_desc, IID_PPV_ARGS(pipeline_state.ReleaseAndGetAddressOf()));
+        if (FAILED(result))
+        {
+            std::fprintf(stderr,
+                "[D3D12RHI] Create compute pipeline failed, HRESULT=0x%08lX\n",
+                static_cast<unsigned long>(result));
+            return RHI::RHIResult::BackendFailure;
+        }
+        out_pipeline = std::make_unique<D3D12ComputePipeline>(
+            std::move(pipeline_state), layout->root_signature_, *layout);
+        return RHI::RHIResult::Success;
+    }
+
     RHI::RHIResult D3D12Device::CreateCommandAllocator(
         std::unique_ptr<RHI::CommandAllocator>& out_allocator)
     {
@@ -1227,8 +1258,24 @@ namespace GE::D3D12RHI
         {
             return RHI::RHIResult::BackendFailure;
         }
+
+        D3D12_INDIRECT_ARGUMENT_DESC argument{};
+        argument.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+        D3D12_COMMAND_SIGNATURE_DESC signature_description{};
+        signature_description.ByteStride =
+            sizeof(RHI::DrawIndexedIndirectArguments);
+        signature_description.NumArgumentDescs = 1;
+        signature_description.pArgumentDescs = &argument;
+        Microsoft::WRL::ComPtr<ID3D12CommandSignature> signature;
+        const HRESULT signature_result = native_device_->CreateCommandSignature(
+            &signature_description, nullptr,
+            IID_PPV_ARGS(signature.ReleaseAndGetAddressOf()));
+        if (FAILED(signature_result))
+        {
+            return RHI::RHIResult::BackendFailure;
+        }
         out_command_list = std::make_unique<D3D12CommandList>(
-            std::move(native_list));
+            std::move(native_list), std::move(signature));
         return RHI::RHIResult::Success;
     }
 }

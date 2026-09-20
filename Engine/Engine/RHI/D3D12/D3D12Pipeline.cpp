@@ -43,4 +43,14 @@ namespace GE::D3D12RHI
     {
         return topology_;
     }
+
+    D3D12ComputePipeline::D3D12ComputePipeline(
+        Microsoft::WRL::ComPtr<ID3D12PipelineState> pipeline_state,
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> root_signature,
+        D3D12PipelineLayout& layout) noexcept
+        : pipeline_state_(std::move(pipeline_state)),
+          root_signature_(std::move(root_signature)),
+          layout_(&layout)
+    {
+    }
 }

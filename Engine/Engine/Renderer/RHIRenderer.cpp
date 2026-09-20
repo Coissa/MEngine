@@ -11,6 +11,7 @@
 #include <Engine/RHI/RHISwapchain.h>
 #include <Engine/RHI/RHITexture.h>
 #include <Engine/RHI/RHITextureView.h>
+#include <Engine/RenderResource/GpuDrivenScene.h>
 
 #include <algorithm>
 #include <array>
@@ -215,6 +216,8 @@ namespace GE::Render
             std::unique_ptr<RHI::Buffer> vertex_buffer;
             std::unique_ptr<RHI::Buffer> index_buffer;
             std::uint32_t index_count = 0;
+            std::array<float, 3> bounds_center{};
+            float bounds_radius = 0.0F;
         };
 
         struct GpuTexture final
@@ -245,6 +248,7 @@ namespace GE::Render
             RenderCore::RenderExtent new_extent);
         [[nodiscard]] bool ValidateSceneDescription() const noexcept;
         [[nodiscard]] bool CreateSceneResources();
+        [[nodiscard]] bool CreateGpuDrivenResources();
         [[nodiscard]] bool CreateUIResources();
         [[nodiscard]] bool CreateGizmoResources();
         [[nodiscard]] bool CreateSkyboxResources();
@@ -336,6 +340,8 @@ namespace GE::Render
         std::vector<GpuMesh> meshes;
         std::vector<GpuTexture> textures;
         std::vector<GpuMaterial> materials;
+        std::array<std::unique_ptr<RenderResource::GpuDrivenScene>,
+            FrameResourceCount> gpu_scenes;
         std::unique_ptr<RHI::Shader> vertex_shader;
         std::unique_ptr<RHI::Shader> pixel_shader;
         std::unique_ptr<RHI::PipelineLayout> pipeline_layout;
@@ -565,7 +571,8 @@ namespace GE::Render
                 swapchain), "CreateSwapchain")
             || !CreateAttachments()
             || !CreateSceneResources()
-            || !CreateFrameResources())
+            || !CreateFrameResources()
+            || !CreateGpuDrivenResources())
         {
             ReleaseResources();
             return false;
@@ -745,6 +752,29 @@ namespace GE::Render
             GpuMesh mesh;
             mesh.handle = source.handle;
             mesh.index_count = static_cast<std::uint32_t>(source.indices.size());
+            std::array<float, 3> bounds_min = source.vertices.front().position;
+            std::array<float, 3> bounds_max = bounds_min;
+            for (const auto& vertex : source.vertices)
+            {
+                for (std::size_t axis = 0; axis < 3; ++axis)
+                {
+                    bounds_min[axis] = (std::min)(
+                        bounds_min[axis], vertex.position[axis]);
+                    bounds_max[axis] = (std::max)(
+                        bounds_max[axis], vertex.position[axis]);
+                }
+            }
+            for (std::size_t axis = 0; axis < 3; ++axis)
+                mesh.bounds_center[axis] =
+                    (bounds_min[axis] + bounds_max[axis]) * 0.5F;
+            for (const auto& vertex : source.vertices)
+            {
+                const float x = vertex.position[0] - mesh.bounds_center[0];
+                const float y = vertex.position[1] - mesh.bounds_center[1];
+                const float z = vertex.position[2] - mesh.bounds_center[2];
+                mesh.bounds_radius = (std::max)(mesh.bounds_radius,
+                    std::sqrt(x * x + y * y + z * z));
+            }
 
             if (!Check(device->CreateBuffer(
                     {.size = vertex_bytes,
@@ -1084,6 +1114,28 @@ namespace GE::Render
         for (const TextureUploadBuffer& upload : texture_uploads)
         {
             resource_states.ForgetBuffer(*upload.buffer);
+        }
+        return true;
+    }
+
+    bool RHIRenderer::Impl::CreateGpuDrivenResources()
+    {
+        if (!scene.gpu_driven.has_value()) return true;
+        const RHIGpuDrivenDescription& description = *scene.gpu_driven;
+        if (description.culling_compute_shader.empty()
+            || description.max_instances == 0)
+            return false;
+        for (auto& gpu_scene : gpu_scenes)
+        {
+            auto result = RenderResource::GpuDrivenScene::Create(
+                *device, description.culling_compute_shader,
+                description.max_instances);
+            if (!result)
+            {
+                std::fprintf(stderr, "[Renderer] GPU Driven scene creation failed\n");
+                return false;
+            }
+            gpu_scene = std::move(result).Value();
         }
         return true;
     }
@@ -1996,6 +2048,10 @@ namespace GE::Render
         };
         std::vector<DrawSubmission> submissions;
         submissions.reserve(frame.render_items.size());
+        std::vector<RenderResource::GpuSceneInstance> gpu_instances;
+        std::vector<RenderResource::GpuSceneDraw> gpu_draws;
+        gpu_instances.reserve(frame.render_items.size());
+        gpu_draws.reserve(frame.render_items.size());
         frame_resource.resource_sets.clear();
         frame_resource.resource_sets.reserve(frame.render_items.size());
 
@@ -2041,6 +2097,23 @@ namespace GE::Render
             }
             frame_resource.resource_sets.push_back(std::move(resource_set));
             submissions.push_back({mesh});
+
+            const Math::Vec3 world_center = Math::TransformPoint(
+                {mesh->bounds_center[0], mesh->bounds_center[1],
+                 mesh->bounds_center[2]}, item.local_to_world);
+            float max_scale = 0.0F;
+            for (std::size_t axis = 0; axis < 3; ++axis)
+            {
+                const float x = item.local_to_world.At(axis, 0);
+                const float y = item.local_to_world.At(axis, 1);
+                const float z = item.local_to_world.At(axis, 2);
+                max_scale = (std::max)(max_scale,
+                    std::sqrt(x * x + y * y + z * z));
+            }
+            gpu_instances.push_back({
+                .bounds_center = {world_center[0], world_center[1], world_center[2]},
+                .bounds_radius = mesh->bounds_radius * max_scale});
+            gpu_draws.push_back({.index_count = mesh->index_count});
         }
 
         const FrameConstants frame_constants{
@@ -2254,8 +2327,17 @@ namespace GE::Render
             .red = 0.025F, .green = 0.04F, .blue = 0.085F, .alpha = 1.0F};
         RHI::CommandList& command_list = *frame_resource.command_list;
 
-        bool recorded =
-            TransitionTrackedTexture(
+        RenderResource::GpuDrivenScene* gpu_scene =
+            gpu_scenes[next_frame_resource_index].get();
+        const bool use_gpu_driven = gpu_scene != nullptr
+            && !gpu_instances.empty()
+            && gpu_instances.size() <= gpu_scene->MaxInstances();
+
+        bool recorded = !use_gpu_driven
+            || Check(gpu_scene->RecordCull(
+                    command_list, gpu_instances, view_projection, gpu_draws),
+                "GPU frustum culling");
+        recorded = recorded && TransitionTrackedTexture(
                 command_list,
                 scene_target,
                 RHI::TextureState::ColorAttachment,
@@ -2285,7 +2367,13 @@ namespace GE::Render
                 && Check(command_list.SetIndexBuffer(
                     *mesh.index_buffer, 0, RHI::RHIFormat::R16_UInt),
                     "SetIndexBuffer")
-                && Check(command_list.DrawIndexed(mesh.index_count), "DrawIndexed");
+                && (use_gpu_driven
+                    ? Check(command_list.ExecuteIndirect(
+                            gpu_scene->IndirectArguments(),
+                            index * sizeof(RHI::DrawIndexedIndirectArguments), 1),
+                        "ExecuteIndirect")
+                    : Check(command_list.DrawIndexed(mesh.index_count),
+                        "DrawIndexed"));
         }
         if (recorded && skybox_enabled)
         {
@@ -2532,6 +2620,7 @@ namespace GE::Render
         pipeline_layout.reset();
         pixel_shader.reset();
         vertex_shader.reset();
+        for (auto& gpu_scene : gpu_scenes) gpu_scene.reset();
         // ResourceSet 已释放；随后先释放 Material/Sampler，再释放 Texture View/Texture。
         materials.clear();
         textures.clear();

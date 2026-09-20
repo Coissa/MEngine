@@ -21,6 +21,7 @@ target_include_directories(MEngineRenderer
 target_link_libraries(MEngineRenderer
     PUBLIC
         MEngineRenderCore
+        MEngineRenderResource
         MEngineRHI
     PRIVATE
         MEngineCore

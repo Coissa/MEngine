@@ -128,8 +128,10 @@ namespace GE::D3D12RHI
     }
 
     D3D12CommandList::D3D12CommandList(
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> native_list) noexcept
-        : native_list_(std::move(native_list))
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> native_list,
+        Microsoft::WRL::ComPtr<ID3D12CommandSignature> draw_indexed_signature) noexcept
+        : native_list_(std::move(native_list)),
+          draw_indexed_signature_(std::move(draw_indexed_signature))
     {
     }
 
@@ -151,6 +153,7 @@ namespace GE::D3D12RHI
         has_color_attachment_ = false;
         has_depth_attachment_ = false;
         current_layout_ = nullptr;
+        compute_binding_ = false;
         return RHI::RHIResult::Success;
     }
 
@@ -472,6 +475,23 @@ namespace GE::D3D12RHI
             break;
         }
         current_layout_ = native_pipeline->layout_;
+        compute_binding_ = false;
+        return RHI::RHIResult::Success;
+    }
+
+    RHI::RHIResult D3D12CommandList::SetComputePipeline(
+        RHI::ComputePipeline& pipeline) noexcept
+    {
+        auto* native_pipeline = dynamic_cast<D3D12ComputePipeline*>(&pipeline);
+        if (!recording_ || native_pipeline == nullptr)
+        {
+            return RHI::RHIResult::InvalidArgument;
+        }
+        native_list_->SetPipelineState(native_pipeline->pipeline_state_.Get());
+        native_list_->SetComputeRootSignature(
+            native_pipeline->root_signature_.Get());
+        current_layout_ = native_pipeline->layout_;
+        compute_binding_ = true;
         return RHI::RHIResult::Success;
     }
 
@@ -508,16 +528,28 @@ namespace GE::D3D12RHI
             switch (binding.type)
             {
             case RHI::ResourceBindingType::ConstantBuffer:
-                native_list_->SetGraphicsRootConstantBufferView(
-                    binding.root_parameter, binding.address);
+                if (compute_binding_)
+                    native_list_->SetComputeRootConstantBufferView(
+                        binding.root_parameter, binding.address);
+                else
+                    native_list_->SetGraphicsRootConstantBufferView(
+                        binding.root_parameter, binding.address);
                 break;
             case RHI::ResourceBindingType::ReadOnlyStorageBuffer:
-                native_list_->SetGraphicsRootShaderResourceView(
-                    binding.root_parameter, binding.address);
+                if (compute_binding_)
+                    native_list_->SetComputeRootShaderResourceView(
+                        binding.root_parameter, binding.address);
+                else
+                    native_list_->SetGraphicsRootShaderResourceView(
+                        binding.root_parameter, binding.address);
                 break;
             case RHI::ResourceBindingType::ReadWriteStorageBuffer:
-                native_list_->SetGraphicsRootUnorderedAccessView(
-                    binding.root_parameter, binding.address);
+                if (compute_binding_)
+                    native_list_->SetComputeRootUnorderedAccessView(
+                        binding.root_parameter, binding.address);
+                else
+                    native_list_->SetGraphicsRootUnorderedAccessView(
+                        binding.root_parameter, binding.address);
                 break;
             case RHI::ResourceBindingType::SampledTexture:
             case RHI::ResourceBindingType::Sampler:
@@ -526,8 +558,12 @@ namespace GE::D3D12RHI
         }
         for (const D3D12BoundDescriptor& binding : native_set->descriptors_)
         {
-            native_list_->SetGraphicsRootDescriptorTable(
-                binding.root_parameter, binding.descriptor);
+            if (compute_binding_)
+                native_list_->SetComputeRootDescriptorTable(
+                    binding.root_parameter, binding.descriptor);
+            else
+                native_list_->SetGraphicsRootDescriptorTable(
+                    binding.root_parameter, binding.descriptor);
         }
         return RHI::RHIResult::Success;
     }
@@ -597,6 +633,63 @@ namespace GE::D3D12RHI
         native_list_->DrawIndexedInstanced(
             index_count, instance_count, first_index, vertex_offset,
             first_instance);
+        return RHI::RHIResult::Success;
+    }
+
+    RHI::RHIResult D3D12CommandList::Dispatch(
+        std::uint32_t group_count_x,
+        std::uint32_t group_count_y,
+        std::uint32_t group_count_z) noexcept
+    {
+        if (!recording_ || !compute_binding_ || current_layout_ == nullptr
+            || group_count_x == 0 || group_count_y == 0 || group_count_z == 0)
+        {
+            return RHI::RHIResult::InvalidArgument;
+        }
+        native_list_->Dispatch(group_count_x, group_count_y, group_count_z);
+        return RHI::RHIResult::Success;
+    }
+
+    RHI::RHIResult D3D12CommandList::UAVBarrier(
+        RHI::Buffer& buffer) noexcept
+    {
+        auto* native_buffer = dynamic_cast<D3D12Buffer*>(&buffer);
+        if (!recording_ || native_buffer == nullptr
+            || !RHI::HasBufferUsage(
+                buffer.GetDescription().usage, RHI::BufferUsage::Storage))
+        {
+            return RHI::RHIResult::InvalidArgument;
+        }
+        D3D12_RESOURCE_BARRIER barrier{};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        barrier.UAV.pResource = native_buffer->native_resource_.Get();
+        native_list_->ResourceBarrier(1, &barrier);
+        return RHI::RHIResult::Success;
+    }
+
+    RHI::RHIResult D3D12CommandList::ExecuteIndirect(
+        RHI::Buffer& argument_buffer,
+        std::uint64_t argument_offset,
+        std::uint32_t max_draw_count) noexcept
+    {
+        auto* native_buffer = dynamic_cast<D3D12Buffer*>(&argument_buffer);
+        const auto& description = argument_buffer.GetDescription();
+        const std::uint64_t required_size =
+            static_cast<std::uint64_t>(max_draw_count)
+            * sizeof(RHI::DrawIndexedIndirectArguments);
+        if (!recording_ || compute_binding_ || current_layout_ == nullptr
+            || native_buffer == nullptr || draw_indexed_signature_ == nullptr
+            || max_draw_count == 0
+            || !RHI::HasBufferUsage(description.usage, RHI::BufferUsage::Indirect)
+            || argument_offset > description.size
+            || required_size > description.size - argument_offset)
+        {
+            return RHI::RHIResult::InvalidArgument;
+        }
+        native_list_->ExecuteIndirect(
+            draw_indexed_signature_.Get(), max_draw_count,
+            native_buffer->native_resource_.Get(), argument_offset,
+            nullptr, 0);
         return RHI::RHIResult::Success;
     }
 

@@ -28,7 +28,8 @@ namespace GE::D3D12RHI
     {
     public:
         explicit D3D12CommandList(
-            Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> native_list) noexcept;
+            Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> native_list,
+            Microsoft::WRL::ComPtr<ID3D12CommandSignature> draw_indexed_signature) noexcept;
         ~D3D12CommandList() noexcept override = default;
 
         [[nodiscard]] RHI::RHIResult Reset(
@@ -68,6 +69,8 @@ namespace GE::D3D12RHI
             const RHI::ScissorRect& scissor) noexcept override;
         [[nodiscard]] RHI::RHIResult SetGraphicsPipeline(
             RHI::GraphicsPipeline& pipeline) noexcept override;
+        [[nodiscard]] RHI::RHIResult SetComputePipeline(
+            RHI::ComputePipeline& pipeline) noexcept override;
         [[nodiscard]] RHI::RHIResult SetResourceSet(
             RHI::ResourceSet& resource_set) noexcept override;
         [[nodiscard]] RHI::RHIResult SetVertexBuffer(
@@ -84,16 +87,28 @@ namespace GE::D3D12RHI
             std::uint32_t first_index,
             std::int32_t vertex_offset,
             std::uint32_t first_instance) noexcept override;
+        [[nodiscard]] RHI::RHIResult Dispatch(
+            std::uint32_t group_count_x,
+            std::uint32_t group_count_y,
+            std::uint32_t group_count_z) noexcept override;
+        [[nodiscard]] RHI::RHIResult UAVBarrier(
+            RHI::Buffer& buffer) noexcept override;
+        [[nodiscard]] RHI::RHIResult ExecuteIndirect(
+            RHI::Buffer& argument_buffer,
+            std::uint64_t argument_offset,
+            std::uint32_t max_draw_count) noexcept override;
         [[nodiscard]] RHI::RHIResult Close() noexcept override;
 
     private:
         friend class D3D12Queue;
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> native_list_;
+        Microsoft::WRL::ComPtr<ID3D12CommandSignature> draw_indexed_signature_;
         bool recording_ = true;
         bool has_color_attachment_ = false;
         bool has_depth_attachment_ = false;
         D3D12_CPU_DESCRIPTOR_HANDLE color_attachment_{};
         D3D12_CPU_DESCRIPTOR_HANDLE depth_attachment_{};
         const void* current_layout_ = nullptr;
+        bool compute_binding_ = false;
     };
 }

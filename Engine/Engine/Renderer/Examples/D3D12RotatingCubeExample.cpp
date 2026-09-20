@@ -256,6 +256,8 @@ namespace GE::Render::Examples
                 shader_directory / "examples" / "rotating_cube.hlsl";
             const std::filesystem::path skybox_shader_path =
                 shader_directory / "examples" / "skybox.hlsl";
+            const std::filesystem::path gpu_culling_shader_path =
+                shader_directory / "gpu_scene_culling.hlsl";
             const std::filesystem::path asset_directory =
                 shader_directory.parent_path() / "Assets";
 
@@ -304,6 +306,15 @@ namespace GE::Render::Examples
                 out_scene = {};
                 return false;
             }
+
+            RHIGpuDrivenDescription gpu_driven;
+            if (!CompileShader(gpu_culling_shader_path, "CSMain", "cs_5_0",
+                    gpu_driven.culling_compute_shader, out_error))
+            {
+                out_scene = {};
+                return false;
+            }
+            out_scene.gpu_driven = std::move(gpu_driven);
 
             RHISkyboxDescription skybox;
             skybox.cubemap_texture = SkyboxTexture;

@@ -51,6 +51,18 @@ namespace GE::RHI
         std::int32_t bottom = 0;
     };
 
+    // 与 D3D12_DRAW_INDEXED_ARGUMENTS/VkDrawIndexedIndirectCommand 的共同布局一致。
+    struct DrawIndexedIndirectArguments final
+    {
+        std::uint32_t index_count = 0;
+        std::uint32_t instance_count = 0;
+        std::uint32_t first_index = 0;
+        std::int32_t vertex_offset = 0;
+        std::uint32_t first_instance = 0;
+    };
+
+    static_assert(sizeof(DrawIndexedIndirectArguments) == 20);
+
     class CommandAllocator
     {
     public:
@@ -118,6 +130,11 @@ namespace GE::RHI
             const ScissorRect& scissor) noexcept = 0;
         [[nodiscard]] virtual RHIResult SetGraphicsPipeline(
             GraphicsPipeline& pipeline) noexcept = 0;
+        [[nodiscard]] virtual RHIResult SetComputePipeline(
+            ComputePipeline&) noexcept
+        {
+            return RHIResult::Unsupported;
+        }
         [[nodiscard]] virtual RHIResult SetResourceSet(
             ResourceSet& resource_set) noexcept = 0;
         [[nodiscard]] virtual RHIResult SetVertexBuffer(
@@ -134,6 +151,20 @@ namespace GE::RHI
             std::uint32_t first_index = 0,
             std::int32_t vertex_offset = 0,
             std::uint32_t first_instance = 0) noexcept = 0;
+        [[nodiscard]] virtual RHIResult Dispatch(
+            std::uint32_t, std::uint32_t, std::uint32_t) noexcept
+        {
+            return RHIResult::Unsupported;
+        }
+        [[nodiscard]] virtual RHIResult UAVBarrier(Buffer&) noexcept
+        {
+            return RHIResult::Unsupported;
+        }
+        [[nodiscard]] virtual RHIResult ExecuteIndirect(
+            Buffer&, std::uint64_t, std::uint32_t) noexcept
+        {
+            return RHIResult::Unsupported;
+        }
         [[nodiscard]] virtual RHIResult Close() noexcept = 0;
 
     protected:

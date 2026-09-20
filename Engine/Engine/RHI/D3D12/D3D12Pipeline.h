@@ -89,4 +89,20 @@ namespace GE::D3D12RHI
         D3D12PipelineLayout* layout_ = nullptr;
         RHI::PrimitiveTopology topology_ = RHI::PrimitiveTopology::TriangleList;
     };
+
+    class D3D12ComputePipeline final : public RHI::ComputePipeline
+    {
+    public:
+        D3D12ComputePipeline(
+            Microsoft::WRL::ComPtr<ID3D12PipelineState> pipeline_state,
+            Microsoft::WRL::ComPtr<ID3D12RootSignature> root_signature,
+            D3D12PipelineLayout& layout) noexcept;
+        ~D3D12ComputePipeline() noexcept override = default;
+
+    private:
+        friend class D3D12CommandList;
+        Microsoft::WRL::ComPtr<ID3D12PipelineState> pipeline_state_;
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> root_signature_;
+        D3D12PipelineLayout* layout_ = nullptr;
+    };
 }

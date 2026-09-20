@@ -89,6 +89,9 @@ namespace GE::D3D12RHI
         [[nodiscard]] RHI::RHIResult CreateGraphicsPipeline(
             const RHI::GraphicsPipelineDescription& description,
             std::unique_ptr<RHI::GraphicsPipeline>& out_pipeline) override;
+        [[nodiscard]] RHI::RHIResult CreateComputePipeline(
+            const RHI::ComputePipelineDescription& description,
+            std::unique_ptr<RHI::ComputePipeline>& out_pipeline) override;
         [[nodiscard]] RHI::RHIResult CreateCommandAllocator(
             std::unique_ptr<RHI::CommandAllocator>& out_allocator) override;
         [[nodiscard]] RHI::RHIResult CreateCommandList(
