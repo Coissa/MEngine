@@ -10,9 +10,12 @@ namespace GE::Render
     public:
         explicit ReSTIRGIPass(RHI::Device& owner) : device(owner) {}
         void Resize(uint32_t width, uint32_t height);
+        void ResetHistory() noexcept;
+        void CommitFrame() noexcept;
         RHI::TextureView& Execute(RHI::CommandList&, uint32_t slot, const RenderCore::RenderFrame&, SceneAssets&,
                                   PipelineLibrary&, RHI::Buffer& lighting, RHI::TextureView& depth,
-                                  RHI::TextureView& color, std::array<float, 2> jitter, uint32_t frameIndex);
+                                  RHI::TextureView& color, RHI::TextureView& velocity, std::array<float, 2> jitter,
+                                  uint32_t frameIndex);
         RHI::TextureView& NormalTarget() { return *normalRTV; }
         RHI::TextureView& DiffuseTarget() { return *diffuseRTV; }
 
@@ -27,5 +30,17 @@ namespace GE::Render
         std::array<FrameResources, RHI::FrameSlotCount> frames;
         std::unique_ptr<RHI::Texture> normal, diffuse, output;
         std::unique_ptr<RHI::TextureView> normalRTV, normalSRV, diffuseRTV, diffuseSRV, outputUAV, outputSRV;
+        std::array<std::unique_ptr<RHI::Buffer>, 2> reservoirs;
+        struct History
+        {
+            std::vector<RenderCore::RenderItem> items;
+            RenderCore::SceneRenderSettings lighting;
+            Math::Mat4 projection;
+            uint64_t cameraId = 0, revision = 0;
+            std::array<float, 2> jitter{};
+            uint32_t index = 0;
+            bool valid = false;
+        };
+        History previous, pending;
     };
 } // namespace GE::Render

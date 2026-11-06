@@ -15,7 +15,7 @@ namespace GE::Render
         struct GIConstants
         {
             Math::Mat4 cameraWorld;
-            std::array<float, 4> projection, sun, sizeJitter;
+            std::array<float, 4> projection, sun, sizeJitter, previousJitter;
             std::array<uint32_t, 4> frame;
         };
     } // namespace
@@ -32,15 +32,45 @@ namespace GE::Render
         diffuseSRV = device.CreateView(*diffuse, ViewKind::ShaderResource);
         outputUAV = device.CreateView(*output, ViewKind::Storage);
         outputSRV = device.CreateView(*output, ViewKind::ShaderResource);
+        for (auto& reservoir : reservoirs)
+            reservoir = device.CreateBuffer({size_t(width) * height * 96, Memory::GPU, true});
+        ResetHistory();
+    }
+
+    void ReSTIRGIPass::ResetHistory() noexcept
+    {
+        previous.valid = pending.valid = false;
+    }
+
+    void ReSTIRGIPass::CommitFrame() noexcept
+    {
+        if (pending.valid)
+        {
+            std::swap(previous, pending);
+            pending.valid = false;
+        }
     }
 
     RHI::TextureView& ReSTIRGIPass::Execute(RHI::CommandList& cmd, uint32_t slot, const RenderCore::RenderFrame& frame,
                                             SceneAssets& assets, PipelineLibrary& pipelines, RHI::Buffer& lighting,
                                             RHI::TextureView& depth, RHI::TextureView& color,
-                                            std::array<float, 2> jitter, uint32_t frameIndex)
+                                            RHI::TextureView& velocity, std::array<float, 2> jitter,
+                                            uint32_t frameIndex)
     {
         using namespace RHI;
         std::vector<RayTracingInstance> instances;
+        const bool reuseHistory = previous.valid && previous.cameraId == frame.main_view.camera_id &&
+                                  previous.revision == frame.history_revision &&
+                                  previous.projection == frame.main_view.projection &&
+                                  previous.items == frame.render_items && previous.lighting == frame.rendering;
+        pending.items = frame.render_items;
+        pending.lighting = frame.rendering;
+        pending.projection = frame.main_view.projection;
+        pending.cameraId = frame.main_view.camera_id;
+        pending.revision = frame.history_revision;
+        pending.jitter = jitter;
+        pending.index = previous.valid ? 1 - previous.index : 0;
+        pending.valid = true;
         std::vector<GIInstance> materials;
         for (const auto& item : frame.render_items)
         {
@@ -79,7 +109,8 @@ namespace GE::Render
         constants.sun = {frame.rendering.light_direction[0], frame.rendering.light_direction[1],
                          frame.rendering.light_direction[2], frame.rendering.light_intensity};
         constants.sizeJitter = {float(size.width), float(size.height), jitter[0], jitter[1]};
-        constants.frame = {frameIndex, 0, 1, 0};
+        constants.previousJitter = {previous.jitter[0], previous.jitter[1], 0, 0};
+        constants.frame = {frameIndex, uint32_t(reuseHistory), 2, 0};
         resources.constants->Write(0, &constants, sizeof(constants));
         cmd.BuildRayTracingScene(*resources.scene, instances);
         cmd.Transition(*assets.giTriangles, State::ShaderResource);
@@ -89,6 +120,10 @@ namespace GE::Render
             assets.hasEnvironment ? *assets.textures.at(assets.skyTexture).view : *assets.irradiance.view;
         cmd.Transition(environment.Resource(), State::ShaderResource);
         cmd.Transition(*output, State::Storage);
+        const uint32_t write = pending.index;
+        cmd.Transition(*reservoirs[1 - write], State::ShaderResource);
+        cmd.Transition(*reservoirs[write], State::Storage);
+        cmd.Transition(velocity.Resource(), State::ShaderResource);
         cmd.SetComputePipeline(*pipelines.gi);
         cmd.SetBindingLayout(*pipelines.giLayout);
         cmd.BindConstantBuffer(0, *resources.constants);
@@ -103,8 +138,12 @@ namespace GE::Render
         cmd.BindTexture(9, *outputUAV);
         cmd.BindTexture(10, environment);
         cmd.BindSampler(11, *assets.environmentSampler);
+        cmd.BindBuffer(12, *reservoirs[1 - write]);
+        cmd.BindBuffer(13, *reservoirs[write], true);
+        cmd.BindTexture(14, velocity);
         cmd.Dispatch((size.width + 7) / 8, (size.height + 7) / 8);
         cmd.Transition(*output, State::ShaderResource);
+        cmd.Transition(*reservoirs[write], State::ShaderResource);
         return *outputSRV;
     }
 } // namespace GE::Render

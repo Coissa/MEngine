@@ -8,6 +8,7 @@
 |---|---|
 | 00-baseline | 开发前版本，源码提交 ad8bb1a |
 | 01-one-bounce | 每像素一个余弦半球候选；次级表面直接光、自发光；未命中时采样天空 |
+| 02-temporal | 两份 reservoir 交替读写，重投影复用上一帧同一表面的样本 |
 
 每个目录包含独立的 MEngineEditor.exe、Shaders、Assets、Launch.ps1 和 VERSION.txt。用 Launch.ps1 启动，VERSION.txt 记录对应提交。二进制在 out 中保留，不加入 Git。源码可通过 git switch --detach <commit> 回看；有未提交改动时先保存自己的工作。
 
@@ -30,6 +31,14 @@ ScenePass 增加世界空间着色法线和漫反射反照率两个 MRT；位置
 BLAS 随场景创建；TLAS、实例上传及常量缓冲按三个帧槽持有，复用前由现有 Fence 等待。TLAS 使用完整场景实例，不受相机视锥剔除影响。
 
 目前次级表面仅使用材质基础颜色、金属度、自发光常量，不采样纹理和法线贴图；Alpha Mask 物体不进入光追加速结构。支持静态网格及实例变换，不支持骨骼变形、Cluster 调试几何、多次反弹和镜面 GI。反射采用固定 0.96 漫反射系数。没有独立 GI 降噪器，TAA 可帮助降低噪声，但关闭 TAA 时单样本噪声明显。
+
+## 第二版：时间复用
+
+每像素 reservoir 保存次级位置/法线、辐射亮度、归一化权重 W、候选数 M、样本年龄及来源表面位置/法线/反照率，共 96 字节。天空样本单独标识并保存方向。使用当前表面 Lambert 贡献的亮度作为 target；新样本权重为 target/pdf，历史合并权重为 target_current × W_history × M_history × Jacobian，结束后用 S/(M × selectedTarget) 归一化。有限次级表面按立体角变换计算 Jacobian；天空方向的 Jacobian 为 1。
+
+重投影使用运动矢量并补偿前后两帧 raster jitter。表面世界位置、法线与反照率不匹配时拒绝历史；限制来源 M 为 16、样本年龄为 20 帧。归一化与选中样本在当前表面的可见性测试均在同一次 dispatch 中完成。当前实现仅查询最终样本可见性，并拒绝极端 Jacobian，属于有偏简化版，不宣称论文的无偏校正。
+
+GI 历史独立于 TAA，关掉 TAA 仍会复用 reservoir。历史索引只在 Renderer::CommitFrame 后推进。关闭 GI、Resize、显式 ResetHistory、相机 ID/投影/场景修订变化、实例或光照快照变化会清空历史。相机位置变化通过重投影处理；移动物体时保守重置全屏 GI，尚未实现动态路径重连。
 
 ## 验证
 

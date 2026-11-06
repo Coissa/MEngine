@@ -2,6 +2,7 @@
 #include <Renderer/Renderer.h>
 #include <Renderer/RHI/D3D12/D3D12BackendFactory.h>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 
@@ -29,7 +30,15 @@ namespace
                     result[c] += image.rgba[(y * image.width + x) * 4 + c] / 1024.0;
         return result;
     }
-    Render::RHIRenderScene MakeScene()
+    uint32_t LitPixels(const RHI::Image& image)
+    {
+        uint32_t count = 0;
+        for (uint32_t y = image.height / 2 - 16; y < image.height / 2 + 16; ++y)
+            for (uint32_t x = image.width / 2 - 16; x < image.width / 2 + 16; ++x)
+                count += image.rgba[(y * image.width + x) * 4] > 0;
+        return count;
+    }
+    Render::RHIRenderScene MakeScene(bool constantSky = false)
     {
         Render::RHIRenderScene scene;
         std::string error;
@@ -37,7 +46,24 @@ namespace
         scene.ui_composition.reset();
         scene.gizmo_composition.reset();
         scene.gpu_driven.reset();
-        scene.skybox.reset();
+        if (!constantSky)
+            scene.skybox.reset();
+        else
+        {
+            auto& sky = scene.textures.front();
+            sky.width = sky.height = 1;
+            sky.mip_levels = 1;
+            std::array<float, 24> pixels;
+            for (size_t i = 0; i < 6; ++i)
+            {
+                pixels[i * 4] = 1;
+                pixels[i * 4 + 1] = 0.25f;
+                pixels[i * 4 + 2] = 0.1f;
+                pixels[i * 4 + 3] = 1;
+            }
+            sky.pixels.resize(sizeof(pixels));
+            std::memcpy(sky.pixels.data(), pixels.data(), sizeof(pixels));
+        }
         Render::RHIMeshDescription receiver;
         receiver.handle = {1};
         receiver.vertices = {{{-3, -3, 0}, {0, 0, -1}, {1, 1, 1}, {0, 0}},
@@ -103,6 +129,7 @@ int main()
             enabled = draw();
         Save(enabled, "gi-enabled.ppm");
         const auto average = CenterAverage(enabled);
+        Require(LitPixels(enabled) > 650, "Reservoir history did not improve sample coverage with TAA disabled");
         Require(average[0] > 20 && average[0] > average[1] * 3,
                 "Emissive secondary surface did not produce red indirect light");
         // A discarded recording must not advance the GI/TAA history.
@@ -112,13 +139,43 @@ int main()
         }
         Require(CenterAverage(draw())[0] > 20, "GI was lost after cancelled recording");
         renderer.ResetHistory();
-        Require(CenterAverage(draw())[0] > 10, "GI did not regenerate after history reset");
+        const auto reset = draw();
+        Require(CenterAverage(reset)[0] > 10, "GI did not regenerate after history reset");
+        Require(LitPixels(reset) < 500, "Explicit reset kept old reservoir samples");
         context.WaitIdle();
         renderer.ReleaseSizeResources();
         renderer.Resize(width, height);
         Require(CenterAverage(draw())[0] > 10, "GI did not regenerate after resize");
         frame.enable_gi = false;
         Require(CenterAverage(draw())[0] < 1, "GI toggle left stale lighting in the frame");
+        frame.enable_gi = true;
+        frame.render_items.pop_back();
+        Require(CenterAverage(draw())[0] < 1, "Removing the emitter reused stale indirect radiance");
+        // Under a constant sky every cosine-weighted sample has identical throughput.
+        // Reusing more samples must preserve that brightness without relying on TAA.
+        Render::Renderer skyRenderer(*device, MakeScene(true));
+        skyRenderer.Resize(width, height);
+        frame.rendering.environment_intensity = 1;
+        auto drawSky = [&]
+        {
+            auto recording = context.BeginFrame();
+            skyRenderer.Render(recording.Cmd(), recording.SlotIndex(), frame, {*target, RHI::State::CopySource});
+            context.Wait(context.Submit(std::move(recording)));
+            skyRenderer.CommitFrame();
+            return device->ReadbackTexture(*output);
+        };
+        const auto initialSky = CenterAverage(drawSky());
+        RHI::Image reusedSky;
+        for (int i = 0; i < 32; ++i)
+            reusedSky = drawSky();
+        const auto finalSky = CenterAverage(reusedSky);
+        for (size_t c = 0; c < 3; ++c)
+            Require(std::abs(initialSky[c] - finalSky[c]) < 1, "Reservoir normalization changed constant-sky energy");
+        // Camera motion keeps the same static receiver and requires valid reprojection.
+        frame.main_view.view = Math::TranslationMatrix({-0.1f, 0, 6});
+        frame.main_view.camera_world_position = {0.1f, 0, -6, 1};
+        Require(std::abs(CenterAverage(drawSky())[0] - initialSky[0]) < 1,
+                "Camera reprojection changed constant-sky energy");
         context.WaitIdle();
         device->CheckDebugErrors();
         std::cout << "GI indirect-light, toggle, resize and cancelled-recording checks passed; RGB = " << average[0]

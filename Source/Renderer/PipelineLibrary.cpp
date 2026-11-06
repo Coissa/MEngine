@@ -47,7 +47,10 @@ namespace GE::Render
                                                     {BindingKind::Texture, 6},
                                                     {BindingKind::StorageTexture, 0},
                                                     {BindingKind::Texture, 7},
-                                                    {BindingKind::Sampler, 0}}});
+                                                    {BindingKind::Sampler, 0},
+                                                    {BindingKind::StructuredBuffer, 13},
+                                                    {BindingKind::StorageBuffer, 1},
+                                                    {BindingKind::Texture, 14}}});
             ShaderBytecode cs{source.gi_compute_shader};
             gi = device.CreateComputePipeline({giLayout.get(), &cs});
         }

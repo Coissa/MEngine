@@ -155,10 +155,14 @@ namespace GE::Render
     void Renderer::ResetHistory() noexcept
     {
         previous.valid = pending.valid = false;
+        if (giPass)
+            giPass->ResetHistory();
     }
     void Renderer::CommitFrame() noexcept
     {
         frames[pendingSlot].timestampsSubmitted = true;
+        if (giPass)
+            giPass->CommitFrame();
         std::swap(previous, pending);
         pending.valid = false;
     }
@@ -178,6 +182,8 @@ namespace GE::Render
         const bool reuseHistory =
             historyCompatible && previous.taaEnabled && taaEnabled && previous.giEnabled == giEnabled;
         pending.giEnabled = giEnabled;
+        if (giPass && (!giEnabled || !historyCompatible))
+            giPass->ResetHistory();
         pending.giFrameIndex = previous.giFrameIndex + 1;
         const auto& sceneSize = size->color->Description();
         const std::array<float, 2> inverseSize{1.0f / sceneSize.width, 1.0f / sceneSize.height};
@@ -344,7 +350,7 @@ namespace GE::Render
             RHI::TextureView* resolved = linearScene ? size->hdrSRV.get() : size->colorSRV.get();
             if (giEnabled)
                 resolved = &giPass->Execute(cmd, slot, frame, assets, pipelines, *dynamic.lighting, *size->depthSRV,
-                                            *resolved, jitterUV, pending.giFrameIndex);
+                                            *resolved, *size->velocitySRV, jitterUV, pending.giFrameIndex);
             if (taaEnabled)
             {
                 const TAAConstants taaConstants{inverseSize, jitterUV, 0.1f, uint32_t(reuseHistory)};

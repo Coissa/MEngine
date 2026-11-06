@@ -8,6 +8,7 @@ cbuffer GIConstants : register(b0)
     float4 projection_parameters;
     float4 sun_direction_intensity;
     float4 size_jitter;
+    float4 previous_jitter;
     uint4 frame_parameters;
 };
 struct Triangle
@@ -33,6 +34,26 @@ Texture2D<float4> scene_color : register(t6);
 TextureCube<float4> sky : register(t7);
 SamplerState sky_sampler : register(s0);
 RWTexture2D<float4> output_color : register(u0);
+
+// 96 bytes, including the source receiver needed for reprojection and Jacobians.
+struct Reservoir
+{
+    float3 samplePosition;
+    float W;
+    float3 sampleNormal;
+    uint M;
+    float3 radiance;
+    uint age;
+    float3 receiverPosition;
+    uint kind; // 1: finite surface, 2: sky direction
+    float3 receiverNormal;
+    float padding0;
+    float3 receiverAlbedo;
+    float padding1;
+};
+StructuredBuffer<Reservoir> previous_reservoirs : register(t13);
+RWStructuredBuffer<Reservoir> current_reservoirs : register(u1);
+Texture2D<float2> velocity_buffer : register(t14);
 
 float Random(inout uint state)
 {
@@ -90,6 +111,60 @@ float3 SecondaryRadiance(float3 position, float3 n, Instance material, inout uin
            irradiance * material.albedo.rgb * (1 - material.albedo.w) * (0.96f / 3.14159265359f);
 }
 
+float3 Contribution(Reservoir sample, float3 position, float3 n, float3 albedo)
+{
+    float3 direction = sample.kind == 2 ? sample.samplePosition : normalize(sample.samplePosition - position);
+    if (sample.kind == 1 && dot(sample.sampleNormal, -direction) <= 0)
+        return 0;
+    return sample.radiance * albedo * (saturate(dot(n, direction)) / 3.14159265359f);
+}
+float Target(Reservoir sample, float3 position, float3 n, float3 albedo)
+{
+    return dot(Contribution(sample, position, n, albedo), float3(0.2126f, 0.7152f, 0.0722f));
+}
+void Merge(inout Reservoir result, inout float sum, Reservoir candidate, float target, float jacobian, uint count,
+           inout uint rng)
+{
+    float weight = target * candidate.W * count * jacobian;
+    result.M += count;
+    sum += weight;
+    if (weight > 0 && Random(rng) * sum < weight)
+    {
+        result.samplePosition = candidate.samplePosition;
+        result.sampleNormal = candidate.sampleNormal;
+        result.radiance = candidate.radiance;
+        result.kind = candidate.kind;
+        result.age = candidate.age;
+    }
+}
+void ReuseHistory(int2 pixel, float3 position, float3 n, float3 albedo, float tolerance, inout Reservoir result,
+                  inout float sum, inout uint rng)
+{
+    if (any(pixel < 0) || any(pixel >= (int2)size_jitter.xy))
+        return;
+    Reservoir source = previous_reservoirs[pixel.x + pixel.y * (uint)size_jitter.x];
+    if (source.M == 0 || source.age >= 20 || dot(source.receiverNormal, n) < 0.9f ||
+        length(source.receiverPosition - position) > tolerance || any(abs(source.receiverAlbedo - albedo) > 0.1f))
+        return;
+    float jacobian = 1;
+    if (source.kind == 1)
+    {
+        float3 oldDelta = source.receiverPosition - source.samplePosition;
+        float3 newDelta = position - source.samplePosition;
+        float oldDistance2 = dot(oldDelta, oldDelta);
+        float newDistance2 = dot(newDelta, newDelta);
+        float oldCosine = saturate(dot(source.sampleNormal, oldDelta * rsqrt(max(oldDistance2, 1e-8f))));
+        float newCosine = saturate(dot(source.sampleNormal, newDelta * rsqrt(max(newDistance2, 1e-8f))));
+        if (oldCosine < 1e-5f || newDistance2 < 1e-6f)
+            return;
+        jacobian = newCosine * oldDistance2 / (oldCosine * newDistance2);
+        if (jacobian < 0.1f || jacobian > 10)
+            return;
+    }
+    ++source.age;
+    Merge(result, sum, source, Target(source, position, n, albedo), jacobian, min(source.M, 16u), rng);
+}
+
 [numthreads(8, 8, 1)] void CSMain(uint3 dispatch : SV_DispatchThreadID)
 {
     uint2 pixel = dispatch.xy;
@@ -101,6 +176,7 @@ float3 SecondaryRadiance(float3 position, float3 n, Instance material, inout uin
     if (depth >= 1 || surface.w == 0)
     {
         output_color[pixel] = base;
+        current_reservoirs[pixel.x + pixel.y * (uint)size_jitter.x] = (Reservoir)0;
         return;
     }
     float2 uv = (float2(pixel) + 0.5f) / size_jitter.xy - size_jitter.zw;
@@ -121,7 +197,9 @@ float3 SecondaryRadiance(float3 position, float3 n, Instance material, inout uin
     while (query.Proceed())
     {
     }
-    float3 incoming;
+    Reservoir candidate = (Reservoir)0;
+    candidate.W = 3.14159265359f / max(dot(n, direction), 1e-6f);
+    candidate.M = 1;
     if (query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
     {
         Instance material = instances[query.CommittedInstanceID()];
@@ -132,10 +210,43 @@ float3 SecondaryRadiance(float3 position, float3 n, Instance material, inout uin
         if (dot(hitNormal, direction) > 0)
             hitNormal = -hitNormal;
         float3 hitPosition = ray.Origin + direction * query.CommittedRayT();
-        incoming = SecondaryRadiance(hitPosition, hitNormal, material, rng);
+        candidate.radiance = SecondaryRadiance(hitPosition, hitNormal, material, rng);
+        candidate.samplePosition = hitPosition;
+        candidate.sampleNormal = hitNormal;
+        candidate.kind = 1;
     }
     else
-        incoming = sky.SampleLevel(sky_sampler, EnvironmentDirection(direction), 0).rgb * environment_parameters.x;
-    // Cosine-weighted Lambert sampling: f*cos/pdf = diffuse reflectance.
-    output_color[pixel] = float4(base.rgb + diffuse_buffer[pixel].rgb * incoming, base.a);
+    {
+        candidate.radiance =
+            sky.SampleLevel(sky_sampler, EnvironmentDirection(direction), 0).rgb * environment_parameters.x;
+        candidate.samplePosition = direction;
+        candidate.kind = 2;
+    }
+    // Reservoir sampling selects one representative, rather than averaging colors.
+    float3 albedo = diffuse_buffer[pixel].rgb;
+    Reservoir result = candidate;
+    result.M = 0;
+    float sum = 0;
+    Merge(result, sum, candidate, Target(candidate, ray.Origin, n, albedo), 1, 1, rng);
+    if (frame_parameters.y != 0)
+    {
+        // Velocity excludes raster jitter; reservoirs are stored on the jittered grid.
+        float2 historyUV =
+            (float2(pixel) + 0.5f) / size_jitter.xy + velocity_buffer[pixel] - size_jitter.zw + previous_jitter.xy;
+        int2 previousPixel = (int2)floor(historyUV * size_jitter.xy);
+        ReuseHistory(previousPixel, ray.Origin, n, albedo, max(0.02f, z * 0.01f), result, sum, rng);
+    }
+    float selectedTarget = Target(result, ray.Origin, n, albedo);
+    result.W = selectedTarget > 0 ? sum / (result.M * selectedTarget) : 0;
+    result.receiverPosition = ray.Origin;
+    result.receiverNormal = n;
+    result.receiverAlbedo = albedo;
+    current_reservoirs[pixel.x + pixel.y * (uint)size_jitter.x] = result;
+    float3 selectedDirection = result.kind == 2 ? result.samplePosition : normalize(result.samplePosition - ray.Origin);
+    float distance = result.kind == 2 ? 10000 : max(0.0021f, length(result.samplePosition - ray.Origin) - 0.006f);
+    float3 indirect = Contribution(result, ray.Origin, n, albedo) * result.W;
+    // One visibility query for the selected sample: deliberately biased, minimal reuse.
+    if (selectedTarget > 0 && !Visible(ray.Origin, selectedDirection, distance))
+        indirect = 0;
+    output_color[pixel] = float4(base.rgb + indirect, base.a);
 }

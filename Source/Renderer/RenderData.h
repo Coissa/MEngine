@@ -84,6 +84,7 @@ namespace GE::RenderCore
         RenderMatrix4 local_to_world{1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F,
                                      0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F};
         std::array<float, 4> color_tint{1.0F, 1.0F, 1.0F, 1.0F};
+        bool operator==(const RenderItem&) const = default;
     };
 } // namespace GE::RenderCore
 
@@ -158,6 +159,7 @@ namespace GE::RenderCore
         std::array<float, 3> color{1, 1, 1};
         float inner_angle = 20, outer_angle = 35;
         bool spot = false;
+        bool operator==(const LocalLight&) const = default;
     };
     struct GpuTimings
     {
@@ -178,6 +180,7 @@ namespace GE::RenderCore
         bool shadows = false;
         float shadow_distance = 80;
         std::vector<LocalLight> lights;
+        bool operator==(const SceneRenderSettings&) const = default;
     };
 
     struct RenderFrame final
