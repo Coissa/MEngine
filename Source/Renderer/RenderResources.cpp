@@ -139,6 +139,28 @@ namespace GE::Render
     {
         for (auto& mesh : scene.meshes)
             meshes.emplace(mesh.handle.value, UploadMesh(device, mesh.vertices, mesh.indices));
+        if (device.GetCapabilities().inlineRayTracing && !scene.gi_compute_shader.empty())
+        {
+            struct Triangle
+            {
+                std::array<float, 3> a, b, c;
+            };
+            std::vector<Triangle> triangles;
+            for (const auto& source : scene.meshes)
+            {
+                auto& mesh = meshes.at(source.handle.value);
+                mesh.triangleOffset = uint32_t(triangles.size());
+                mesh.rayTracing = device.CreateRayTracingMesh(*mesh.vertices, uint32_t(source.vertices.size()),
+                                                              sizeof(PositionNormalColorTextureVertex), *mesh.indices,
+                                                              mesh.indexCount);
+                for (size_t i = 0; i + 2 < source.indices.size(); i += 3)
+                    triangles.push_back({source.vertices[source.indices[i]].position,
+                                         source.vertices[source.indices[i + 1]].position,
+                                         source.vertices[source.indices[i + 2]].position});
+            }
+            if (!triangles.empty())
+                giTriangles = UploadBuffer(device, triangles.data(), triangles.size() * sizeof(Triangle));
+        }
         for (auto& source : scene.nanite_meshes)
         {
             std::vector<PositionNormalColorTextureVertex> vertices;

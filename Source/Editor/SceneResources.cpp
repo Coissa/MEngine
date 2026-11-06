@@ -150,6 +150,11 @@ namespace GE::Editor
                 return false;
             }
             out_scene.post_process = std::move(post);
+            if (!LoadShaderBytecode(shader_directory / "restir_gi.hlsl", "CSMain", out_scene.gi_compute_shader,
+                                    out_error))
+                return false;
+            if (!LoadShaderBytecode(shader_path, "GIPSMain", out_scene.gi_pixel_shader, out_error))
+                return false;
 
             RHILightingDescription lighting;
             const auto environment_shader = shader_directory / "environment.hlsl";

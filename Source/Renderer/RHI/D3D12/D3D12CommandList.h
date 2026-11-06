@@ -39,6 +39,8 @@ namespace GE::D3D12
                          int32_t vertexOffset = 0) override;
         void Draw(uint32_t count) override;
         void Dispatch(uint32_t x, uint32_t y = 1, uint32_t z = 1) override;
+        void BuildRayTracingScene(RHI::RayTracingScene&, std::span<const RHI::RayTracingInstance>) override;
+        void BindRayTracingScene(uint32_t binding, RHI::RayTracingScene&) override;
         void UAVBarrier(RHI::Buffer&) override;
         void UAVBarrier(RHI::Texture&) override;
         void WriteTimestamp(RHI::TimestampQuery&, uint32_t index) override;

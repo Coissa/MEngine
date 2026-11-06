@@ -22,6 +22,7 @@ namespace GE::RHI
         bool waveOperations = false;
         bool descriptorHeapIndexing = false;
         bool rayTracing = false;
+        bool inlineRayTracing = false;
         bool meshShaders = false;
         bool enhancedBarriers = false;
     };

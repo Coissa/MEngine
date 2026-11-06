@@ -208,6 +208,7 @@ namespace GE::RenderCore
         std::uint64_t history_revision = 0;
         bool visualize_motion_vectors = false;
         bool enable_taa = true;
+        bool enable_gi = false;
         GpuTimings gpu_timings;
     };
 } // namespace GE::RenderCore

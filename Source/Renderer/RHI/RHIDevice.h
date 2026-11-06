@@ -1,6 +1,7 @@
 #pragma once
 #include "RHICommandContext.h"
 #include "RHIGraphicsQueue.h"
+#include "RHIRayTracing.h"
 #include <memory>
 
 namespace GE::RHI
@@ -21,6 +22,10 @@ namespace GE::RHI
         virtual std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineDesc& desc) = 0;
         virtual std::unique_ptr<Sampler> CreateSampler(const SamplerDescription& desc) = 0;
         virtual std::unique_ptr<ComputePipeline> CreateComputePipeline(const ComputePipelineDesc& desc) = 0;
+        virtual std::unique_ptr<RayTracingMesh> CreateRayTracingMesh(Buffer& vertices, uint32_t vertexCount,
+                                                                     uint32_t stride, Buffer& indices,
+                                                                     uint32_t indexCount) = 0;
+        virtual std::unique_ptr<RayTracingScene> CreateRayTracingScene(uint32_t capacity) = 0;
         // Synchronous helpers. No normal frame recording may be active.
         virtual void UploadBuffer(Buffer& buffer, const void* data, size_t bytes) = 0;
         virtual void UploadTexture(Texture& texture, const void* rgba, uint32_t sourceRowPitch, uint32_t mip = 0,

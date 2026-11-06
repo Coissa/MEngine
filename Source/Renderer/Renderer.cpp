@@ -137,12 +137,19 @@ namespace GE::Render
     }
     void Renderer::ReleaseSizeResources()
     {
+        giPass.reset();
         size.reset();
         ResetHistory();
     }
     void Renderer::Resize(uint32_t width, uint32_t height)
     {
         size = std::make_unique<SizeResources>(device, width, height);
+        if (pipelines.gi)
+        {
+            if (!giPass)
+                giPass = std::make_unique<ReSTIRGIPass>(device);
+            giPass->Resize(width, height);
+        }
         ResetHistory();
     }
     void Renderer::ResetHistory() noexcept
@@ -160,12 +167,18 @@ namespace GE::Render
     {
         const bool linearScene = pipelines.tone || pipelines.taa;
         const bool sceneVisible = !pipelines.ui || frame.scene_extent.HasArea();
+        const bool giEnabled = pipelines.gi && assets.giTriangles && sceneVisible && frame.main_view.valid &&
+                               frame.enable_gi && !frame.rendering.normal_debug && !frame.visualize_motion_vectors &&
+                               frame.main_view.projection.At(2, 3) != 0;
         const bool historyCompatible =
             previous.valid && frame.main_view.valid && previous.cameraId == frame.main_view.camera_id &&
             previous.revision == frame.history_revision && previous.projection == frame.main_view.projection;
         const bool taaEnabled = sceneVisible && frame.main_view.valid && frame.enable_taa && pipelines.taa &&
                                 !frame.visualize_motion_vectors;
-        const bool reuseHistory = historyCompatible && previous.taaEnabled && taaEnabled;
+        const bool reuseHistory =
+            historyCompatible && previous.taaEnabled && taaEnabled && previous.giEnabled == giEnabled;
+        pending.giEnabled = giEnabled;
+        pending.giFrameIndex = previous.giFrameIndex + 1;
         const auto& sceneSize = size->color->Description();
         const std::array<float, 2> inverseSize{1.0f / sceneSize.width, 1.0f / sceneSize.height};
         pending.taaEnabled = taaEnabled;
@@ -193,7 +206,8 @@ namespace GE::Render
         cmd.WriteTimestamp(*dynamic.timestamps, 0);
         const bool shadows = sceneVisible && frame.main_view.valid && frame.rendering.shadows && pipelines.shadow &&
                              !frame.rendering.normal_debug && frame.main_view.projection.At(2, 3) != 0;
-        const auto lighting = MakeLighting(frame, assets, shadows);
+        auto lighting = MakeLighting(frame, assets, shadows);
+        lighting.counts[3] = giEnabled ? 1.0f : 0.0f;
         dynamic.lighting->Write(0, &lighting, sizeof(lighting));
         for (uint32_t cascade = 0; cascade < ShadowCascades; ++cascade)
             dynamic.shadowConstants->Write(cascade * 256, &lighting.shadowMatrices[cascade], sizeof(Math::Mat4));
@@ -319,14 +333,18 @@ namespace GE::Render
         {
             auto& displayColor = pipelines.ui ? *size->colorRTV : output.color;
             auto& sceneColor = linearScene ? *size->hdrRTV : displayColor;
-            scenePass.Execute(cmd,
-                              {sceneColor, *size->depthDSV, *size->velocityRTV, *pipelines.scene,
-                               *pipelines.sceneLayout, *dynamic.frame, *dynamic.objects, draws,
-                               useCull ? cullFrames[slot]->arguments.get() : nullptr, &assets, dynamic.lighting.get()});
+            scenePass.Execute(cmd, {sceneColor, *size->depthDSV, *size->velocityRTV, *pipelines.scene,
+                                    *pipelines.sceneLayout, *dynamic.frame, *dynamic.objects, draws,
+                                    useCull ? cullFrames[slot]->arguments.get() : nullptr, &assets,
+                                    dynamic.lighting.get(), giPass ? &giPass->NormalTarget() : nullptr,
+                                    giPass ? &giPass->DiffuseTarget() : nullptr});
             if (sky)
                 scenePass.DrawSky(cmd, sceneColor, *size->depthDSV, *size->velocityRTV, *sky);
             cmd.WriteTimestamp(*dynamic.timestamps, 3);
             RHI::TextureView* resolved = linearScene ? size->hdrSRV.get() : size->colorSRV.get();
+            if (giEnabled)
+                resolved = &giPass->Execute(cmd, slot, frame, assets, pipelines, *dynamic.lighting, *size->depthSRV,
+                                            *resolved, jitterUV, pending.giFrameIndex);
             if (taaEnabled)
             {
                 const TAAConstants taaConstants{inverseSize, jitterUV, 0.1f, uint32_t(reuseHistory)};

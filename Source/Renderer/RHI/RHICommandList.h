@@ -1,6 +1,7 @@
 #pragma once
 #include "RHIPipeline.h"
 #include "RHIResource.h"
+#include "RHIRayTracing.h"
 namespace GE::RHI
 {
     class CommandList
@@ -29,6 +30,8 @@ namespace GE::RHI
                                  int32_t vertexOffset = 0) = 0;
         virtual void Draw(uint32_t count) = 0;
         virtual void Dispatch(uint32_t x, uint32_t y = 1, uint32_t z = 1) = 0;
+        virtual void BuildRayTracingScene(RayTracingScene&, std::span<const RayTracingInstance>) = 0;
+        virtual void BindRayTracingScene(uint32_t binding, RayTracingScene&) = 0;
         virtual void UAVBarrier(Buffer&) = 0;
         virtual void UAVBarrier(Texture&) = 0;
         virtual void WriteTimestamp(TimestampQuery&, uint32_t index) = 0;

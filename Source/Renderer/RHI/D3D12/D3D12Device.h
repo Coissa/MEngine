@@ -32,6 +32,9 @@ namespace GE::D3D12
         std::unique_ptr<RHI::Sampler> CreateSampler(const RHI::SamplerDescription&) override;
         std::unique_ptr<RHI::ComputePipeline> CreateComputePipeline(const RHI::ComputePipelineDesc&) override;
         void CheckDebugErrors() override;
+        std::unique_ptr<RHI::RayTracingMesh> CreateRayTracingMesh(RHI::Buffer&, uint32_t, uint32_t, RHI::Buffer&,
+                                                                  uint32_t) override;
+        std::unique_ptr<RHI::RayTracingScene> CreateRayTracingScene(uint32_t capacity) override;
 
         ID3D12Device* Native() const { return native.Get(); }
 

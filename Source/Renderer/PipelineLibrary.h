@@ -12,6 +12,8 @@ namespace GE::Render
         std::unique_ptr<RHI::GraphicsPipeline> taa, display, tone;
         std::unique_ptr<RHI::BindingLayout> shadowLayout;
         std::unique_ptr<RHI::GraphicsPipeline> shadow;
+        std::unique_ptr<RHI::ComputePipeline> gi;
+        std::unique_ptr<RHI::BindingLayout> giLayout;
         PipelineLibrary(RHI::Device&, const RHIRenderScene&);
     };
 } // namespace GE::Render

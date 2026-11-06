@@ -4,6 +4,7 @@
 #include "Passes/MotionVectorPass.h"
 #include "Passes/ScenePass.h"
 #include "Passes/UIPass.h"
+#include "Passes/ReSTIRGIPass.h"
 #include "PipelineLibrary.h"
 #include "RenderResources.h"
 namespace GE::Render
@@ -40,6 +41,8 @@ namespace GE::Render
             uint64_t cameraId = 0, revision = 0;
             uint32_t historyIndex = 0, jitterIndex = 0;
             bool taaEnabled = false;
+            bool giEnabled = false;
+            uint32_t giFrameIndex = 0;
             bool valid = false;
         };
         MotionHistory previous, pending;
@@ -50,5 +53,6 @@ namespace GE::Render
         EditorDebugPass editorDebugPass;
         MotionVectorPass motionPass;
         UIPass uiPass;
+        std::unique_ptr<ReSTIRGIPass> giPass;
     };
 } // namespace GE::Render

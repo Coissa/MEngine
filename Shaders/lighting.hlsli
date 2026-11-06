@@ -35,25 +35,27 @@ float CascadeVisibility(float3 position, uint cascade)
     float4 clip = mul(float4(position, 1), shadow_matrices[cascade]);
     float3 projected = clip.xyz / clip.w;
     float2 uv = projected.xy * float2(0.5f, -0.5f) + 0.5f;
-    if (any(uv < 0) || any(uv > 1) || projected.z <= 0 || projected.z >= 1) return 1;
+    if (any(uv < 0) || any(uv > 1) || projected.z <= 0 || projected.z >= 1)
+        return 1;
     uint width, height, layers;
     shadow_map.GetDimensions(width, height, layers);
     int2 pixel = int2(uv * float2(width, height));
     float visibility = 0;
-    [unroll] for (int y = -1; y <= 1; ++y)
-        [unroll] for (int x = -1; x <= 1; ++x)
-        {
-            int2 samplePixel = clamp(pixel + int2(x, y), int2(0, 0), int2(width - 1, height - 1));
-            float depth = shadow_map.Load(int4(samplePixel, cascade, 0));
-            visibility += projected.z - shadow_parameters.z <= depth ? 1.0f : 0.0f;
-        }
+    [unroll] for (int y = -1; y <= 1; ++y)[unroll] for (int x = -1; x <= 1; ++x)
+    {
+        int2 samplePixel = clamp(pixel + int2(x, y), int2(0, 0), int2(width - 1, height - 1));
+        float depth = shadow_map.Load(int4(samplePixel, cascade, 0));
+        visibility += projected.z - shadow_parameters.z <= depth ? 1.0f : 0.0f;
+    }
     return visibility / 9.0f;
 }
 float SunVisibility(float3 position, float3 n, float3 l)
 {
-    if (shadow_parameters.x < 0.5f) return 1;
+    if (shadow_parameters.x < 0.5f)
+        return 1;
     float depth = mul(float4(position, 1), lighting_view).z;
-    if (depth > cascade_splits.w) return 1;
+    if (depth > cascade_splits.w)
+        return 1;
     uint cascade = depth > cascade_splits.x ? 1 : 0;
     cascade = depth > cascade_splits.y ? 2 : cascade;
     cascade = depth > cascade_splits.z ? 3 : cascade;
@@ -62,7 +64,7 @@ float SunVisibility(float3 position, float3 n, float3 l)
     float visibility = CascadeVisibility(receiver, cascade);
     float begin = cascade == 0 ? 0 : cascade_splits[cascade - 1];
     float blend = saturate((depth - lerp(begin, cascade_splits[cascade], 0.9f)) /
-                          max((cascade_splits[cascade] - begin) * 0.1f, 1e-4f));
+                           max((cascade_splits[cascade] - begin) * 0.1f, 1e-4f));
     float next = cascade < 3 ? CascadeVisibility(receiver, min(cascade + 1, 3u)) : 1;
     return lerp(visibility, next, blend);
 }
@@ -80,23 +82,27 @@ float3 LocalLighting(float3 position, float3 baseColor, float metallic, float ro
         float attenuation = window * window / max(distance2, 0.01f);
         if (light.parameters.x > 0.5f)
             attenuation *= smoothstep(light.direction_cone.w, light.parameters.y, dot(-l, light.direction_cone.xyz));
-        result += DirectPBR(baseColor, metallic, roughness, n, v, l) *
-                  light.color_intensity.rgb * light.color_intensity.w * attenuation;
+        result += DirectPBR(baseColor, metallic, roughness, n, v, l) * light.color_intensity.rgb *
+                  light.color_intensity.w * attenuation;
     }
     return result;
 }
 float3 EnvironmentLighting(float3 baseColor, float metallic, float roughness, float3 n, float3 v, float ao)
 {
-    if (environment_parameters.x <= 0) return 0;
+    if (environment_parameters.x <= 0)
+        return 0;
     float NoV = saturate(dot(n, v));
     float3 f0 = lerp(0.04f.xxx, baseColor, metallic);
     float3 f = f0 + (max(1 - roughness, f0) - f0) * pow(1 - NoV, 5);
-    float3 diffuse = irradiance_map.SampleLevel(lighting_sampler, EnvironmentDirection(n), 0).rgb *
-                     baseColor * (1 - f) * (1 - metallic) * ao;
-    float3 reflected = prefiltered_map.SampleLevel(lighting_sampler, EnvironmentDirection(reflect(-v, n)),
-                                                   roughness * environment_parameters.z).rgb;
+    float3 diffuse = irradiance_map.SampleLevel(lighting_sampler, EnvironmentDirection(n), 0).rgb * baseColor *
+                     (1 - f) * (1 - metallic) * ao;
+    float3 reflected =
+        prefiltered_map
+            .SampleLevel(lighting_sampler, EnvironmentDirection(reflect(-v, n)), roughness * environment_parameters.z)
+            .rgb;
     float2 brdf = brdf_map.SampleLevel(lighting_sampler, float2(NoV, roughness), 0).rg;
     float specularAO = saturate(pow(NoV + ao, exp2(-16 * roughness - 1)) - 1 + ao);
-    return (diffuse + reflected * (f0 * brdf.x + brdf.y) * specularAO) * environment_parameters.x;
+    return (diffuse * (1 - light_counts.w) + reflected * (f0 * brdf.x + brdf.y) * specularAO) *
+           environment_parameters.x;
 }
 #endif

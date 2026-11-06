@@ -477,6 +477,8 @@ namespace GE::Editor
             ImGui::TextUnformatted(editor.IsSceneDirty() ? "Scene modified *" : "Scene saved");
             ImGui::Checkbox("Temporal AA (TAA)", &m_enable_taa);
             out_frame.enable_taa = m_enable_taa;
+            ImGui::Checkbox("Diffuse GI (one bounce)", &m_enable_gi);
+            out_frame.enable_gi = m_enable_gi;
             ImGui::Checkbox("Show motion vectors", &m_show_motion_vectors);
             out_frame.visualize_motion_vectors = m_show_motion_vectors;
             if (m_show_motion_vectors)

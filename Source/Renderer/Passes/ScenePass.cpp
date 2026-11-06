@@ -6,8 +6,15 @@ namespace GE::Render
         cmd.Transition(input.color.Resource(), RHI::State::RenderTarget);
         cmd.Transition(input.depth.Resource(), RHI::State::DepthWrite);
         cmd.Transition(input.velocity.Resource(), RHI::State::RenderTarget);
-        std::array<RHI::TextureView*, 2> targets{&input.color, &input.velocity};
-        cmd.SetRenderTargets(targets, &input.depth);
+        std::array<RHI::TextureView*, 4> targets{&input.color, &input.velocity, input.giNormal, input.giDiffuse};
+        if (input.giNormal)
+        {
+            cmd.Transition(input.giNormal->Resource(), RHI::State::RenderTarget);
+            cmd.Transition(input.giDiffuse->Resource(), RHI::State::RenderTarget);
+            cmd.ClearColor(*input.giNormal, {0, 0, 0, 0});
+            cmd.ClearColor(*input.giDiffuse, {0, 0, 0, 0});
+        }
+        cmd.SetRenderTargets(std::span(targets.data(), input.giNormal ? 4u : 2u), &input.depth);
         const auto& size = input.color.Resource().Description();
         cmd.SetViewport(size.width, size.height);
         cmd.ClearColor(input.color, {0.025f, 0.04f, 0.085f, 1});

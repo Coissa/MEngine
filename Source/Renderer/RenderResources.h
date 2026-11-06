@@ -27,6 +27,8 @@ namespace GE::Render
         uint32_t indexCount = 0;
         Math::Vec3 center{};
         float radius = 0;
+        std::unique_ptr<RHI::RayTracingMesh> rayTracing;
+        uint32_t triangleOffset = 0;
     };
     struct GpuTexture
     {
@@ -73,6 +75,7 @@ namespace GE::Render
         std::unique_ptr<RHI::TextureView> shadowSRV;
         std::array<std::unique_ptr<RHI::TextureView>, ShadowCascades> shadowDSV;
         bool hasEnvironment = false;
+        std::unique_ptr<RHI::Buffer> giTriangles;
         SceneAssets(RHI::Device&, RHIRenderScene&);
     };
     struct SizeResources

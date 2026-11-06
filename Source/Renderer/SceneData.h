@@ -144,6 +144,8 @@ namespace GE::Render
         std::optional<RHIMotionVectorVisualizationDescription> motion_vector_visualization;
         std::optional<RHIPostProcessDescription> post_process;
         std::optional<RHILightingDescription> lighting;
+        std::vector<std::byte> gi_compute_shader;
+        std::vector<std::byte> gi_pixel_shader;
     };
 
 } // namespace GE::Render

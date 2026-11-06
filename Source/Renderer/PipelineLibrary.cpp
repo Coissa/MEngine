@@ -28,6 +28,29 @@ namespace GE::Render
         desc.depthTest = true;
         desc.vertexElements = {{"ATTRIBUTE", 3, 0}, {"ATTRIBUTE", 3, 12}, {"ATTRIBUTE", 3, 24}, {"ATTRIBUTE", 2, 36}};
         scene = device.CreateGraphicsPipeline(desc);
+        if (hdr && device.GetCapabilities().inlineRayTracing && !source.gi_compute_shader.empty())
+        {
+            auto giDesc = desc;
+            ShaderBytecode giPS{source.gi_pixel_shader};
+            giDesc.pixelShader = &giPS;
+            giDesc.colorFormats.push_back(RHIFormat::R16G16B16A16_Float);
+            giDesc.colorFormats.push_back(RHIFormat::R16G16B16A16_Float);
+            scene = device.CreateGraphicsPipeline(giDesc);
+            giLayout = device.CreateBindingLayout({{{BindingKind::ConstantBuffer, 0},
+                                                    {BindingKind::ConstantBuffer, 2},
+                                                    {BindingKind::StructuredBuffer, 0},
+                                                    {BindingKind::StructuredBuffer, 1},
+                                                    {BindingKind::StructuredBuffer, 2},
+                                                    {BindingKind::Texture, 3},
+                                                    {BindingKind::Texture, 4},
+                                                    {BindingKind::Texture, 5},
+                                                    {BindingKind::Texture, 6},
+                                                    {BindingKind::StorageTexture, 0},
+                                                    {BindingKind::Texture, 7},
+                                                    {BindingKind::Sampler, 0}}});
+            ShaderBytecode cs{source.gi_compute_shader};
+            gi = device.CreateComputePipeline({giLayout.get(), &cs});
+        }
         if (source.lighting)
         {
             shadowLayout = device.CreateBindingLayout({{{BindingKind::ConstantBuffer, 0},

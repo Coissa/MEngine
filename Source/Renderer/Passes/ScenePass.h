@@ -26,6 +26,8 @@ namespace GE::Render
         RHI::Buffer* indirect = nullptr;
         const SceneAssets* assets = nullptr;
         RHI::Buffer* lighting = nullptr;
+        RHI::TextureView* giNormal = nullptr;
+        RHI::TextureView* giDiffuse = nullptr;
     };
     class ScenePass
     {

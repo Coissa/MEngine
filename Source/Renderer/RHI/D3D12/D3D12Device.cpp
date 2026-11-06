@@ -59,7 +59,10 @@ namespace GE::D3D12
         capabilities.waveLaneCountMax = options1.WaveLaneCountMax;
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5{};
         if (SUCCEEDED(native->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5))))
+        {
             capabilities.rayTracing = options5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+            capabilities.inlineRayTracing = options5.RaytracingTier >= D3D12_RAYTRACING_TIER_1_1;
+        }
         D3D12_FEATURE_DATA_D3D12_OPTIONS7 options7{};
         if (SUCCEEDED(native->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options7, sizeof(options7))))
             capabilities.meshShaders = options7.MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;

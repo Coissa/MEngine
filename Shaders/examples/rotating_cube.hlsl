@@ -69,8 +69,9 @@ float4 DebugColor(float3 displayColor)
     return float4(ambient_exposure_debug.w > 0.5f ? displayColor : SRGBToLinear(displayColor), 1);
 }
 
-float4 ComputeSceneColor(VertexOutput input)
+float4 ComputeSceneColor(VertexOutput input, out float4 surfaceNormal, out float4 diffuseAlbedo)
 {
+    surfaceNormal = diffuseAlbedo = 0;
     if (color_tint.w < 0.0f)
     {
         const float cluster_id = round(input.color.r);
@@ -95,21 +96,24 @@ float4 ComputeSceneColor(VertexOutput input)
     }
     float4 mr = metallic_roughness_texture.Sample(albedo_sampler, uv);
     float metallic = saturate(pbr_parameters.x * mr.b);
+    surfaceNormal = float4(n, 1);
+    diffuseAlbedo = float4(albedo.rgb * (1 - metallic) * 0.96f, 1);
     float roughness = clamp(pbr_parameters.y * mr.g, 0.045f, 1.0f);
     roughness = FilterSpecularRoughness(roughness, n);
     float3 direction = light_direction_intensity.xyz;
     float3 l = direction * rsqrt(max(dot(direction, direction), 1e-8f));
     float3 view = camera_world_position.xyz - input.world_position;
     float3 v = dot(view, view) > 1e-8f ? normalize(view) : n;
-    float3 direct = DirectPBR(albedo.rgb, metallic, roughness, n, v, l) * light_direction_intensity.w *
-                    sun_color.rgb * SunVisibility(input.world_position, n, l);
+    float3 direct = DirectPBR(albedo.rgb, metallic, roughness, n, v, l) * light_direction_intensity.w * sun_color.rgb *
+                    SunVisibility(input.world_position, n, l);
     direct += LocalLighting(input.world_position, albedo.rgb, metallic, roughness, n, v);
     float ao = lerp(1.0f, occlusion_texture.Sample(albedo_sampler, uv).r, pbr_parameters.z);
-    float3 indirect = ambient_exposure_debug.x * albedo.rgb * (1.0f - metallic) * ao;
+    float3 indirect = ambient_exposure_debug.x * albedo.rgb * (1.0f - metallic) * ao * (1 - light_counts.w);
     indirect += EnvironmentLighting(albedo.rgb, metallic, roughness, n, v, ao);
     float3 emissive = emissive_factor.rgb * emissive_texture.Sample(albedo_sampler, uv).rgb;
     float3 color = direct + indirect + emissive;
-    if (ambient_exposure_debug.w > 0.5f) color = DisplayColor(color, ambient_exposure_debug.y, false);
+    if (ambient_exposure_debug.w > 0.5f)
+        color = DisplayColor(color, ambient_exposure_debug.y, false);
     return float4(color, 1.0f);
 }
 
@@ -122,7 +126,23 @@ struct PixelOutput
 PixelOutput PSMain(VertexOutput input)
 {
     PixelOutput output;
-    output.color = ComputeSceneColor(input);
+    float4 surfaceNormal, diffuseAlbedo;
+    output.color = ComputeSceneColor(input, surfaceNormal, diffuseAlbedo);
+    output.velocity = CalculateMotionVector(input.current_clip, input.previous_clip);
+    return output;
+}
+
+struct GIPixelOutput
+{
+    float4 color : SV_Target0;
+    float2 velocity : SV_Target1;
+    float4 normal : SV_Target2;
+    float4 diffuse : SV_Target3;
+};
+GIPixelOutput GIPSMain(VertexOutput input)
+{
+    GIPixelOutput output;
+    output.color = ComputeSceneColor(input, output.normal, output.diffuse);
     output.velocity = CalculateMotionVector(input.current_clip, input.previous_clip);
     return output;
 }
