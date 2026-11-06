@@ -477,8 +477,11 @@ namespace GE::Editor
             ImGui::TextUnformatted(editor.IsSceneDirty() ? "Scene modified *" : "Scene saved");
             ImGui::Checkbox("Temporal AA (TAA)", &m_enable_taa);
             out_frame.enable_taa = m_enable_taa;
-            ImGui::Checkbox("ReSTIR GI (temporal)", &m_enable_gi);
+            ImGui::Checkbox("ReSTIR GI", &m_enable_gi);
             out_frame.enable_gi = m_enable_gi;
+            if (m_enable_gi)
+                ImGui::Combo("GI mode", &m_gi_mode, "One bounce\0Temporal\0Temporal + history neighbors\0");
+            out_frame.gi_mode = uint32_t(m_gi_mode + 1);
             ImGui::Checkbox("Show motion vectors", &m_show_motion_vectors);
             out_frame.visualize_motion_vectors = m_show_motion_vectors;
             if (m_show_motion_vectors)
@@ -544,7 +547,7 @@ namespace GE::Editor
             }
             if (out_frame.gpu_timings.valid && ImGui::CollapsingHeader("GPU timings"))
             {
-                constexpr const char* names[] = {"Culling", "Sun shadows", "Scene + sky", "TAA + display", "Editor"};
+                constexpr const char* names[] = {"Culling", "Sun shadows", "Scene + sky", "GI + TAA + display", "Editor"};
                 double total = 0;
                 for (size_t i = 0; i < out_frame.gpu_timings.milliseconds.size(); ++i)
                 {

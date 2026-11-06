@@ -179,9 +179,10 @@ namespace GE::Render
             previous.revision == frame.history_revision && previous.projection == frame.main_view.projection;
         const bool taaEnabled = sceneVisible && frame.main_view.valid && frame.enable_taa && pipelines.taa &&
                                 !frame.visualize_motion_vectors;
-        const bool reuseHistory =
-            historyCompatible && previous.taaEnabled && taaEnabled && previous.giEnabled == giEnabled;
+        const bool reuseHistory = historyCompatible && previous.taaEnabled && taaEnabled &&
+                                  previous.giEnabled == giEnabled && (!giEnabled || previous.giMode == frame.gi_mode);
         pending.giEnabled = giEnabled;
+        pending.giMode = frame.gi_mode;
         if (giPass && (!giEnabled || !historyCompatible))
             giPass->ResetHistory();
         pending.giFrameIndex = previous.giFrameIndex + 1;

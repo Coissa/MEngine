@@ -212,6 +212,7 @@ namespace GE::RenderCore
         bool visualize_motion_vectors = false;
         bool enable_taa = true;
         bool enable_gi = false;
+        uint32_t gi_mode = 3; // 1: one bounce, 2: temporal, 3: temporal + history neighbors.
         GpuTimings gpu_timings;
     };
 } // namespace GE::RenderCore

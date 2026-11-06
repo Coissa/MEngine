@@ -43,6 +43,7 @@ namespace GE::Editor
         bool m_show_motion_vectors = false;
         bool m_enable_taa = true;
         bool m_enable_gi = true;
+        int m_gi_mode = 2;
         EditorGizmoAxis m_gizmo_drag_axis = EditorGizmoAxis::None;
         GE::Runtime::GameObjectHandle m_gizmo_target;
         GE::Runtime::TransformComponent m_gizmo_initial_transform;

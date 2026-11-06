@@ -132,6 +132,24 @@ int main()
         Require(LitPixels(enabled) > 650, "Reservoir history did not improve sample coverage with TAA disabled");
         Require(average[0] > 20 && average[0] > average[1] * 3,
                 "Emissive secondary surface did not produce red indirect light");
+        uint32_t temporalEarlyCoverage = 0;
+        const char* modeImages[] = {"gi-one-bounce.ppm", "gi-temporal.ppm", "gi-spatiotemporal.ppm"};
+        for (uint32_t mode = 1; mode <= 3; ++mode)
+        {
+            frame.gi_mode = mode;
+            renderer.ResetHistory();
+            draw();
+            auto secondFrame = draw();
+            if (mode == 2)
+                temporalEarlyCoverage = LitPixels(secondFrame);
+            if (mode == 3)
+                Require(LitPixels(secondFrame) > temporalEarlyCoverage + 120,
+                        "History-neighbor reuse did not improve second-frame coverage over temporal reuse");
+            RHI::Image converged;
+            for (int i = 0; i < 30; ++i)
+                converged = draw();
+            Save(converged, modeImages[mode - 1]);
+        }
         // A discarded recording must not advance the GI/TAA history.
         {
             auto cancelled = context.BeginFrame();
@@ -176,6 +194,8 @@ int main()
         frame.main_view.camera_world_position = {0.1f, 0, -6, 1};
         Require(std::abs(CenterAverage(drawSky())[0] - initialSky[0]) < 1,
                 "Camera reprojection changed constant-sky energy");
+        frame.rendering.environment_intensity = 0;
+        Require(CenterAverage(drawSky())[0] < 1, "Lighting change kept stale reservoir radiance");
         context.WaitIdle();
         device->CheckDebugErrors();
         std::cout << "GI indirect-light, toggle, resize and cancelled-recording checks passed; RGB = " << average[0]

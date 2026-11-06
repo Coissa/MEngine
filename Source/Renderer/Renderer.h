@@ -43,6 +43,7 @@ namespace GE::Render
             bool taaEnabled = false;
             bool giEnabled = false;
             uint32_t giFrameIndex = 0;
+            uint32_t giMode = 0;
             bool valid = false;
         };
         MotionHistory previous, pending;

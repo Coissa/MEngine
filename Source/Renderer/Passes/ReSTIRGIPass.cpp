@@ -62,7 +62,8 @@ namespace GE::Render
         const bool reuseHistory = previous.valid && previous.cameraId == frame.main_view.camera_id &&
                                   previous.revision == frame.history_revision &&
                                   previous.projection == frame.main_view.projection &&
-                                  previous.items == frame.render_items && previous.lighting == frame.rendering;
+                                  previous.items == frame.render_items && previous.lighting == frame.rendering &&
+                                  previous.mode == frame.gi_mode;
         pending.items = frame.render_items;
         pending.lighting = frame.rendering;
         pending.projection = frame.main_view.projection;
@@ -70,6 +71,7 @@ namespace GE::Render
         pending.revision = frame.history_revision;
         pending.jitter = jitter;
         pending.index = previous.valid ? 1 - previous.index : 0;
+        pending.mode = frame.gi_mode;
         pending.valid = true;
         std::vector<GIInstance> materials;
         for (const auto& item : frame.render_items)
@@ -110,7 +112,7 @@ namespace GE::Render
                          frame.rendering.light_direction[2], frame.rendering.light_intensity};
         constants.sizeJitter = {float(size.width), float(size.height), jitter[0], jitter[1]};
         constants.previousJitter = {previous.jitter[0], previous.jitter[1], 0, 0};
-        constants.frame = {frameIndex, uint32_t(reuseHistory), 2, 0};
+        constants.frame = {frameIndex, uint32_t(reuseHistory), frame.gi_mode, frame.gi_mode >= 3 ? 4u : 0u};
         resources.constants->Write(0, &constants, sizeof(constants));
         cmd.BuildRayTracingScene(*resources.scene, instances);
         cmd.Transition(*assets.giTriangles, State::ShaderResource);

@@ -137,14 +137,15 @@ void Merge(inout Reservoir result, inout float sum, Reservoir candidate, float t
         result.age = candidate.age;
     }
 }
-void ReuseHistory(int2 pixel, float3 position, float3 n, float3 albedo, float tolerance, inout Reservoir result,
-                  inout float sum, inout uint rng)
+void ReuseHistory(int2 pixel, float3 position, float3 n, float3 albedo, float tolerance, float maxDistance,
+                  inout Reservoir result, inout float sum, inout uint rng)
 {
     if (any(pixel < 0) || any(pixel >= (int2)size_jitter.xy))
         return;
     Reservoir source = previous_reservoirs[pixel.x + pixel.y * (uint)size_jitter.x];
     if (source.M == 0 || source.age >= 20 || dot(source.receiverNormal, n) < 0.9f ||
-        length(source.receiverPosition - position) > tolerance || any(abs(source.receiverAlbedo - albedo) > 0.1f))
+        length(source.receiverPosition - position) > maxDistance ||
+        abs(dot(source.receiverPosition - position, n)) > tolerance || any(abs(source.receiverAlbedo - albedo) > 0.1f))
         return;
     float jacobian = 1;
     if (source.kind == 1)
@@ -228,13 +229,24 @@ void ReuseHistory(int2 pixel, float3 position, float3 n, float3 albedo, float to
     result.M = 0;
     float sum = 0;
     Merge(result, sum, candidate, Target(candidate, ray.Origin, n, albedo), 1, 1, rng);
-    if (frame_parameters.y != 0)
+    if (frame_parameters.y != 0 && frame_parameters.z >= 2)
     {
         // Velocity excludes raster jitter; reservoirs are stored on the jittered grid.
         float2 historyUV =
             (float2(pixel) + 0.5f) / size_jitter.xy + velocity_buffer[pixel] - size_jitter.zw + previous_jitter.xy;
         int2 previousPixel = (int2)floor(historyUV * size_jitter.xy);
-        ReuseHistory(previousPixel, ray.Origin, n, albedo, max(0.02f, z * 0.01f), result, sum, rng);
+        float tolerance = max(0.02f, z * 0.01f);
+        ReuseHistory(previousPixel, ray.Origin, n, albedo, tolerance, tolerance, result, sum, rng);
+        // Only previous-frame reservoirs are read. No cross-thread/group dependency.
+        float rotation = Random(rng) * 6.28318530718f;
+        for (uint i = 0; i < frame_parameters.w; ++i)
+        {
+            float angle = rotation + i * 2.39996323f;
+            float radius = 3 + 5 * Random(rng);
+            int2 offset = (int2)round(float2(cos(angle), sin(angle)) * radius);
+            float maxDistance = max(tolerance, 4 * z * (radius + 2) / (projection_parameters.y * size_jitter.y));
+            ReuseHistory(previousPixel + offset, ray.Origin, n, albedo, tolerance, maxDistance, result, sum, rng);
+        }
     }
     float selectedTarget = Target(result, ray.Origin, n, albedo);
     result.W = selectedTarget > 0 ? sum / (result.M * selectedTarget) : 0;

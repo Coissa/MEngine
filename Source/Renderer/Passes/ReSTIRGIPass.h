@@ -39,6 +39,7 @@ namespace GE::Render
             uint64_t cameraId = 0, revision = 0;
             std::array<float, 2> jitter{};
             uint32_t index = 0;
+            uint32_t mode = 0;
             bool valid = false;
         };
         History previous, pending;

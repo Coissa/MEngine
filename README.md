@@ -14,6 +14,8 @@
 
 [构建与验证](BUILDING.md) · [当前架构与调用入口](ARCHITECTURE.md) · [场景文件与资源格式](docs/SceneFiles.md)
 
+已加入独立实现的简化 ReSTIR GI：一跳漫反射、时间复用和历史邻居复用均通过单个 GI Compute Dispatch 执行。在 Scene 面板可切换三种模式；版本提交与独立运行包见 [ReSTIR GI](docs/ReSTIRGI.md)，本地运行包位于 `out/gi-versions/`。
+
 源码位于 `Source/`；资源、Shader、第三方依赖、工具和测试分别位于根目录的 `Assets/`、`Shaders/`、`ThirdParty/`、`Tools/`、`Tests/`。`docs/` 保留当前功能说明、架构决策、Nanite 计划和设计参考。
 
 构建产物统一放在 `out/`，根目录 `MEngine.slnx` 由 `GenerateSolution.ps1` 生成，清理时保留。清理构建目录后，重新执行脚本即可更新解决方案及其引用的项目文件。`Source/Runtime/Generated/` 和测试中的生成代码是默认构建所需的源码，需要保留。

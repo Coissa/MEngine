@@ -15,7 +15,7 @@ $commit = git -C $projectRoot rev-parse HEAD
 Version: $Version
 Commit: $commit
 Configuration: Release x64
-Run: powershell -ExecutionPolicy Bypass -File Launch.ps1
+Run: powershell -NoProfile -ExecutionPolicy Bypass -File Launch.ps1
 "@ | Set-Content (Join-Path $destination 'VERSION.txt')
 @'
 Push-Location $PSScriptRoot
