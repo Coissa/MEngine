@@ -1,0 +1,13 @@
+{
+  "module_name": "MEngine.Runtime",
+  "module_root": "../../../Source",
+  "header_files": [
+    "Renderer/RenderData.h",
+    "Runtime/Component.h"
+  ],
+  "output_directory": "Runtime/Generated/Reflection",
+  "compile_command_source": "Runtime/Component.cpp",
+  "type_dependencies": [
+    "Core/Serialization/BuiltinSerialization.h"
+  ]
+}

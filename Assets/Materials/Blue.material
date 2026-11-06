@@ -1,0 +1,11 @@
+{
+  "base_color": [
+    0.25,
+    0.55,
+    1,
+    1
+  ],
+  "base_color_texture": "9f770a06-e60d-5695-9763-2d594f7baffc",
+  "filter": "linear",
+  "address": "clamp"
+}

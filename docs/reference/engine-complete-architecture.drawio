@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-08-29T08:00:00.000Z" agent="Codex" version="24.7.17" type="device" compressed="false">
+  <diagram id="ownership-architecture" name="01-整体架构与所有权">
+    <mxGraphModel dx="2400" dy="1600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="p1-title" value="&lt;b&gt;MEngine 完整目标架构&lt;/b&gt; — 所有权、生命周期与数据边界" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=24;fontColor=#1f2937;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="2320" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-main" value="&lt;b&gt;main / EngineMain&lt;/b&gt;&lt;br&gt;组合根：解析配置，选择 Game / Editor 与 RHI 后端" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="930" y="85" width="540" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-loop" value="&lt;b&gt;EngineLoop&lt;/b&gt;&lt;br&gt;进程级生命周期与帧编排器；不承载 World 业务，也不直接管理 RHI 细节" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="870" y="190" width="660" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="p1-platform-bg" value="平台与全局服务" style="swimlane;html=1;rounded=0;startSize=34;horizontal=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="40" y="320" width="410" height="920" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-engine-bg" value="Engine 与 World（逻辑域）" style="swimlane;html=1;rounded=0;startSize=34;horizontal=1;fillColor=#f4fbf3;strokeColor=#82b366;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="470" y="320" width="750" height="920" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-render-bg" value="Renderer 与 RenderScene（渲染域）" style="swimlane;html=1;rounded=0;startSize=34;horizontal=1;fillColor=#fff8ef;strokeColor=#d79b00;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="320" width="590" height="920" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-rhi-bg" value="RHI 与 GPU（设备域）" style="swimlane;html=1;rounded=0;startSize=34;horizontal=1;fillColor=#faf7fc;strokeColor=#9673a6;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1850" y="320" width="510" height="920" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="p1-reflection" value="&lt;b&gt;Reflection / TypeRegistry&lt;/b&gt;&lt;br&gt;进程级类型注册与元数据" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="85" y="390" width="320" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-platform" value="&lt;b&gt;PlatformApplication&lt;/b&gt;&lt;br&gt;消息泵、输入、窗口事件" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="85" y="500" width="320" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-window" value="&lt;b&gt;Window&lt;/b&gt;&lt;br&gt;Native Handle / Extent / Close" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="85" y="610" width="320" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-surface" value="Native Surface" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="135" y="720" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="p1-engine" value="&lt;b&gt;Engine（抽象）&lt;/b&gt;&lt;br&gt;持有 WorldContext；驱动逻辑域初始化、Tick 与退出" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="665" y="380" width="360" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-game-engine" value="GameEngine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="535" y="500" width="250" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-editor-engine" value="EditorEngine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="905" y="500" width="250" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-game-context" value="&lt;b&gt;Game WorldContext&lt;/b&gt;&lt;br&gt;GameInstance + Game World" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf5e9;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="515" y="610" width="290" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-editor-context" value="&lt;b&gt;Editor WorldContext&lt;/b&gt;&lt;br&gt;Editor World" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf5e9;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="835" y="610" width="170" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-pie-context" value="&lt;b&gt;PIE WorldContext&lt;/b&gt;&lt;br&gt;GameInstance + PIE World" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf5e9;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="610" width="180" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-game-world" value="Game World&lt;br&gt;Objects / Components" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="515" y="735" width="200" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-game-instance" value="GameInstance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="730" y="735" width="120" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-editor-world" value="Editor World" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="865" y="735" width="145" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-pie-world" value="PIE World" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1025" y="735" width="145" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-extraction" value="&lt;b&gt;RenderExtraction&lt;/b&gt;&lt;br&gt;读取 Tick 后稳定状态；不把 World 指针交给渲染域" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="655" y="875" width="380" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-updates" value="&lt;b&gt;SceneUpdateBatch&lt;/b&gt;&lt;br&gt;结构命令：Create / Destroy / Mesh / Material&lt;br&gt;状态快照：Transform / Camera / Light" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="510" y="1010" width="320" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-frame" value="&lt;b&gt;RenderFrame&lt;/b&gt;&lt;br&gt;FrameId / Extent / Views / Alpha" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="865" y="1010" width="310" height="95" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="p1-renderer" value="&lt;b&gt;Renderer&lt;/b&gt;&lt;br&gt;拥有渲染域与 RHI；消费 RenderSubmission" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=2;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1355" y="380" width="360" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-registry" value="&lt;b&gt;RenderSceneRegistry&lt;/b&gt;&lt;br&gt;SceneHandle → RenderScene" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1355" y="505" width="360" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-game-scene" value="Game RenderScene" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5e6;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="640" width="160" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-editor-scene" value="Editor RenderScene" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5e6;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1455" y="640" width="160" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-pie-scene" value="PIE RenderScene" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5e6;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1620" y="640" width="160" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-scene-update" value="&lt;b&gt;RenderScene Frame Update&lt;/b&gt;&lt;br&gt;ApplyUpdates → Interpolate → Visibility / LOD&lt;br&gt;Build DrawLists / Passes（不是 Gameplay Tick）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="760" width="470" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-submission" value="&lt;b&gt;RenderSubmission&lt;/b&gt;&lt;br&gt;SceneHandle + SceneUpdateBatch + RenderFrame" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="1015" width="490" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-channel" value="&lt;b&gt;RenderSubmissionChannel&lt;/b&gt;&lt;br&gt;M2：同步移动调用&lt;br&gt;目标：Game → Render 有界队列（可靠命令 + 最新状态）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="1125" width="470" height="85" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="p1-rhi" value="&lt;b&gt;RHI Interface&lt;/b&gt;&lt;br&gt;Renderer 面向稳定抽象" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1950" y="390" width="310" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-backend" value="Concrete Backend&lt;br&gt;D3D12 / Vulkan / ..." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1950" y="505" width="310" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-device" value="Adapter + Device" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1950" y="620" width="310" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-queue" value="Command Queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3eaf7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1885" y="735" width="145" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-swapchain" value="Swapchain" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3eaf7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2040" y="735" width="145" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-frame-context" value="FrameContext + Fence" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3eaf7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2195" y="735" width="145" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-command" value="CommandList / Resources / Pipeline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3eaf7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1950" y="850" width="310" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-gpu" value="&lt;b&gt;GPU&lt;/b&gt;&lt;br&gt;Execute → Signal → Present" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1950" y="1000" width="310" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="p1-note" value="&lt;b&gt;关键约束&lt;/b&gt;&lt;br&gt;1. EngineLoop 只做进程级编排，不拥有 World 业务。&lt;br&gt;2. Engine 拥有 World 生命周期；Renderer 拥有 RenderScene 与 RHI。&lt;br&gt;3. World 仅保存稳定 SceneHandle，不跨线程暴露对象指针。&lt;br&gt;4. 多个 World 共享同一个 Renderer / RHI Device，但各自拥有独立 RenderScene。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#2e7d32;fontSize=13;align=left;spacingLeft=12;" vertex="1" parent="1">
+          <mxGeometry x="470" y="1280" width="1360" height="165" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1-legend" value="&lt;b&gt;图例&lt;/b&gt;&lt;br&gt;实线箭头：拥有 / 创建 / 调用&lt;br&gt;红色虚线：跨域帧数据&lt;br&gt;灰色虚线：非拥有句柄或平台依赖" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="1850" y="1280" width="510" height="165" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="p1-e-main-loop" value="创建并持有" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p1-main" target="p1-loop"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-loop-ref" value="初始化 / 退出" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p1-loop" target="p1-reflection"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-loop-platform" value="持有" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p1-loop" target="p1-platform"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-loop-engine" value="持有唯一实例" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p1-loop" target="p1-engine"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-loop-renderer" value="持有" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p1-loop" target="p1-renderer"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-platform-window" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-platform" target="p1-window"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-window-surface" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-window" target="p1-surface"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-engine-game" value="具体实现" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-engine" target="p1-game-engine"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-engine-editor" value="具体实现" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-engine" target="p1-editor-engine"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-game-context" value="拥有" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-game-engine" target="p1-game-context"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-editor-context" value="拥有" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-editor-engine" target="p1-editor-context"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-pie-context" value="可选 / 多实例" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-editor-engine" target="p1-pie-context"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-game-world" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-game-context" target="p1-game-world"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-game-instance" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-game-context" target="p1-game-instance"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-editor-world" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-editor-context" target="p1-editor-world"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-pie-world" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-pie-context" target="p1-pie-world"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-world-extract" value="Tick 后提取" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="p1-game-world" target="p1-extraction"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-editor-extract" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="p1-editor-world" target="p1-extraction"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-pie-extract" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="p1-pie-world" target="p1-extraction"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-extract-updates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;" edge="1" parent="1" source="p1-extraction" target="p1-updates"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-extract-frame" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;" edge="1" parent="1" source="p1-extraction" target="p1-frame"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-updates-submission" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;" edge="1" parent="1" source="p1-updates" target="p1-submission"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-frame-submission" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;" edge="1" parent="1" source="p1-frame" target="p1-submission"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-submission-channel" value="move" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="p1-submission" target="p1-channel"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-channel-renderer" value="按渲染帧消费" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="p1-channel" target="p1-renderer"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-renderer-registry" value="拥有" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-renderer" target="p1-registry"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-reg-game" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-registry" target="p1-game-scene"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-reg-editor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-registry" target="p1-editor-scene"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-reg-pie" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-registry" target="p1-pie-scene"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-scene-update" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-registry" target="p1-scene-update"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-renderer-rhi" value="拥有" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p1-renderer" target="p1-rhi"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-rhi-backend" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-rhi" target="p1-backend"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-backend-device" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-backend" target="p1-device"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-device-queue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-device" target="p1-queue"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-device-swapchain" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-device" target="p1-swapchain"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-device-frame" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-device" target="p1-frame-context"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-device-command" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="p1-device" target="p1-command"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-command-gpu" value="Submit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p1-command" target="p1-gpu"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-surface-swapchain" value="非拥有依赖" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=4 4;strokeColor=#666666;" edge="1" parent="1" source="p1-surface" target="p1-swapchain"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-world-game-scene" value="SceneHandle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=4 4;strokeColor=#666666;" edge="1" parent="1" source="p1-game-world" target="p1-game-scene"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-world-editor-scene" value="SceneHandle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=4 4;strokeColor=#666666;" edge="1" parent="1" source="p1-editor-world" target="p1-editor-scene"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p1-e-world-pie-scene" value="SceneHandle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=4 4;strokeColor=#666666;" edge="1" parent="1" source="p1-pie-world" target="p1-pie-scene"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="lifecycle-dataflow" name="02-启动循环与退出">
+    <mxGraphModel dx="2400" dy="2200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="2200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="p2-title" value="&lt;b&gt;MEngine 完整生命周期&lt;/b&gt; — 启动 → 初始化 → 帧循环与数据传输 → 逆序退出" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=24;fontColor=#1f2937;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="2320" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="p2-main-bg" value="Main / EngineLoop（进程编排）" style="swimlane;html=1;rounded=0;startSize=38;horizontal=1;fillColor=#eef5ff;strokeColor=#6c8ebf;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="550" height="2040" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-game-bg" value="Game / Logic（Engine · WorldContext · World）" style="swimlane;html=1;rounded=0;startSize=38;horizontal=1;fillColor=#f1f8f0;strokeColor=#82b366;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="620" y="80" width="550" height="2040" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-render-bg" value="Render（Renderer · RenderScene）" style="swimlane;html=1;rounded=0;startSize=38;horizontal=1;fillColor=#fff7eb;strokeColor=#d79b00;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="80" width="550" height="2040" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-rhi-bg" value="RHI / GPU（设备与提交）" style="swimlane;html=1;rounded=0;startSize=38;horizontal=1;fillColor=#f8f3fa;strokeColor=#9673a6;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="1780" y="80" width="580" height="2040" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="p2-startup-label" value="启动与初始化" style="text;html=1;strokeColor=none;fillColor=#fff2cc;align=left;verticalAlign=middle;fontStyle=1;fontSize=18;spacingLeft=12;" vertex="1" parent="1">
+          <mxGeometry x="50" y="130" width="2300" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-main-entry" value="&lt;b&gt;main()&lt;/b&gt;&lt;br&gt;解析配置；选择 Game / Editor、平台与 RHI 后端" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" vertex="1" parent="1"><mxGeometry x="105" y="190" width="420" height="70" as="geometry"/></mxCell>
+        <mxCell id="p2-create-loop" value="Create EngineLoop&lt;br&gt;建立进程级组合关系" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1"><mxGeometry x="105" y="290" width="420" height="60" as="geometry"/></mxCell>
+        <mxCell id="p2-init-reflect" value="Reflection / TypeRegistry::Initialize" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1"><mxGeometry x="105" y="380" width="420" height="55" as="geometry"/></mxCell>
+        <mxCell id="p2-init-platform" value="PlatformApplication + Window&lt;br&gt;创建 NativeSurface，开始消息接收" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1"><mxGeometry x="105" y="465" width="420" height="65" as="geometry"/></mxCell>
+        <mxCell id="p2-init-renderer" value="Renderer::Initialize&lt;br&gt;创建 RenderSceneRegistry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1265" y="465" width="420" height="65" as="geometry"/></mxCell>
+        <mxCell id="p2-init-rhi" value="Create Backend → Adapter → Device → Queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1845" y="350" width="450" height="60" as="geometry"/></mxCell>
+        <mxCell id="p2-init-swapchain" value="Create Swapchain / FrameContexts / Fences&lt;br&gt;绑定 Window NativeSurface" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1845" y="450" width="450" height="65" as="geometry"/></mxCell>
+        <mxCell id="p2-init-engine" value="Engine::Initialize&lt;br&gt;GameEngine 或 EditorEngine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1"><mxGeometry x="685" y="560" width="420" height="65" as="geometry"/></mxCell>
+        <mxCell id="p2-init-world" value="Create WorldContext(s)&lt;br&gt;Create GameInstance / World / Objects / Components" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1"><mxGeometry x="685" y="655" width="420" height="70" as="geometry"/></mxCell>
+        <mxCell id="p2-init-scene" value="Renderer::CreateRenderScene(WorldId)&lt;br&gt;World 只保存稳定 SceneHandle" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1265" y="655" width="420" height="70" as="geometry"/></mxCell>
+        <mxCell id="p2-enter-run" value="EngineLoop::Run()" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="265" y="675" width="100" height="100" as="geometry"/></mxCell>
+
+        <mxCell id="p2-loop-label" value="逐帧循环（M2 为同线程顺序阶段；目标架构可拆为 Game / Render / RHI 线程）" style="text;html=1;strokeColor=none;fillColor=#f8cecc;align=left;verticalAlign=middle;fontStyle=1;fontSize=18;spacingLeft=12;" vertex="1" parent="1">
+          <mxGeometry x="50" y="805" width="2300" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-pump" value="PumpMessages&lt;br&gt;读取 Close / Resize / Input" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1"><mxGeometry x="105" y="870" width="420" height="65" as="geometry"/></mxCell>
+        <mxCell id="p2-clock" value="FrameClock + Accumulator&lt;br&gt;计算 realDelta 与 fixedStep 次数" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1"><mxGeometry x="105" y="965" width="420" height="65" as="geometry"/></mxCell>
+        <mxCell id="p2-sim-decision" value="需要逻辑步？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" vertex="1" parent="1"><mxGeometry x="225" y="1060" width="180" height="95" as="geometry"/></mxCell>
+        <mxCell id="p2-world-tick" value="&lt;b&gt;0..N × Fixed Tick&lt;/b&gt;&lt;br&gt;Engine → WorldContext → World → Object / Component&lt;br&gt;产生 dirty state 与 structural events" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontSize=13;" vertex="1" parent="1"><mxGeometry x="675" y="1055" width="440" height="90" as="geometry"/></mxCell>
+        <mxCell id="p2-extract" value="&lt;b&gt;RenderExtraction&lt;/b&gt;&lt;br&gt;逻辑步完成后读取稳定状态&lt;br&gt;结构事件可靠传递；连续状态保留最新值" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" vertex="1" parent="1"><mxGeometry x="675" y="1190" width="440" height="90" as="geometry"/></mxCell>
+        <mxCell id="p2-build-submission" value="Build RenderSubmission&lt;br&gt;SceneHandle + SceneUpdateBatch + RenderFrame&lt;br&gt;附带 interpolation alpha / views / extent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;fontSize=13;" vertex="1" parent="1"><mxGeometry x="675" y="1325" width="440" height="90" as="geometry"/></mxCell>
+        <mxCell id="p2-channel" value="RenderSubmissionChannel&lt;br&gt;M2：同步 move 调用&lt;br&gt;目标：有界 SPSC 队列" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1275" y="1325" width="400" height="90" as="geometry"/></mxCell>
+        <mxCell id="p2-apply" value="RenderScene::ApplyUpdates&lt;br&gt;创建/销毁代理；更新 Transform / Camera / Light" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1275" y="1045" width="400" height="80" as="geometry"/></mxCell>
+        <mxCell id="p2-prepare" value="Render Frame Update&lt;br&gt;Interpolate → Visibility / LOD → DrawLists / Passes&lt;br&gt;按渲染帧率执行，不做 Gameplay Tick" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1275" y="1160" width="400" height="90" as="geometry"/></mxCell>
+        <mxCell id="p2-record" value="Record CommandLists&lt;br&gt;Transitions / Clears / Draws / UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1855" y="1060" width="430" height="70" as="geometry"/></mxCell>
+        <mxCell id="p2-submit" value="Queue Submit → GPU Execute&lt;br&gt;Signal Fence → Present Swapchain" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1855" y="1175" width="430" height="75" as="geometry"/></mxCell>
+        <mxCell id="p2-exit-decision" value="Close / Engine Exit / Fatal？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" vertex="1" parent="1"><mxGeometry x="200" y="1330" width="230" height="110" as="geometry"/></mxCell>
+
+        <mxCell id="p2-shutdown-label" value="停止与逆序退出（Renderer 必须活到所有 World 释放 SceneHandle 之后）" style="text;html=1;strokeColor=none;fillColor=#d5e8d4;align=left;verticalAlign=middle;fontStyle=1;fontSize=18;spacingLeft=12;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1500" width="2300" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2-stop-submit" value="Stop New Submissions&lt;br&gt;冻结帧入口" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1"><mxGeometry x="105" y="1570" width="420" height="60" as="geometry"/></mxCell>
+        <mxCell id="p2-engine-shutdown" value="Engine::Shutdown&lt;br&gt;停止 Gameplay / PIE / World Tick" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1"><mxGeometry x="685" y="1570" width="420" height="65" as="geometry"/></mxCell>
+        <mxCell id="p2-release-scenes" value="World(s) Release SceneHandle&lt;br&gt;销毁 WorldContext / GameInstance / World" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1"><mxGeometry x="685" y="1670" width="420" height="70" as="geometry"/></mxCell>
+        <mxCell id="p2-render-stop" value="Renderer StopAccepting + Drain Queue&lt;br&gt;销毁 RenderScene / Registry 高层对象" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1265" y="1670" width="420" height="70" as="geometry"/></mxCell>
+        <mxCell id="p2-wait-gpu" value="Wait GPU Fences / Device Idle&lt;br&gt;确保所有在途帧结束" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1845" y="1670" width="450" height="65" as="geometry"/></mxCell>
+        <mxCell id="p2-destroy-rhi" value="Destroy FrameResources → Swapchain → Queue / Device → Backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1845" y="1775" width="450" height="70" as="geometry"/></mxCell>
+        <mxCell id="p2-render-done" value="Renderer::Shutdown 完成" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" vertex="1" parent="1"><mxGeometry x="1265" y="1780" width="420" height="60" as="geometry"/></mxCell>
+        <mxCell id="p2-platform-shutdown" value="Destroy Window / PlatformApplication&lt;br&gt;Reflection / TypeRegistry::Shutdown" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1"><mxGeometry x="105" y="1870" width="420" height="70" as="geometry"/></mxCell>
+        <mxCell id="p2-destroy-loop" value="Destroy EngineLoop → return from main()" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="155" y="1980" width="320" height="70" as="geometry"/></mxCell>
+
+        <mxCell id="p2-thread-note" value="&lt;b&gt;线程演进&lt;/b&gt;&lt;br&gt;M2：一个物理线程，按 Logic → Extraction → Render → RHI 阶段顺序执行。&lt;br&gt;目标：Game Thread 生产 RenderSubmission；Render Thread 独占 Renderer / RenderScene；RHI Thread 可选，仅负责底层提交；Worker Thread 只做纯任务，结果回交所属线程。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=12;align=left;spacingLeft=12;" vertex="1" parent="1"><mxGeometry x="620" y="1965" width="1730" height="100" as="geometry"/></mxCell>
+
+        <mxCell id="p2-e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-main-entry" target="p2-create-loop"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-create-loop" target="p2-init-reflect"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-init-reflect" target="p2-init-platform"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e4" value="Window / Surface ready" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-init-platform" target="p2-init-renderer"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e5" value="创建 RHI" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-init-renderer" target="p2-init-rhi"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-init-rhi" target="p2-init-swapchain"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e7" value="Renderer ready" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-init-swapchain" target="p2-init-engine"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-init-engine" target="p2-init-world"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e9" value="每个 World" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-init-world" target="p2-init-scene"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e10" value="初始化成功" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-init-scene" target="p2-enter-run"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-enter-run" target="p2-pump"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-pump" target="p2-clock"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-clock" target="p2-sim-decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e14" value="是（可执行多次）" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-sim-decision" target="p2-world-tick"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e15" value="逻辑帧完成" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="p2-world-tick" target="p2-extract"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e16" value="否 / fixed ticks 已追平" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="p2-sim-decision" target="p2-extract"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=2;" edge="1" parent="1" source="p2-extract" target="p2-build-submission"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e18" value="move / enqueue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=3;" edge="1" parent="1" source="p2-build-submission" target="p2-channel"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e19" value="dequeue by render cadence" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;strokeWidth=3;" edge="1" parent="1" source="p2-channel" target="p2-apply"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-apply" target="p2-prepare"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e21" value="Draw packets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-prepare" target="p2-record"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-record" target="p2-submit"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e23" value="帧完成 / Present" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-submit" target="p2-exit-decision"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e24" value="否：下一渲染帧" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-exit-decision" target="p2-pump"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="70" y="1385"/><mxPoint x="70" y="902"/></Array></mxGeometry></mxCell>
+        <mxCell id="p2-e25" value="是" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-exit-decision" target="p2-stop-submit"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-stop-submit" target="p2-engine-shutdown"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-engine-shutdown" target="p2-release-scenes"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e28" value="Renderer 仍存活" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-release-scenes" target="p2-render-stop"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e29" value="Flush" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-render-stop" target="p2-wait-gpu"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-wait-gpu" target="p2-destroy-rhi"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e31" value="RHI 已释放" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-destroy-rhi" target="p2-render-done"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-render-done" target="p2-platform-shutdown"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="p2-e33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;" edge="1" parent="1" source="p2-platform-shutdown" target="p2-destroy-loop"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

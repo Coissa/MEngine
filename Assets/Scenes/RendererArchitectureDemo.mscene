@@ -1,0 +1,33 @@
+MENGINE_SCENE 4
+scene_state 0
+render_settings -0.4 0.8 -0.7 2.4 0.18 1.2 0
+mesh_assets 1
+1 5f7a3956-4d69-562b-9376-2abfaeda2313
+material_assets 1
+1 cd2a1dd4-c9a0-50be-b1bd-02f469fb1972
+object_count 3
+object 1 "Main Camera"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 30
+0 1.2 -5 13.49573328 0 0 1 1 1
+component "MEngine.Runtime.CameraComponent" 1 12
+45 0.1 100 1
+end_object
+object 2 "Cube Tilt"
+parent 0
+component_count 1
+component "MEngine.Runtime.TransformComponent" 1 27
+0 0 0 -11.4591559 0 0 1 1 1
+end_object
+object 3 "Checker Cube"
+parent 2
+component_count 3
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+1 1 1
+component "MEngine.Runtime.RotatorComponent" 1 14
+0 37.2422567 0
+end_object
+end_scene

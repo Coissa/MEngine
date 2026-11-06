@@ -1,0 +1,95 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "MEngine RendererLab scene export"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {}
+  ],
+  "buffers": [
+    {
+      "uri": "Soldier0_2.bin",
+      "byteLength": 176114
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 136640,
+      "byteStride": 32
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 136640,
+      "byteLength": 39474
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 4270,
+      "type": "VEC3",
+      "min": [
+        -10.698341624415932,
+        -0.6359622071980272,
+        -22.899454520347117
+      ],
+      "max": [
+        9.788606099504188,
+        60.870521744029794,
+        19.790086348754834
+      ]
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 12,
+      "componentType": 5126,
+      "count": 4270,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 24,
+      "componentType": 5126,
+      "count": 4270,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 19737,
+      "type": "SCALAR"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+file(GLOB sdk_dxc "C:/Program Files (x86)/Windows Kits/10/bin/*/x64/dxc.exe")
+list(SORT sdk_dxc COMPARE NATURAL ORDER DESCENDING)
+list(TRANSFORM sdk_dxc REPLACE "/dxc.exe$" "")
+find_program(MENGINE_DXC NAMES dxc HINTS "$ENV{WindowsSdkVerBinPath}/x64" ${sdk_dxc} REQUIRED)
+function(mengine_shader source entry profile)
+    get_filename_component(shader_directory "${source}" DIRECTORY)
+    get_filename_component(shader_name "${source}" NAME_WE)
+    set(output "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/Shaders/${shader_directory}/${shader_name}.${entry}.cso")
+    add_custom_command(OUTPUT "${output}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/Shaders/${shader_directory}"
+        COMMAND "${MENGINE_DXC}" -nologo -Ges -HV 2021 "$<IF:$<CONFIG:Debug>,-Od,-O3>"
+            "$<$<CONFIG:Debug>:-Zi;-Qembed_debug>"
+            -E "${entry}" -T "${profile}" -Fo "${output}" "${PROJECT_SOURCE_DIR}/Shaders/${source}"
+        DEPENDS "${PROJECT_SOURCE_DIR}/Shaders/${source}" ${ARGN}
+            "${PROJECT_SOURCE_DIR}/Shaders/color_space.hlsli" "${PROJECT_SOURCE_DIR}/Shaders/pbr.hlsli"
+            "${PROJECT_SOURCE_DIR}/Shaders/lighting.hlsli"
+        COMMAND_EXPAND_LISTS VERBATIM)
+    set_source_files_properties("${output}" PROPERTIES HEADER_FILE_ONLY TRUE)
+    target_sources(Engine PRIVATE "${output}")
+endfunction()
+mengine_shader(examples/rotating_cube.hlsl VSMain vs_6_6 "${PROJECT_SOURCE_DIR}/Shaders/motion_vectors.hlsli")
+mengine_shader(examples/rotating_cube.hlsl PSMain ps_6_6 "${PROJECT_SOURCE_DIR}/Shaders/motion_vectors.hlsli")
+mengine_shader(examples/rotating_cube.hlsl ShadowVS vs_6_6)
+mengine_shader(examples/rotating_cube.hlsl ShadowPS ps_6_6)
+mengine_shader(environment.hlsl IrradianceCS cs_6_6)
+mengine_shader(environment.hlsl PrefilterCS cs_6_6)
+mengine_shader(environment.hlsl IntegrateBRDFCS cs_6_6)
+mengine_shader(examples/skybox.hlsl SkyboxVS vs_6_6 "${PROJECT_SOURCE_DIR}/Shaders/motion_vectors.hlsli")
+mengine_shader(examples/skybox.hlsl SkyboxPS ps_6_6 "${PROJECT_SOURCE_DIR}/Shaders/motion_vectors.hlsli")
+mengine_shader(motion_vector_visualization.hlsl FullscreenVS vs_6_6)
+mengine_shader(motion_vector_visualization.hlsl VisualizePS ps_6_6)
+mengine_shader(temporal_aa.hlsl FullscreenVS vs_6_6)
+mengine_shader(temporal_aa.hlsl ResolvePS ps_6_6)
+mengine_shader(temporal_aa.hlsl DisplayPS ps_6_6)
+mengine_shader(temporal_aa.hlsl ToneMapPS ps_6_6)
+mengine_shader(gpu_scene_culling.hlsl CSMain cs_6_6)
+mengine_shader(editor/editor_ui.hlsl VSMain vs_6_6)
+mengine_shader(editor/editor_ui.hlsl PSMain ps_6_6)
+mengine_shader(editor/editor_gizmo.hlsl GizmoVS vs_6_6)
+mengine_shader(editor/editor_gizmo.hlsl GizmoVisiblePS ps_6_6)
+mengine_shader(editor/editor_gizmo.hlsl GizmoOccludedPS ps_6_6)
+if(BUILD_TESTING)
+    mengine_shader(tests/rhi_targets.hlsl FullscreenVS vs_6_6)
+    mengine_shader(tests/rhi_targets.hlsl TargetsPS ps_6_6)
+    mengine_shader(tests/rhi_targets.hlsl ReadTargetsPS ps_6_6)
+endif()

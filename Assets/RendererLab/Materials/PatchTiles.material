@@ -1,0 +1,21 @@
+{
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "metallic": 0,
+  "roughness": 0.45,
+  "uv_scale": [
+    1,
+    1
+  ],
+  "alpha_cutoff": 0,
+  "filter": "linear",
+  "address": "clamp",
+  "base_color_texture": "7c49bc88-d560-5222-832f-53170004b723",
+  "normal_texture": "454d1e91-ec26-5823-a5a4-0b1b5d27311d",
+  "normal_scale": 0.5,
+  "metallic_roughness_texture": "cf7a0a23-1c39-5590-88fd-5160e87f0abd"
+}

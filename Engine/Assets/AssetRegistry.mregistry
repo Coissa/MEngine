@@ -1,5 +1,0 @@
-MENGINE_ASSET_REGISTRY 1
-asset_count 1
-asset "MEngine.Asset.TextureCube" "Textures/Sky/GeneratedDayBlack_v1" "" "" 0 0 0
-end_asset
-end_registry

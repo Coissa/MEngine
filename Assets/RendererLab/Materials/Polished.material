@@ -1,0 +1,17 @@
+{
+  "base_color": [
+    0.8,
+    0.8,
+    0.85,
+    1
+  ],
+  "metallic": 1,
+  "roughness": 0.22,
+  "uv_scale": [
+    1,
+    1
+  ],
+  "alpha_cutoff": 0,
+  "filter": "linear",
+  "address": "clamp"
+}

@@ -1,0 +1,577 @@
+<mxfile host="app.diagrams.net" agent="Codex" compressed="false" pages="2">
+  <diagram id="updated-ownership" name="第 1 页-整体结构">
+    <mxGraphModel dx="1654" dy="878" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Fn_6eOqs3QkW90DW1VmP-7" parent="1" style="whiteSpace=wrap;html=1;rounded=1;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=13;" value="" vertex="1">
+          <mxGeometry height="1370" width="2990" x="210" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="EngineMain / main" vertex="1">
+          <mxGeometry height="60" width="180" x="1510" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-select" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Select Game / Editor&#xa;Select RHI API" vertex="1">
+          <mxGeometry height="70" width="180" x="1510" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-loop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;" value="EngineLoop&#xa;process lifetime / frame orchestration" vertex="1">
+          <mxGeometry height="80" width="300" x="1450" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-process-label" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="EngineLoop owns" vertex="1">
+          <mxGeometry height="30" width="300" x="1450" y="405" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-reflection" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="TypeRegistry / Reflection" vertex="1">
+          <mxGeometry height="60" width="210" x="250" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-platform" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PlatformApplication" vertex="1">
+          <mxGeometry height="60" width="210" x="400" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-assets" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="AssetManager" vertex="1">
+          <mxGeometry height="60" width="210" x="700" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-renderer" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;" value="Renderer" vertex="1">
+          <mxGeometry height="60" width="210" x="1200" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-engine" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;" value="Engine (abstract)" vertex="1">
+          <mxGeometry height="60" width="210" x="2450" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-window" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Window&#xa;NativeHandle / Extent / Events" vertex="1">
+          <mxGeometry height="70" width="210" x="400" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-rhi" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="RHI Backend&#xa;Adapter / Device / Queue / Swapchain" vertex="1">
+          <mxGeometry height="80" width="260" x="850" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="Fn_6eOqs3QkW90DW1VmP-1" edge="1" parent="1" source="p1-scene-reg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=13;fontColor=default;" target="p1-render-scene">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-scene-reg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="RenderSceneRegistry" vertex="1">
+          <mxGeometry height="60" width="210" x="1190" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-resources" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="RenderResourceManager&#xa;Mesh / Material / Texture GPU resources" vertex="1">
+          <mxGeometry height="80" width="270" x="1460" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-game-engine" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="GameEngine" vertex="1">
+          <mxGeometry height="60" width="190" x="2200" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-editor-engine" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="EditorEngine" vertex="1">
+          <mxGeometry height="60" width="190" x="2600" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-game-context" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="GameWorldContext&#xa;SimulationClock / SceneHandle" vertex="1">
+          <mxGeometry height="80" width="230" x="2080" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-editor-context" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="EditorWorldContext&#xa;EditorClock / SceneHandle" vertex="1">
+          <mxGeometry height="80" width="220" x="2420" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-pie-context" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PIEWorldContext(s)&#xa;SimulationClock / SceneHandle" vertex="1">
+          <mxGeometry height="80" width="230" x="2740" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-game-instance" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="GameInstance&#xa;session state / subsystems / LocalPlayer" vertex="1">
+          <mxGeometry height="80" width="230" x="1940" y="950" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-game-world" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="GameWorld" vertex="1">
+          <mxGeometry height="60" width="190" x="2220" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-editor-world" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="EditorWorld" vertex="1">
+          <mxGeometry height="60" width="190" x="2440" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-pie-instance" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="GameInstance per PIE" vertex="1">
+          <mxGeometry height="60" width="190" x="2710" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-pie-world" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PIEWorld(s)" vertex="1">
+          <mxGeometry height="60" width="190" x="2950" y="1040" as="geometry" />
+        </mxCell>
+        <mxCell id="Fn_6eOqs3QkW90DW1VmP-5" edge="1" parent="1" source="p1-world-generic" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=13;fontColor=default;" target="p1-go">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-world-generic" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;" value="World&#xa;ObjectRegistry / TickScheduler / PhysicsScene / Gameplay systems" vertex="1">
+          <mxGeometry height="90" width="390" x="2385" y="1115" as="geometry" />
+        </mxCell>
+        <mxCell id="Fn_6eOqs3QkW90DW1VmP-2" edge="1" parent="1" source="p1-go" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=13;fontColor=default;" target="p1-component">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-go" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="GameObject" vertex="1">
+          <mxGeometry height="60" width="180" x="2490" y="1290" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-component" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Component&lt;br&gt;Transform / MeshRenderer / Light / Camera ..." vertex="1">
+          <mxGeometry height="80" width="280" x="2760" y="1280" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-render-scene" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="RenderScenes" vertex="1">
+          <mxGeometry height="70" width="230" x="1180" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-render-proxy" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="RenderProxy / Primitive" vertex="1">
+          <mxGeometry height="80" width="260" x="1165" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-imgui-pass" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="ImGuiRenderBackend / UI Pass" vertex="1">
+          <mxGeometry height="60" width="260" x="1500" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-editor-ui" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="EditorUI&#xa;owns ImGuiContext and Panels" vertex="1">
+          <mxGeometry height="75" width="250" x="1900" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-viewport" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="ViewportPanel / ViewportClient&#xa;SceneHandle / Camera / Extent" vertex="1">
+          <mxGeometry height="80" width="260" x="1800" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-target" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Viewport RenderTargetHandle" vertex="1">
+          <mxGeometry height="70" width="250" x="1650" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-extraction" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="RenderExtraction&#xa;reads stable World state" vertex="1">
+          <mxGeometry height="70" width="250" x="2020" y="1125" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-submission" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="RenderSubmission&#xa;SceneHandle + SceneUpdateBatch + RenderFrame" vertex="1">
+          <mxGeometry height="80" width="300" x="1640" y="1120" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-channel" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="RenderSubmissionChannel&#xa;sync move / bounded queue" vertex="1">
+          <mxGeometry height="100" width="220" x="1300" y="1110" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-main-select" edge="1" parent="1" source="p1-main" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-select">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-select-loop" edge="1" parent="1" source="p1-select" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-loop" value="create">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-loop-ref" edge="1" parent="1" source="p1-loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-reflection" value="owns lifetime">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-loop-platform" edge="1" parent="1" source="p1-loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-platform" value="owns">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="505" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-loop-assets" edge="1" parent="1" source="p1-loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-assets" value="owns service">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="805" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-loop-renderer" edge="1" parent="1" source="p1-loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-renderer" value="unique ownership">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-loop-engine" edge="1" parent="1" source="p1-loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-engine" value="unique ownership">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-platform-window" edge="1" parent="1" source="p1-platform" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-window" value="owns">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-render-rhi" edge="1" parent="1" source="p1-renderer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-rhi" value="owns">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-render-scenes" edge="1" parent="1" source="p1-renderer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-scene-reg" value="owns">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-render-res" edge="1" parent="1" source="p1-renderer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-resources" value="owns">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1595" y="510" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-scene-proxy" edge="1" parent="1" source="p1-render-scene" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-render-proxy" value="owns">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-assets-res" edge="1" parent="1" source="p1-assets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-resources" value="AssetHandle / upload request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="805" y="610" />
+              <mxPoint x="1595" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-engine-game" edge="1" parent="1" source="p1-game-engine" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-engine" value="implements">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-engine-editor" edge="1" parent="1" source="p1-editor-engine" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-engine" value="implements">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2695" y="590" />
+              <mxPoint x="2555" y="590" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-game-context" edge="1" parent="1" source="p1-game-engine" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-game-context" value="owns">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2295" y="740" />
+              <mxPoint x="2195" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-editor-context" edge="1" parent="1" source="p1-editor-engine" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-editor-context" value="owns">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-pie-context" edge="1" parent="1" source="p1-editor-engine" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-pie-context" value="owns 0..N">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-game-inst" edge="1" parent="1" source="p1-game-context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-game-instance" value="owns across world travel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-game-world" edge="1" parent="1" source="p1-game-context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-game-world" value="owns current">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-editor-world" edge="1" parent="1" source="p1-editor-context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-editor-world" value="owns">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-pie-inst" edge="1" parent="1" source="p1-pie-context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-pie-instance" value="owns">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-pie-world" edge="1" parent="1" source="p1-pie-context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-pie-world" value="owns">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-game-generic" edge="1" parent="1" source="p1-game-world" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-world-generic" value="is a">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-editor-generic" edge="1" parent="1" source="p1-editor-world" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-world-generic" value="is a">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-pie-generic" edge="1" parent="1" source="p1-pie-world" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-world-generic" value="is a">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-context-scene" edge="1" parent="1" source="p1-editor-context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-render-scene" value="non-owning SceneHandle">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2530.03" y="760" />
+              <mxPoint x="1295" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-world-extract" edge="1" parent="1" source="p1-world-generic" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-extraction" value="stable state">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-extract-submission" edge="1" parent="1" source="p1-extraction" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-submission">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-submission-channel" edge="1" parent="1" source="p1-submission" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-channel" value="move">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-channel-renderer" edge="1" parent="1" source="p1-channel" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-renderer" value="consume by render cadence">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1130" y="1160" />
+              <mxPoint x="1130" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-editor-ui" edge="1" parent="1" source="p1-editor-engine" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-editor-ui" value="owns">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2695" y="610" />
+              <mxPoint x="2025" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-ui-viewport" edge="1" parent="1" source="p1-editor-ui" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-viewport" value="owns 0..N">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2025" y="770" />
+              <mxPoint x="1930.03" y="770" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-viewport-target" edge="1" parent="1" source="p1-viewport" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-target" value="RenderTargetHandle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-e-viewport-scene" edge="1" parent="1" source="p1-viewport" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-render-scene" value="selects by SceneHandle">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1930" y="780" />
+              <mxPoint x="1295" y="780" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-render-ui" edge="1" parent="1" source="p1-renderer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-imgui-pass" value="owns GPU backend">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1780" y="530" />
+              <mxPoint x="1780" y="830" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1-e-target-ui" edge="1" parent="1" source="p1-target" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="p1-imgui-pass" value="texture reference">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1480.03" y="965.03" />
+              <mxPoint x="1480.03" y="830" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Fn_6eOqs3QkW90DW1VmP-3" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontFamily=Helvetica;fontSize=13;fontColor=default;" value="ECS" vertex="1">
+          <mxGeometry height="30" width="60" x="2870" y="1250" as="geometry" />
+        </mxCell>
+        <mxCell id="Fn_6eOqs3QkW90DW1VmP-4" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontFamily=Helvetica;fontSize=13;fontColor=default;" value="OOP" vertex="1">
+          <mxGeometry height="30" width="60" x="2550" y="1350" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="updated-loop" name="第 2 页-启动循环退出">
+    <mxGraphModel dx="2900" dy="1800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2900" pageHeight="1800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p2-title" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=20;" value="MEngine 启动、逻辑帧、渲染数据与退出流程" vertex="1">
+          <mxGeometry height="40" width="2820" x="40" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-start" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="EngineMain" vertex="1">
+          <mxGeometry height="60" width="160" x="60" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-create-loop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Create EngineLoop" vertex="1">
+          <mxGeometry height="60" width="180" x="280" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-init-ref" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Initialize TypeRegistry" vertex="1">
+          <mxGeometry height="60" width="190" x="520" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-init-platform" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Create Platform / Window" vertex="1">
+          <mxGeometry height="60" width="200" x="770" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-init-render" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Initialize Renderer / RHI" vertex="1">
+          <mxGeometry height="60" width="200" x="1030" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-init-engine" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Create and Initialize&#xa;GameEngine / EditorEngine" vertex="1">
+          <mxGeometry height="70" width="220" x="1290" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-init-world" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Create WorldContext&#xa;GameInstance / World" vertex="1">
+          <mxGeometry height="70" width="210" x="1570" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-init-scene" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Renderer creates RenderScene&#xa;WorldContext stores SceneHandle" vertex="1">
+          <mxGeometry height="70" width="250" x="1840" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-run" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="EngineLoop::Run" vertex="1">
+          <mxGeometry height="90" width="170" x="2190" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-frame-label" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Outer process / render frame" vertex="1">
+          <mxGeometry height="30" width="500" x="60" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-pump" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PumpMessages&#xa;Input / Close / Resize" vertex="1">
+          <mxGeometry height="70" width="200" x="60" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-clock" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="FrameClock&#xa;measure realDelta" vertex="1">
+          <mxGeometry height="70" width="190" x="330" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-ui" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="EditorUI Begin / Build&#xa;enqueue Editor commands&#xa;build Viewport requests" vertex="1">
+          <mxGeometry height="90" width="220" x="590" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-advance" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Engine::Advance(realDelta)&#xa;choose WorldContexts" vertex="1">
+          <mxGeometry height="75" width="230" x="880" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-sim-clock" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="WorldContext::SimulationClock&#xa;pause / timeScale / frameNumber" vertex="1">
+          <mxGeometry height="80" width="250" x="1180" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-step" parent="1" style="rhombus;whiteSpace=wrap;html=1;shapeInside=1;" value="fixed step needed?" vertex="1">
+          <mxGeometry height="100" width="150" x="1510" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-world-tick" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="World::FixedTick&#xa;0..N times per outer frame" vertex="1">
+          <mxGeometry height="75" width="230" x="1430" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-tick-scheduler" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="TickScheduler::Execute&#xa;TickGroup / enabled ticks / prerequisites" vertex="1">
+          <mxGeometry height="85" width="260" x="1100" y="495" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-gameplay" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Gameplay Resolution&#xa;Physics query / commands / events&#xa;deferred structural changes" vertex="1">
+          <mxGeometry height="95" width="260" x="770" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-extract" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="RenderExtraction&#xa;World state + AssetHandles&#xa;no World pointers cross boundary" vertex="1">
+          <mxGeometry height="95" width="260" x="440" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-submission" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Build RenderSubmission&#xa;SceneUpdateBatch + RenderFrame" vertex="1">
+          <mxGeometry height="80" width="250" x="120" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-channel" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="RenderSubmissionChannel&#xa;sync move / SPSC queue" vertex="1">
+          <mxGeometry height="100" width="230" x="120" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-apply" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Renderer consumes submission&#xa;RenderScene::ApplyUpdates" vertex="1">
+          <mxGeometry height="80" width="260" x="440" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-scene-update" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Render frame update&#xa;interpolate / visibility / LOD&#xa;draw lists / passes" vertex="1">
+          <mxGeometry height="95" width="260" x="770" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-viewport-pass" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Scene and editor viewport passes&#xa;RenderScene to RenderTarget&#xa;gizmo / selection" vertex="1">
+          <mxGeometry height="95" width="270" x="1100" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-imgui" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="ImGui::Render / UI Pass&#xa;sample Viewport RenderTarget" vertex="1">
+          <mxGeometry height="80" width="250" x="1440" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-rhi" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="RHI Record / Submit&#xa;GPU Execute / Fence / Present" vertex="1">
+          <mxGeometry height="80" width="250" x="1760" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-exit" parent="1" style="rhombus;whiteSpace=wrap;html=1;shapeInside=1;" value="exit requested?" vertex="1">
+          <mxGeometry height="110" width="170" x="2100" y="695" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-thread-label" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Thread model" vertex="1">
+          <mxGeometry height="30" width="200" x="60" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-game-thread" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Game / Logic Thread&#xa;Engine / WorldContext / World&#xa;GameObject / Component" vertex="1">
+          <mxGeometry height="90" width="300" x="220" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-render-thread" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Render Thread&#xa;executes Renderer / RenderScene&#xa;does not own World" vertex="1">
+          <mxGeometry height="90" width="300" x="820" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-rhi-thread" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="RHI Thread (optional later)&#xa;low-level command submission" vertex="1">
+          <mxGeometry height="80" width="280" x="1420" y="985" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-worker-thread" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Worker Threads&#xa;pure jobs; results return to owner thread" vertex="1">
+          <mxGeometry height="80" width="300" x="2020" y="985" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-m2-note" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="M2 may execute Logic -&gt; Extraction -&gt; Render -&gt; RHI as phases on one physical thread; ownership boundaries remain the same." vertex="1">
+          <mxGeometry height="40" width="1900" x="500" y="1120" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-shutdown-label" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Ordered shutdown" vertex="1">
+          <mxGeometry height="30" width="300" x="60" y="1220" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-stop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Stop new submissions" vertex="1">
+          <mxGeometry height="60" width="190" x="60" y="1300" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-engine-stop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Engine Shutdown&#xa;stop World ticks" vertex="1">
+          <mxGeometry height="70" width="190" x="320" y="1295" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-release" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="World releases SceneHandle&#xa;destroy World / GameInstance / Context" vertex="1">
+          <mxGeometry height="85" width="250" x="580" y="1285" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-drain" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Renderer stops accepting&#xa;drain render queue" vertex="1">
+          <mxGeometry height="75" width="220" x="900" y="1290" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-wait" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Wait GPU fences&#xa;destroy RenderScenes / resources" vertex="1">
+          <mxGeometry height="75" width="230" x="1190" y="1290" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-rhi-stop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Destroy Swapchain / Queue&#xa;Device / RHI Backend" vertex="1">
+          <mxGeometry height="75" width="230" x="1490" y="1290" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-platform-stop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Destroy Window / Platform&#xa;Shutdown TypeRegistry" vertex="1">
+          <mxGeometry height="75" width="230" x="1790" y="1290" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-return" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="Destroy EngineLoop&#xa;return main" vertex="1">
+          <mxGeometry height="90" width="200" x="2090" y="1280" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-start-loop" edge="1" parent="1" source="p2-start" target="p2-create-loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-loop-ref" edge="1" parent="1" source="p2-create-loop" target="p2-init-ref" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-ref-platform" edge="1" parent="1" source="p2-init-ref" target="p2-init-platform" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-platform-render" edge="1" parent="1" source="p2-init-platform" target="p2-init-render" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-render-engine" edge="1" parent="1" source="p2-init-render" target="p2-init-engine" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-engine-world" edge="1" parent="1" source="p2-init-engine" target="p2-init-world" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-world-scene" edge="1" parent="1" source="p2-init-world" target="p2-init-scene" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-scene-run" edge="1" parent="1" source="p2-init-scene" target="p2-run" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-run-pump" edge="1" parent="1" source="p2-run" target="p2-pump" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2275" y="220" />
+              <mxPoint x="30" y="220" />
+              <mxPoint x="30" y="355" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2-e-pump-clock" edge="1" parent="1" source="p2-pump" target="p2-clock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-clock-ui" edge="1" parent="1" source="p2-clock" target="p2-ui" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-ui-advance" edge="1" parent="1" source="p2-ui" target="p2-advance" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-advance-clock" edge="1" parent="1" source="p2-advance" target="p2-sim-clock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-clock-step" edge="1" parent="1" source="p2-sim-clock" target="p2-step" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-step-tick" edge="1" parent="1" source="p2-step" target="p2-world-tick" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-tick-scheduler" edge="1" parent="1" source="p2-world-tick" target="p2-tick-scheduler" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-scheduler-gameplay" edge="1" parent="1" source="p2-tick-scheduler" target="p2-gameplay" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-gameplay-extract" edge="1" parent="1" source="p2-gameplay" target="p2-extract" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="after stable tick">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-step-extract" edge="1" parent="1" source="p2-step" target="p2-extract" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="no / ticks caught up">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1585" y="450" />
+              <mxPoint x="570" y="450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2-e-extract-submit" edge="1" parent="1" source="p2-extract" target="p2-submission" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-submit-channel" edge="1" parent="1" source="p2-submission" target="p2-channel" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="move / enqueue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-channel-apply" edge="1" parent="1" source="p2-channel" target="p2-apply" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="consume">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-apply-update" edge="1" parent="1" source="p2-apply" target="p2-scene-update" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-update-viewport" edge="1" parent="1" source="p2-scene-update" target="p2-viewport-pass" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-viewport-imgui" edge="1" parent="1" source="p2-viewport-pass" target="p2-imgui" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="RenderTarget texture">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-imgui-rhi" edge="1" parent="1" source="p2-imgui" target="p2-rhi" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-rhi-exit" edge="1" parent="1" source="p2-rhi" target="p2-exit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-exit-pump" edge="1" parent="1" source="p2-exit" target="p2-pump" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="no">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2350" y="870" />
+              <mxPoint x="30" y="870" />
+              <mxPoint x="30" y="355" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2-e-exit-stop" edge="1" parent="1" source="p2-exit" target="p2-stop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="yes">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2500" y="750" />
+              <mxPoint x="2500" y="1260" />
+              <mxPoint x="155" y="1260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2-e-stop-engine" edge="1" parent="1" source="p2-stop" target="p2-engine-stop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-engine-release" edge="1" parent="1" source="p2-engine-stop" target="p2-release" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-release-drain" edge="1" parent="1" source="p2-release" target="p2-drain" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="Renderer still alive">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-drain-wait" edge="1" parent="1" source="p2-drain" target="p2-wait" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-wait-rhi" edge="1" parent="1" source="p2-wait" target="p2-rhi-stop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-rhi-platform" edge="1" parent="1" source="p2-rhi-stop" target="p2-platform-stop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-e-platform-return" edge="1" parent="1" source="p2-platform-stop" target="p2-return" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

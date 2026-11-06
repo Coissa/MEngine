@@ -1,0 +1,151 @@
+MENGINE_ASSET_REGISTRY 1
+asset_count 63
+asset "MEngine.Asset.TextureCube" "Textures/Sky/GeneratedDayBlack_v1" "" "" 0 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "Meshes/Cube.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "Textures/Demo/Checker.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "Materials/Checker.material" "" "" 1 0 1
+dependency "Textures/Demo/Checker.png" ""
+end_asset
+asset "MEngine.Asset.Material" "Materials/Blue.material" "" "" 1 0 1
+dependency "Textures/Demo/Checker.png" ""
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/bricks2.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/tile.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/water1.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/WireFence.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/ice.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/head_diff.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/jacket_diff.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/pants_diff.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/upBody_diff.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/treeArray20.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/treeArray21.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/treeArray22.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/Bricks.material" "" "" 1 0 3
+dependency "RendererLab/Textures/bricks2.png" ""
+dependency "RendererLab/Textures/bricks2_nmap.png" ""
+dependency "RendererLab/Textures/bricks2_mr.png" ""
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/GroundTiles.material" "" "" 1 0 3
+dependency "RendererLab/Textures/tile.png" ""
+dependency "RendererLab/Textures/tile_nmap.png" ""
+dependency "RendererLab/Textures/tile_mr.png" ""
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/Polished.material" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/Water.material" "" "" 1 0 1
+dependency "RendererLab/Textures/water1.png" ""
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/Fence.material" "" "" 1 0 1
+dependency "RendererLab/Textures/WireFence.png" ""
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/Tree0.material" "" "" 1 0 1
+dependency "RendererLab/Textures/treeArray20.png" ""
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/Tree1.material" "" "" 1 0 1
+dependency "RendererLab/Textures/treeArray21.png" ""
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/Tree2.material" "" "" 1 0 1
+dependency "RendererLab/Textures/treeArray22.png" ""
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/IcePanel.material" "" "" 1 0 1
+dependency "RendererLab/Textures/ice.png" ""
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/PatchTiles.material" "" "" 1 0 3
+dependency "RendererLab/Textures/tile.png" ""
+dependency "RendererLab/Textures/tile_nmap.png" ""
+dependency "RendererLab/Textures/tile_mr.png" ""
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Box.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Sphere.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Column.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Ground.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Skull.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Water.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/TreeCard.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/QuadPatch.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/BezierPatch.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/IcePanel.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Soldier0_0.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/soldier_head.material" "" "" 1 0 1
+dependency "RendererLab/Textures/head_diff.png" ""
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Soldier0_1.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/soldier_jacket.material" "" "" 1 0 1
+dependency "RendererLab/Textures/jacket_diff.png" ""
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Soldier0_2.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/soldier_pants.material" "" "" 1 0 1
+dependency "RendererLab/Textures/pants_diff.png" ""
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Soldier0_3.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/soldier_upBody1.material" "" "" 1 0 1
+dependency "RendererLab/Textures/upBody_diff.png" ""
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Soldier0_4.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "RendererLab/Materials/soldier_upBody2.material" "" "" 1 0 1
+dependency "RendererLab/Textures/upBody_diff.png" ""
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Soldier1_0.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Soldier1_1.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Soldier1_2.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Soldier1_3.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.StaticMesh" "RendererLab/Meshes/Soldier1_4.gltf" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "Materials/PBR/Dielectric15.material" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "Materials/PBR/Dielectric45.material" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "Materials/PBR/Dielectric85.material" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "Materials/PBR/Gold15.material" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "Materials/PBR/Gold45.material" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "Materials/PBR/Gold85.material" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Material" "Materials/PBR/Emissive.material" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/bricks2_nmap.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/bricks2_mr.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/tile_nmap.png" "" "" 1 0 0
+end_asset
+asset "MEngine.Asset.Texture2D" "RendererLab/Textures/tile_mr.png" "" "" 1 0 0
+end_asset
+end_registry

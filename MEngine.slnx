@@ -1,0 +1,24 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="out/visual-studio/Source/Engine.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="73adba33-82bd-3cb4-a304-4878d88b26fe">
+    <BuildDependency Project="out/visual-studio/ZERO_CHECK.vcxproj" />
+  </Project>
+  <Project Path="out/visual-studio/Source/MEngineEditor.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="79b39b36-14ac-3c27-8ab4-280b9496e74c" DefaultStartup="true">
+    <BuildDependency Project="out/visual-studio/Source/Engine.vcxproj" />
+    <BuildDependency Project="out/visual-studio/ZERO_CHECK.vcxproj" />
+  </Project>
+  <Folder Name="/CMakePredefinedTargets/">
+    <Project Path="out/visual-studio/ALL_BUILD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="de117743-925a-3e60-86f4-2506498717cc">
+      <BuildDependency Project="out/visual-studio/Source/Engine.vcxproj" />
+      <BuildDependency Project="out/visual-studio/Source/MEngineEditor.vcxproj" />
+      <BuildDependency Project="out/visual-studio/ZERO_CHECK.vcxproj" />
+      <Build Solution="Debug|*" Project="false" />
+      <Build Solution="Release|*" Project="false" />
+    </Project>
+    <Project Path="out/visual-studio/ZERO_CHECK.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="d99b3d37-cfca-377e-8864-75fba92a5a1e" />
+  </Folder>
+</Solution>

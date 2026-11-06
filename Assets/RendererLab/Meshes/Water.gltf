@@ -1,0 +1,95 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "MEngine RendererLab scene export"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {}
+  ],
+  "buffers": [
+    {
+      "uri": "Water.bin",
+      "byteLength": 44300
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 32768,
+      "byteStride": 32
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 32768,
+      "byteLength": 11532
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "count": 1024,
+      "type": "VEC3",
+      "min": [
+        -3.875,
+        0,
+        -3.875
+      ],
+      "max": [
+        3.875,
+        0,
+        3.875
+      ]
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 12,
+      "componentType": 5126,
+      "count": 1024,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 24,
+      "componentType": 5126,
+      "count": 1024,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 5766,
+      "type": "SCALAR"
+    }
+  ]
+}

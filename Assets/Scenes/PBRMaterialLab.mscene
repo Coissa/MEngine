@@ -1,0 +1,81 @@
+MENGINE_SCENE 5
+scene_state 0
+render_settings -0.4 0.8 -0.7 6 0.04 1 0
+lighting_settings 1 1 1 1 0 1 80
+local_lights 0
+mesh_assets 1
+1 55a9afaf-177a-5fa6-b148-349e25c47fc4
+material_assets 7
+1 4b507b58-3c10-5d9f-a1e8-d138eb43f3ef
+2 6958ed4d-f752-5c3f-86d1-097dfef95ce3
+3 50569d8f-8b3f-5eaa-aef3-96705481042a
+4 36f11eb3-502f-5b9b-b2ff-66ba29f7857d
+5 185b9f91-0f79-5dd9-8e34-4848e259478a
+6 a2fc3a85-93a1-5531-88fc-20280447310c
+7 9235b796-bb9b-5334-be3e-4f823f846d3f
+object_count 8
+object 1 "Camera"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 19
+0 0 -11 0 0 0 1 1 1
+component "MEngine.Runtime.CameraComponent" 1 12
+45 0.1 100 1
+end_object
+object 2 "Dielectric15"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 28
+-2.5 1.3 0 0 0 0 0.9 0.9 0.9
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+1 1 1
+end_object
+object 3 "Dielectric45"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 27
+0.0 1.3 0 0 0 0 0.9 0.9 0.9
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+1 2 1
+end_object
+object 4 "Dielectric85"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 27
+2.5 1.3 0 0 0 0 0.9 0.9 0.9
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+1 3 1
+end_object
+object 5 "Gold15"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 29
+-2.5 -1.1 0 0 0 0 0.9 0.9 0.9
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+1 4 1
+end_object
+object 6 "Gold45"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 28
+0.0 -1.1 0 0 0 0 0.9 0.9 0.9
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+1 5 1
+end_object
+object 7 "Gold85"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 28
+2.5 -1.1 0 0 0 0 0.9 0.9 0.9
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+1 6 1
+end_object
+object 8 "Emissive"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 26
+0 -3.1 0 0 0 0 0.9 0.9 0.9
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+1 7 1
+end_object
+end_scene

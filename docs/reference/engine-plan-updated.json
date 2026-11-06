@@ -1,0 +1,1099 @@
+{
+  "version": "31.4.1",
+  "data": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<mxfile host=\"app.diagrams.net\" modified=\"2026-08-29T10:10:00.000Z\" agent=\"Codex\" version=\"31.4.1\" type=\"device\" compressed=\"false\">\n  <diagram id=\"updated-ownership\" name=\"第 1 页-整体结构\">\n    <mxGraphModel dx=\"2400\" dy=\"1500\" grid=\"1\" gridSize=\"10\" guides=\"1\" tooltips=\"1\" connect=\"1\" arrows=\"1\" fold=\"1\" page=\"1\" pageScale=\"1\" pageWidth=\"2400\" pageHeight=\"1500\" math=\"0\" shadow=\"0\">\n      <root>\n        <mxCell id=\"0\"/>\n        <mxCell id=\"1\" parent=\"0\"/>\n\n        <mxCell id=\"p1-title\" parent=\"1\" style=\"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=20;\" value=\"MEngine 完整计划架构（所有权与类型关系）\" vertex=\"1\"><mxGeometry height=\"40\" width=\"2320\" x=\"40\" y=\"20\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-main\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"EngineMain / main\" vertex=\"1\"><mxGeometry height=\"60\" width=\"180\" x=\"1110\" y=\"80\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-select\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Select Game / Editor&#xa;Select RHI API\" vertex=\"1\"><mxGeometry height=\"70\" width=\"180\" x=\"1110\" y=\"180\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-loop\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;\" value=\"EngineLoop&#xa;process lifetime / frame orchestration\" vertex=\"1\"><mxGeometry height=\"80\" width=\"300\" x=\"1050\" y=\"300\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p1-process-label\" parent=\"1\" style=\"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;\" value=\"EngineLoop owns\" vertex=\"1\"><mxGeometry height=\"30\" width=\"300\" x=\"1050\" y=\"400\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-reflection\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"TypeRegistry / Reflection\" vertex=\"1\"><mxGeometry height=\"60\" width=\"210\" x=\"100\" y=\"470\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-platform\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"PlatformApplication\" vertex=\"1\"><mxGeometry height=\"60\" width=\"210\" x=\"360\" y=\"470\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-assets\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"AssetManager\" vertex=\"1\"><mxGeometry height=\"60\" width=\"210\" x=\"620\" y=\"470\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-renderer\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;\" value=\"Renderer\" vertex=\"1\"><mxGeometry height=\"60\" width=\"210\" x=\"1095\" y=\"470\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-engine\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;\" value=\"Engine (abstract)\" vertex=\"1\"><mxGeometry height=\"60\" width=\"210\" x=\"1690\" y=\"470\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p1-window\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Window&#xa;NativeHandle / Extent / Events\" vertex=\"1\"><mxGeometry height=\"70\" width=\"210\" x=\"360\" y=\"590\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-rhi\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"RHI Backend&#xa;Adapter / Device / Queue / Swapchain\" vertex=\"1\"><mxGeometry height=\"80\" width=\"260\" x=\"880\" y=\"590\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-scene-reg\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"RenderSceneRegistry\" vertex=\"1\"><mxGeometry height=\"60\" width=\"210\" x=\"1170\" y=\"590\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-resources\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"RenderResourceManager&#xa;Mesh / Material / Texture GPU resources\" vertex=\"1\"><mxGeometry height=\"80\" width=\"270\" x=\"1410\" y=\"590\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-game-engine\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"GameEngine\" vertex=\"1\"><mxGeometry height=\"60\" width=\"190\" x=\"1690\" y=\"590\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-editor-engine\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"EditorEngine\" vertex=\"1\"><mxGeometry height=\"60\" width=\"190\" x=\"2040\" y=\"590\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p1-game-context\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"GameWorldContext&#xa;SimulationClock / SceneHandle\" vertex=\"1\"><mxGeometry height=\"80\" width=\"230\" x=\"1590\" y=\"720\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-editor-context\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"EditorWorldContext&#xa;EditorClock / SceneHandle\" vertex=\"1\"><mxGeometry height=\"80\" width=\"220\" x=\"1850\" y=\"720\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-pie-context\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"PIEWorldContext(s)&#xa;SimulationClock / SceneHandle\" vertex=\"1\"><mxGeometry height=\"80\" width=\"230\" x=\"2110\" y=\"720\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-game-instance\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"GameInstance&#xa;session state / subsystems / LocalPlayer\" vertex=\"1\"><mxGeometry height=\"80\" width=\"230\" x=\"1480\" y=\"850\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-game-world\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"GameWorld\" vertex=\"1\"><mxGeometry height=\"60\" width=\"190\" x=\"1730\" y=\"860\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-editor-world\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"EditorWorld\" vertex=\"1\"><mxGeometry height=\"60\" width=\"190\" x=\"1940\" y=\"860\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-pie-instance\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"GameInstance per PIE\" vertex=\"1\"><mxGeometry height=\"60\" width=\"190\" x=\"2150\" y=\"840\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-pie-world\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"PIEWorld(s)\" vertex=\"1\"><mxGeometry height=\"60\" width=\"190\" x=\"2150\" y=\"930\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p1-world-generic\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;\" value=\"World&#xa;ObjectRegistry / TickScheduler / PhysicsScene / Gameplay systems\" vertex=\"1\"><mxGeometry height=\"90\" width=\"390\" x=\"1670\" y=\"1050\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-go\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"GameObject\" vertex=\"1\"><mxGeometry height=\"60\" width=\"180\" x=\"1720\" y=\"1200\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-component\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Component(s)&#xa;Transform / MeshRenderer / Light / Camera ...\" vertex=\"1\"><mxGeometry height=\"80\" width=\"280\" x=\"1980\" y=\"1190\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p1-render-scene\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"RenderScene(s)&#xa;owned by Renderer\" vertex=\"1\"><mxGeometry height=\"70\" width=\"230\" x=\"1160\" y=\"730\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-render-proxy\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"RenderProxy / Primitive(s)&#xa;no World or Component pointers\" vertex=\"1\"><mxGeometry height=\"80\" width=\"260\" x=\"1145\" y=\"850\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-imgui-pass\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"ImGuiRenderBackend / UI Pass\" vertex=\"1\"><mxGeometry height=\"60\" width=\"260\" x=\"840\" y=\"730\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p1-editor-ui\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"EditorUI&#xa;owns ImGuiContext and Panels\" vertex=\"1\"><mxGeometry height=\"75\" width=\"250\" x=\"2060\" y=\"470\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-viewport\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"ViewportPanel / ViewportClient&#xa;SceneHandle / Camera / Extent\" vertex=\"1\"><mxGeometry height=\"80\" width=\"260\" x=\"640\" y=\"730\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-target\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Viewport RenderTargetHandle&#xa;owned by Renderer\" vertex=\"1\"><mxGeometry height=\"70\" width=\"250\" x=\"640\" y=\"850\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p1-extraction\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"RenderExtraction&#xa;reads stable World state\" vertex=\"1\"><mxGeometry height=\"70\" width=\"250\" x=\"930\" y=\"1050\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-submission\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"RenderSubmission&#xa;SceneHandle + SceneUpdateBatch + RenderFrame\" vertex=\"1\"><mxGeometry height=\"80\" width=\"300\" x=\"930\" y=\"1180\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-channel\" parent=\"1\" style=\"ellipse;whiteSpace=wrap;html=1;shapeInside=1;\" value=\"RenderSubmissionChannel&#xa;sync move / bounded queue\" vertex=\"1\"><mxGeometry height=\"100\" width=\"220\" x=\"1270\" y=\"1170\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-handle-note\" parent=\"1\" style=\"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;\" value=\"WorldContext only stores non-owning SceneHandle; Renderer resolves it in RenderSceneRegistry\" vertex=\"1\"><mxGeometry height=\"40\" width=\"700\" x=\"930\" y=\"970\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-resource-note\" parent=\"1\" style=\"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;\" value=\"Component stores MeshAssetHandle / MaterialHandle; actual vertices and material resources are owned by AssetManager and RenderResourceManager\" vertex=\"1\"><mxGeometry height=\"45\" width=\"900\" x=\"500\" y=\"1340\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p1-e-main-select\" edge=\"1\" parent=\"1\" source=\"p1-main\" target=\"p1-select\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-select-loop\" edge=\"1\" parent=\"1\" source=\"p1-select\" target=\"p1-loop\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"create\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-loop-ref\" edge=\"1\" parent=\"1\" source=\"p1-loop\" target=\"p1-reflection\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns lifetime\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-loop-platform\" edge=\"1\" parent=\"1\" source=\"p1-loop\" target=\"p1-platform\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-loop-assets\" edge=\"1\" parent=\"1\" source=\"p1-loop\" target=\"p1-assets\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns service\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-loop-renderer\" edge=\"1\" parent=\"1\" source=\"p1-loop\" target=\"p1-renderer\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"unique ownership\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-loop-engine\" edge=\"1\" parent=\"1\" source=\"p1-loop\" target=\"p1-engine\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"unique ownership\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-platform-window\" edge=\"1\" parent=\"1\" source=\"p1-platform\" target=\"p1-window\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-render-rhi\" edge=\"1\" parent=\"1\" source=\"p1-renderer\" target=\"p1-rhi\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-render-scenes\" edge=\"1\" parent=\"1\" source=\"p1-renderer\" target=\"p1-scene-reg\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-render-res\" edge=\"1\" parent=\"1\" source=\"p1-renderer\" target=\"p1-resources\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-reg-scene\" edge=\"1\" parent=\"1\" source=\"p1-scene-reg\" target=\"p1-render-scene\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"0..N\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-scene-proxy\" edge=\"1\" parent=\"1\" source=\"p1-render-scene\" target=\"p1-render-proxy\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-assets-res\" edge=\"1\" parent=\"1\" source=\"p1-assets\" target=\"p1-resources\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"AssetHandle / upload request\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-engine-game\" edge=\"1\" parent=\"1\" source=\"p1-game-engine\" target=\"p1-engine\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"implements\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-engine-editor\" edge=\"1\" parent=\"1\" source=\"p1-editor-engine\" target=\"p1-engine\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"implements\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-game-context\" edge=\"1\" parent=\"1\" source=\"p1-game-engine\" target=\"p1-game-context\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-editor-context\" edge=\"1\" parent=\"1\" source=\"p1-editor-engine\" target=\"p1-editor-context\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-pie-context\" edge=\"1\" parent=\"1\" source=\"p1-editor-engine\" target=\"p1-pie-context\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns 0..N\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-game-inst\" edge=\"1\" parent=\"1\" source=\"p1-game-context\" target=\"p1-game-instance\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns across world travel\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-game-world\" edge=\"1\" parent=\"1\" source=\"p1-game-context\" target=\"p1-game-world\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns current\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-editor-world\" edge=\"1\" parent=\"1\" source=\"p1-editor-context\" target=\"p1-editor-world\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-pie-inst\" edge=\"1\" parent=\"1\" source=\"p1-pie-context\" target=\"p1-pie-instance\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-pie-world\" edge=\"1\" parent=\"1\" source=\"p1-pie-context\" target=\"p1-pie-world\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-game-generic\" edge=\"1\" parent=\"1\" source=\"p1-game-world\" target=\"p1-world-generic\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"is a\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-editor-generic\" edge=\"1\" parent=\"1\" source=\"p1-editor-world\" target=\"p1-world-generic\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"is a\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-pie-generic\" edge=\"1\" parent=\"1\" source=\"p1-pie-world\" target=\"p1-world-generic\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"is a\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-world-go\" edge=\"1\" parent=\"1\" source=\"p1-world-generic\" target=\"p1-go\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns 0..N\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-go-component\" edge=\"1\" parent=\"1\" source=\"p1-go\" target=\"p1-component\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns 0..N\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-context-scene\" edge=\"1\" parent=\"1\" source=\"p1-editor-context\" target=\"p1-render-scene\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"non-owning SceneHandle\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-world-extract\" edge=\"1\" parent=\"1\" source=\"p1-world-generic\" target=\"p1-extraction\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"stable state\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-extract-submission\" edge=\"1\" parent=\"1\" source=\"p1-extraction\" target=\"p1-submission\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-submission-channel\" edge=\"1\" parent=\"1\" source=\"p1-submission\" target=\"p1-channel\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"move\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-channel-renderer\" edge=\"1\" parent=\"1\" source=\"p1-channel\" target=\"p1-renderer\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"consume by render cadence\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-editor-ui\" edge=\"1\" parent=\"1\" source=\"p1-editor-engine\" target=\"p1-editor-ui\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-ui-viewport\" edge=\"1\" parent=\"1\" source=\"p1-editor-ui\" target=\"p1-viewport\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns 0..N\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-viewport-target\" edge=\"1\" parent=\"1\" source=\"p1-viewport\" target=\"p1-target\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"RenderTargetHandle\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-viewport-scene\" edge=\"1\" parent=\"1\" source=\"p1-viewport\" target=\"p1-render-scene\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"selects by SceneHandle\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-render-ui\" edge=\"1\" parent=\"1\" source=\"p1-renderer\" target=\"p1-imgui-pass\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"owns GPU backend\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p1-e-target-ui\" edge=\"1\" parent=\"1\" source=\"p1-target\" target=\"p1-imgui-pass\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"texture reference\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n      </root>\n    </mxGraphModel>\n  </diagram>\n\n  <diagram id=\"updated-loop\" name=\"第 2 页-启动循环退出\">\n    <mxGraphModel dx=\"2400\" dy=\"1800\" grid=\"1\" gridSize=\"10\" guides=\"1\" tooltips=\"1\" connect=\"1\" arrows=\"1\" fold=\"1\" page=\"1\" pageScale=\"1\" pageWidth=\"2400\" pageHeight=\"1800\" math=\"0\" shadow=\"0\">\n      <root>\n        <mxCell id=\"0\"/>\n        <mxCell id=\"1\" parent=\"0\"/>\n\n        <mxCell id=\"p2-title\" parent=\"1\" style=\"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=20;\" value=\"MEngine 启动、逻辑帧、渲染数据与退出流程\" vertex=\"1\"><mxGeometry height=\"40\" width=\"2320\" x=\"40\" y=\"20\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p2-start\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"EngineMain\" vertex=\"1\"><mxGeometry height=\"60\" width=\"160\" x=\"80\" y=\"100\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-create-loop\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Create EngineLoop\" vertex=\"1\"><mxGeometry height=\"60\" width=\"180\" x=\"300\" y=\"100\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-init-ref\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Initialize TypeRegistry\" vertex=\"1\"><mxGeometry height=\"60\" width=\"190\" x=\"540\" y=\"100\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-init-platform\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Create Platform / Window\" vertex=\"1\"><mxGeometry height=\"60\" width=\"200\" x=\"790\" y=\"100\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-init-render\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Initialize Renderer / RHI\" vertex=\"1\"><mxGeometry height=\"60\" width=\"200\" x=\"1050\" y=\"100\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-init-engine\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Create and Initialize&#xa;GameEngine / EditorEngine\" vertex=\"1\"><mxGeometry height=\"70\" width=\"220\" x=\"1310\" y=\"95\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-init-world\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Create WorldContext&#xa;GameInstance / World\" vertex=\"1\"><mxGeometry height=\"70\" width=\"210\" x=\"1590\" y=\"95\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-init-scene\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Renderer creates RenderScene&#xa;WorldContext stores SceneHandle\" vertex=\"1\"><mxGeometry height=\"70\" width=\"250\" x=\"1860\" y=\"95\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-run\" parent=\"1\" style=\"ellipse;whiteSpace=wrap;html=1;shapeInside=1;\" value=\"EngineLoop::Run\" vertex=\"1\"><mxGeometry height=\"90\" width=\"170\" x=\"2170\" y=\"85\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p2-frame-label\" parent=\"1\" style=\"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;\" value=\"Outer process / render frame\" vertex=\"1\"><mxGeometry height=\"30\" width=\"500\" x=\"80\" y=\"240\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-pump\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"PumpMessages&#xa;Input / Close / Resize\" vertex=\"1\"><mxGeometry height=\"70\" width=\"200\" x=\"80\" y=\"300\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-clock\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"FrameClock&#xa;measure realDelta\" vertex=\"1\"><mxGeometry height=\"70\" width=\"190\" x=\"340\" y=\"300\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-ui\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"EditorUI Begin / Build&#xa;enqueue Editor commands&#xa;build Viewport requests\" vertex=\"1\"><mxGeometry height=\"90\" width=\"220\" x=\"590\" y=\"290\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-advance\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Engine::Advance(realDelta)&#xa;choose WorldContexts\" vertex=\"1\"><mxGeometry height=\"75\" width=\"230\" x=\"870\" y=\"300\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-sim-clock\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"WorldContext::SimulationClock&#xa;pause / timeScale / frameNumber\" vertex=\"1\"><mxGeometry height=\"80\" width=\"250\" x=\"1160\" y=\"295\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-step\" parent=\"1\" style=\"rhombus;whiteSpace=wrap;html=1;shapeInside=1;\" value=\"fixed step needed?\" vertex=\"1\"><mxGeometry height=\"100\" width=\"150\" x=\"1470\" y=\"285\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p2-world-tick\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"World::FixedTick&#xa;0..N times per outer frame\" vertex=\"1\"><mxGeometry height=\"75\" width=\"230\" x=\"1390\" y=\"470\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-tick-scheduler\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"TickScheduler::Execute&#xa;TickGroup / enabled ticks / prerequisites\" vertex=\"1\"><mxGeometry height=\"85\" width=\"260\" x=\"1090\" y=\"465\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-gameplay\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Gameplay Resolution&#xa;Physics query / commands / events&#xa;deferred structural changes\" vertex=\"1\"><mxGeometry height=\"95\" width=\"260\" x=\"770\" y=\"460\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-extract\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"RenderExtraction&#xa;World state + AssetHandles&#xa;no World pointers cross boundary\" vertex=\"1\"><mxGeometry height=\"95\" width=\"260\" x=\"450\" y=\"460\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-submission\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Build RenderSubmission&#xa;SceneUpdateBatch + RenderFrame\" vertex=\"1\"><mxGeometry height=\"80\" width=\"250\" x=\"140\" y=\"470\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p2-channel\" parent=\"1\" style=\"ellipse;whiteSpace=wrap;html=1;shapeInside=1;\" value=\"RenderSubmissionChannel&#xa;sync move / SPSC queue\" vertex=\"1\"><mxGeometry height=\"100\" width=\"230\" x=\"140\" y=\"650\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-apply\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Renderer consumes submission&#xa;RenderScene::ApplyUpdates\" vertex=\"1\"><mxGeometry height=\"80\" width=\"260\" x=\"450\" y=\"660\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-scene-update\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Render frame update&#xa;interpolate / visibility / LOD&#xa;draw lists / passes\" vertex=\"1\"><mxGeometry height=\"95\" width=\"260\" x=\"770\" y=\"650\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-viewport-pass\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Scene and editor viewport passes&#xa;RenderScene to RenderTarget&#xa;gizmo / selection\" vertex=\"1\"><mxGeometry height=\"95\" width=\"270\" x=\"1090\" y=\"650\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-imgui\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"ImGui::Render / UI Pass&#xa;sample Viewport RenderTarget\" vertex=\"1\"><mxGeometry height=\"80\" width=\"250\" x=\"1420\" y=\"660\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-rhi\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"RHI Record / Submit&#xa;GPU Execute / Fence / Present\" vertex=\"1\"><mxGeometry height=\"80\" width=\"250\" x=\"1730\" y=\"660\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-exit\" parent=\"1\" style=\"rhombus;whiteSpace=wrap;html=1;shapeInside=1;\" value=\"exit requested?\" vertex=\"1\"><mxGeometry height=\"110\" width=\"170\" x=\"2070\" y=\"645\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p2-thread-label\" parent=\"1\" style=\"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;\" value=\"Thread model\" vertex=\"1\"><mxGeometry height=\"30\" width=\"200\" x=\"80\" y=\"850\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-game-thread\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Game / Logic Thread&#xa;Engine / WorldContext / World&#xa;GameObject / Component\" vertex=\"1\"><mxGeometry height=\"90\" width=\"300\" x=\"220\" y=\"900\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-render-thread\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Render Thread&#xa;executes Renderer / RenderScene&#xa;does not own World\" vertex=\"1\"><mxGeometry height=\"90\" width=\"300\" x=\"720\" y=\"900\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-rhi-thread\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"RHI Thread (optional later)&#xa;low-level command submission\" vertex=\"1\"><mxGeometry height=\"80\" width=\"280\" x=\"1220\" y=\"905\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-worker-thread\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Worker Threads&#xa;pure jobs; results return to owner thread\" vertex=\"1\"><mxGeometry height=\"80\" width=\"300\" x=\"1700\" y=\"905\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-m2-note\" parent=\"1\" style=\"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;\" value=\"M2 may execute Logic -> Extraction -> Render -> RHI as phases on one physical thread; ownership boundaries remain the same.\" vertex=\"1\"><mxGeometry height=\"40\" width=\"1500\" x=\"450\" y=\"1040\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p2-shutdown-label\" parent=\"1\" style=\"text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;\" value=\"Ordered shutdown\" vertex=\"1\"><mxGeometry height=\"30\" width=\"300\" x=\"80\" y=\"1150\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-stop\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Stop new submissions\" vertex=\"1\"><mxGeometry height=\"60\" width=\"190\" x=\"80\" y=\"1220\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-engine-stop\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Engine Shutdown&#xa;stop World ticks\" vertex=\"1\"><mxGeometry height=\"70\" width=\"190\" x=\"330\" y=\"1215\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-release\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"World releases SceneHandle&#xa;destroy World / GameInstance / Context\" vertex=\"1\"><mxGeometry height=\"85\" width=\"250\" x=\"580\" y=\"1205\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-drain\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Renderer stops accepting&#xa;drain render queue\" vertex=\"1\"><mxGeometry height=\"75\" width=\"220\" x=\"890\" y=\"1210\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-wait\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Wait GPU fences&#xa;destroy RenderScenes / resources\" vertex=\"1\"><mxGeometry height=\"75\" width=\"230\" x=\"1170\" y=\"1210\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-rhi-stop\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Destroy Swapchain / Queue&#xa;Device / RHI Backend\" vertex=\"1\"><mxGeometry height=\"75\" width=\"230\" x=\"1460\" y=\"1210\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-platform-stop\" parent=\"1\" style=\"rounded=0;whiteSpace=wrap;html=1;\" value=\"Destroy Window / Platform&#xa;Shutdown TypeRegistry\" vertex=\"1\"><mxGeometry height=\"75\" width=\"230\" x=\"1750\" y=\"1210\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-return\" parent=\"1\" style=\"ellipse;whiteSpace=wrap;html=1;shapeInside=1;\" value=\"Destroy EngineLoop&#xa;return main\" vertex=\"1\"><mxGeometry height=\"90\" width=\"200\" x=\"2050\" y=\"1200\" as=\"geometry\"/></mxCell>\n\n        <mxCell id=\"p2-e-start-loop\" edge=\"1\" parent=\"1\" source=\"p2-start\" target=\"p2-create-loop\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-loop-ref\" edge=\"1\" parent=\"1\" source=\"p2-create-loop\" target=\"p2-init-ref\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-ref-platform\" edge=\"1\" parent=\"1\" source=\"p2-init-ref\" target=\"p2-init-platform\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-platform-render\" edge=\"1\" parent=\"1\" source=\"p2-init-platform\" target=\"p2-init-render\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-render-engine\" edge=\"1\" parent=\"1\" source=\"p2-init-render\" target=\"p2-init-engine\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-engine-world\" edge=\"1\" parent=\"1\" source=\"p2-init-engine\" target=\"p2-init-world\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-world-scene\" edge=\"1\" parent=\"1\" source=\"p2-init-world\" target=\"p2-init-scene\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-scene-run\" edge=\"1\" parent=\"1\" source=\"p2-init-scene\" target=\"p2-run\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-run-pump\" edge=\"1\" parent=\"1\" source=\"p2-run\" target=\"p2-pump\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"><Array as=\"points\"><mxPoint x=\"2255\" y=\"230\"/><mxPoint x=\"180\" y=\"230\"/></Array></mxGeometry></mxCell>\n        <mxCell id=\"p2-e-pump-clock\" edge=\"1\" parent=\"1\" source=\"p2-pump\" target=\"p2-clock\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-clock-ui\" edge=\"1\" parent=\"1\" source=\"p2-clock\" target=\"p2-ui\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-ui-advance\" edge=\"1\" parent=\"1\" source=\"p2-ui\" target=\"p2-advance\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-advance-clock\" edge=\"1\" parent=\"1\" source=\"p2-advance\" target=\"p2-sim-clock\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-clock-step\" edge=\"1\" parent=\"1\" source=\"p2-sim-clock\" target=\"p2-step\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-step-tick\" edge=\"1\" parent=\"1\" source=\"p2-step\" target=\"p2-world-tick\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"yes\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-tick-scheduler\" edge=\"1\" parent=\"1\" source=\"p2-world-tick\" target=\"p2-tick-scheduler\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-scheduler-gameplay\" edge=\"1\" parent=\"1\" source=\"p2-tick-scheduler\" target=\"p2-gameplay\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-gameplay-extract\" edge=\"1\" parent=\"1\" source=\"p2-gameplay\" target=\"p2-extract\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"after stable tick\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-step-extract\" edge=\"1\" parent=\"1\" source=\"p2-step\" target=\"p2-extract\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"no / ticks caught up\"><mxGeometry relative=\"1\" as=\"geometry\"><Array as=\"points\"><mxPoint x=\"1545\" y=\"420\"/><mxPoint x=\"580\" y=\"420\"/></Array></mxGeometry></mxCell>\n        <mxCell id=\"p2-e-extract-submit\" edge=\"1\" parent=\"1\" source=\"p2-extract\" target=\"p2-submission\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-submit-channel\" edge=\"1\" parent=\"1\" source=\"p2-submission\" target=\"p2-channel\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"move / enqueue\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-channel-apply\" edge=\"1\" parent=\"1\" source=\"p2-channel\" target=\"p2-apply\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"consume\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-apply-update\" edge=\"1\" parent=\"1\" source=\"p2-apply\" target=\"p2-scene-update\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-update-viewport\" edge=\"1\" parent=\"1\" source=\"p2-scene-update\" target=\"p2-viewport-pass\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-viewport-imgui\" edge=\"1\" parent=\"1\" source=\"p2-viewport-pass\" target=\"p2-imgui\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"RenderTarget texture\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-imgui-rhi\" edge=\"1\" parent=\"1\" source=\"p2-imgui\" target=\"p2-rhi\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-rhi-exit\" edge=\"1\" parent=\"1\" source=\"p2-rhi\" target=\"p2-exit\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-exit-pump\" edge=\"1\" parent=\"1\" source=\"p2-exit\" target=\"p2-pump\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"no\"><mxGeometry relative=\"1\" as=\"geometry\"><Array as=\"points\"><mxPoint x=\"2155\" y=\"810\"/><mxPoint x=\"50\" y=\"810\"/><mxPoint x=\"50\" y=\"335\"/></Array></mxGeometry></mxCell>\n        <mxCell id=\"p2-e-exit-stop\" edge=\"1\" parent=\"1\" source=\"p2-exit\" target=\"p2-stop\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"yes\"><mxGeometry relative=\"1\" as=\"geometry\"><Array as=\"points\"><mxPoint x=\"2155\" y=\"1120\"/><mxPoint x=\"175\" y=\"1120\"/></Array></mxGeometry></mxCell>\n        <mxCell id=\"p2-e-stop-engine\" edge=\"1\" parent=\"1\" source=\"p2-stop\" target=\"p2-engine-stop\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-engine-release\" edge=\"1\" parent=\"1\" source=\"p2-engine-stop\" target=\"p2-release\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-release-drain\" edge=\"1\" parent=\"1\" source=\"p2-release\" target=\"p2-drain\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\" value=\"Renderer still alive\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-drain-wait\" edge=\"1\" parent=\"1\" source=\"p2-drain\" target=\"p2-wait\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-wait-rhi\" edge=\"1\" parent=\"1\" source=\"p2-wait\" target=\"p2-rhi-stop\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-rhi-platform\" edge=\"1\" parent=\"1\" source=\"p2-rhi-stop\" target=\"p2-platform-stop\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n        <mxCell id=\"p2-e-platform-return\" edge=\"1\" parent=\"1\" source=\"p2-platform-stop\" target=\"p2-return\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>\n      </root>\n    </mxGraphModel>\n  </diagram>\n</mxfile>\n",
+  "pages": [
+    {
+      "id": "updated-ownership",
+      "name": "第 1 页-整体结构",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer",
+          "parent": "0"
+        },
+        {
+          "id": "p1-title",
+          "type": "node",
+          "parent": "1",
+          "label": "MEngine 完整计划架构（所有权与类型关系）"
+        },
+        {
+          "id": "p1-main",
+          "type": "node",
+          "parent": "1",
+          "label": "EngineMain / main"
+        },
+        {
+          "id": "p1-select",
+          "type": "node",
+          "parent": "1",
+          "label": "Select Game / Editor\nSelect RHI API"
+        },
+        {
+          "id": "p1-loop",
+          "type": "node",
+          "parent": "1",
+          "label": "EngineLoop\nprocess lifetime / frame orchestration"
+        },
+        {
+          "id": "p1-process-label",
+          "type": "node",
+          "parent": "1",
+          "label": "EngineLoop owns"
+        },
+        {
+          "id": "p1-reflection",
+          "type": "node",
+          "parent": "1",
+          "label": "TypeRegistry / Reflection"
+        },
+        {
+          "id": "p1-platform",
+          "type": "node",
+          "parent": "1",
+          "label": "PlatformApplication"
+        },
+        {
+          "id": "p1-assets",
+          "type": "node",
+          "parent": "1",
+          "label": "AssetManager"
+        },
+        {
+          "id": "p1-renderer",
+          "type": "node",
+          "parent": "1",
+          "label": "Renderer"
+        },
+        {
+          "id": "p1-engine",
+          "type": "node",
+          "parent": "1",
+          "label": "Engine (abstract)"
+        },
+        {
+          "id": "p1-window",
+          "type": "node",
+          "parent": "1",
+          "label": "Window\nNativeHandle / Extent / Events"
+        },
+        {
+          "id": "p1-rhi",
+          "type": "node",
+          "parent": "1",
+          "label": "RHI Backend\nAdapter / Device / Queue / Swapchain"
+        },
+        {
+          "id": "p1-scene-reg",
+          "type": "node",
+          "parent": "1",
+          "label": "RenderSceneRegistry"
+        },
+        {
+          "id": "p1-resources",
+          "type": "node",
+          "parent": "1",
+          "label": "RenderResourceManager\nMesh / Material / Texture GPU resources"
+        },
+        {
+          "id": "p1-game-engine",
+          "type": "node",
+          "parent": "1",
+          "label": "GameEngine"
+        },
+        {
+          "id": "p1-editor-engine",
+          "type": "node",
+          "parent": "1",
+          "label": "EditorEngine"
+        },
+        {
+          "id": "p1-game-context",
+          "type": "node",
+          "parent": "1",
+          "label": "GameWorldContext\nSimulationClock / SceneHandle"
+        },
+        {
+          "id": "p1-editor-context",
+          "type": "node",
+          "parent": "1",
+          "label": "EditorWorldContext\nEditorClock / SceneHandle"
+        },
+        {
+          "id": "p1-pie-context",
+          "type": "node",
+          "parent": "1",
+          "label": "PIEWorldContext(s)\nSimulationClock / SceneHandle"
+        },
+        {
+          "id": "p1-game-instance",
+          "type": "node",
+          "parent": "1",
+          "label": "GameInstance\nsession state / subsystems / LocalPlayer"
+        },
+        {
+          "id": "p1-game-world",
+          "type": "node",
+          "parent": "1",
+          "label": "GameWorld"
+        },
+        {
+          "id": "p1-editor-world",
+          "type": "node",
+          "parent": "1",
+          "label": "EditorWorld"
+        },
+        {
+          "id": "p1-pie-instance",
+          "type": "node",
+          "parent": "1",
+          "label": "GameInstance per PIE"
+        },
+        {
+          "id": "p1-pie-world",
+          "type": "node",
+          "parent": "1",
+          "label": "PIEWorld(s)"
+        },
+        {
+          "id": "p1-world-generic",
+          "type": "node",
+          "parent": "1",
+          "label": "World\nObjectRegistry / TickScheduler / PhysicsScene / Gameplay systems"
+        },
+        {
+          "id": "p1-go",
+          "type": "node",
+          "parent": "1",
+          "label": "GameObject"
+        },
+        {
+          "id": "p1-component",
+          "type": "node",
+          "parent": "1",
+          "label": "Component(s)\nTransform / MeshRenderer / Light / Camera ..."
+        },
+        {
+          "id": "p1-render-scene",
+          "type": "node",
+          "parent": "1",
+          "label": "RenderScene(s)\nowned by Renderer"
+        },
+        {
+          "id": "p1-render-proxy",
+          "type": "node",
+          "parent": "1",
+          "label": "RenderProxy / Primitive(s)\nno World or Component pointers"
+        },
+        {
+          "id": "p1-imgui-pass",
+          "type": "node",
+          "parent": "1",
+          "label": "ImGuiRenderBackend / UI Pass"
+        },
+        {
+          "id": "p1-editor-ui",
+          "type": "node",
+          "parent": "1",
+          "label": "EditorUI\nowns ImGuiContext and Panels"
+        },
+        {
+          "id": "p1-viewport",
+          "type": "node",
+          "parent": "1",
+          "label": "ViewportPanel / ViewportClient\nSceneHandle / Camera / Extent"
+        },
+        {
+          "id": "p1-target",
+          "type": "node",
+          "parent": "1",
+          "label": "Viewport RenderTargetHandle\nowned by Renderer"
+        },
+        {
+          "id": "p1-extraction",
+          "type": "node",
+          "parent": "1",
+          "label": "RenderExtraction\nreads stable World state"
+        },
+        {
+          "id": "p1-submission",
+          "type": "node",
+          "parent": "1",
+          "label": "RenderSubmission\nSceneHandle + SceneUpdateBatch + RenderFrame"
+        },
+        {
+          "id": "p1-channel",
+          "type": "node",
+          "parent": "1",
+          "label": "RenderSubmissionChannel\nsync move / bounded queue"
+        },
+        {
+          "id": "p1-handle-note",
+          "type": "node",
+          "parent": "1",
+          "label": "WorldContext only stores non-owning SceneHandle; Renderer resolves it in RenderSceneRegistry"
+        },
+        {
+          "id": "p1-resource-note",
+          "type": "node",
+          "parent": "1",
+          "label": "Component stores MeshAssetHandle / MaterialHandle; actual vertices and material resources are owned by AssetManager and RenderResourceManager"
+        },
+        {
+          "id": "p1-e-main-select",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-main",
+          "target": "p1-select"
+        },
+        {
+          "id": "p1-e-select-loop",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-select",
+          "target": "p1-loop",
+          "label": "create"
+        },
+        {
+          "id": "p1-e-loop-ref",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-loop",
+          "target": "p1-reflection",
+          "label": "owns lifetime"
+        },
+        {
+          "id": "p1-e-loop-platform",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-loop",
+          "target": "p1-platform",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-loop-assets",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-loop",
+          "target": "p1-assets",
+          "label": "owns service"
+        },
+        {
+          "id": "p1-e-loop-renderer",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-loop",
+          "target": "p1-renderer",
+          "label": "unique ownership"
+        },
+        {
+          "id": "p1-e-loop-engine",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-loop",
+          "target": "p1-engine",
+          "label": "unique ownership"
+        },
+        {
+          "id": "p1-e-platform-window",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-platform",
+          "target": "p1-window",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-render-rhi",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-renderer",
+          "target": "p1-rhi",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-render-scenes",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-renderer",
+          "target": "p1-scene-reg",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-render-res",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-renderer",
+          "target": "p1-resources",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-reg-scene",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-scene-reg",
+          "target": "p1-render-scene",
+          "label": "0..N"
+        },
+        {
+          "id": "p1-e-scene-proxy",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-render-scene",
+          "target": "p1-render-proxy",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-assets-res",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-assets",
+          "target": "p1-resources",
+          "label": "AssetHandle / upload request"
+        },
+        {
+          "id": "p1-e-engine-game",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-game-engine",
+          "target": "p1-engine",
+          "label": "implements"
+        },
+        {
+          "id": "p1-e-engine-editor",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-editor-engine",
+          "target": "p1-engine",
+          "label": "implements"
+        },
+        {
+          "id": "p1-e-game-context",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-game-engine",
+          "target": "p1-game-context",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-editor-context",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-editor-engine",
+          "target": "p1-editor-context",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-pie-context",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-editor-engine",
+          "target": "p1-pie-context",
+          "label": "owns 0..N"
+        },
+        {
+          "id": "p1-e-game-inst",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-game-context",
+          "target": "p1-game-instance",
+          "label": "owns across world travel"
+        },
+        {
+          "id": "p1-e-game-world",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-game-context",
+          "target": "p1-game-world",
+          "label": "owns current"
+        },
+        {
+          "id": "p1-e-editor-world",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-editor-context",
+          "target": "p1-editor-world",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-pie-inst",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-pie-context",
+          "target": "p1-pie-instance",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-pie-world",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-pie-context",
+          "target": "p1-pie-world",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-game-generic",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-game-world",
+          "target": "p1-world-generic",
+          "label": "is a"
+        },
+        {
+          "id": "p1-e-editor-generic",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-editor-world",
+          "target": "p1-world-generic",
+          "label": "is a"
+        },
+        {
+          "id": "p1-e-pie-generic",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-pie-world",
+          "target": "p1-world-generic",
+          "label": "is a"
+        },
+        {
+          "id": "p1-e-world-go",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-world-generic",
+          "target": "p1-go",
+          "label": "owns 0..N"
+        },
+        {
+          "id": "p1-e-go-component",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-go",
+          "target": "p1-component",
+          "label": "owns 0..N"
+        },
+        {
+          "id": "p1-e-context-scene",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-editor-context",
+          "target": "p1-render-scene",
+          "label": "non-owning SceneHandle"
+        },
+        {
+          "id": "p1-e-world-extract",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-world-generic",
+          "target": "p1-extraction",
+          "label": "stable state"
+        },
+        {
+          "id": "p1-e-extract-submission",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-extraction",
+          "target": "p1-submission"
+        },
+        {
+          "id": "p1-e-submission-channel",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-submission",
+          "target": "p1-channel",
+          "label": "move"
+        },
+        {
+          "id": "p1-e-channel-renderer",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-channel",
+          "target": "p1-renderer",
+          "label": "consume by render cadence"
+        },
+        {
+          "id": "p1-e-editor-ui",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-editor-engine",
+          "target": "p1-editor-ui",
+          "label": "owns"
+        },
+        {
+          "id": "p1-e-ui-viewport",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-editor-ui",
+          "target": "p1-viewport",
+          "label": "owns 0..N"
+        },
+        {
+          "id": "p1-e-viewport-target",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-viewport",
+          "target": "p1-target",
+          "label": "RenderTargetHandle"
+        },
+        {
+          "id": "p1-e-viewport-scene",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-viewport",
+          "target": "p1-render-scene",
+          "label": "selects by SceneHandle"
+        },
+        {
+          "id": "p1-e-render-ui",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-renderer",
+          "target": "p1-imgui-pass",
+          "label": "owns GPU backend"
+        },
+        {
+          "id": "p1-e-target-ui",
+          "type": "edge",
+          "parent": "1",
+          "source": "p1-target",
+          "target": "p1-imgui-pass",
+          "label": "texture reference"
+        }
+      ]
+    },
+    {
+      "id": "updated-loop",
+      "name": "第 2 页-启动循环退出",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer",
+          "parent": "0"
+        },
+        {
+          "id": "p2-title",
+          "type": "node",
+          "parent": "1",
+          "label": "MEngine 启动、逻辑帧、渲染数据与退出流程"
+        },
+        {
+          "id": "p2-start",
+          "type": "node",
+          "parent": "1",
+          "label": "EngineMain"
+        },
+        {
+          "id": "p2-create-loop",
+          "type": "node",
+          "parent": "1",
+          "label": "Create EngineLoop"
+        },
+        {
+          "id": "p2-init-ref",
+          "type": "node",
+          "parent": "1",
+          "label": "Initialize TypeRegistry"
+        },
+        {
+          "id": "p2-init-platform",
+          "type": "node",
+          "parent": "1",
+          "label": "Create Platform / Window"
+        },
+        {
+          "id": "p2-init-render",
+          "type": "node",
+          "parent": "1",
+          "label": "Initialize Renderer / RHI"
+        },
+        {
+          "id": "p2-init-engine",
+          "type": "node",
+          "parent": "1",
+          "label": "Create and Initialize\nGameEngine / EditorEngine"
+        },
+        {
+          "id": "p2-init-world",
+          "type": "node",
+          "parent": "1",
+          "label": "Create WorldContext\nGameInstance / World"
+        },
+        {
+          "id": "p2-init-scene",
+          "type": "node",
+          "parent": "1",
+          "label": "Renderer creates RenderScene\nWorldContext stores SceneHandle"
+        },
+        {
+          "id": "p2-run",
+          "type": "node",
+          "parent": "1",
+          "label": "EngineLoop::Run"
+        },
+        {
+          "id": "p2-frame-label",
+          "type": "node",
+          "parent": "1",
+          "label": "Outer process / render frame"
+        },
+        {
+          "id": "p2-pump",
+          "type": "node",
+          "parent": "1",
+          "label": "PumpMessages\nInput / Close / Resize"
+        },
+        {
+          "id": "p2-clock",
+          "type": "node",
+          "parent": "1",
+          "label": "FrameClock\nmeasure realDelta"
+        },
+        {
+          "id": "p2-ui",
+          "type": "node",
+          "parent": "1",
+          "label": "EditorUI Begin / Build\nenqueue Editor commands\nbuild Viewport requests"
+        },
+        {
+          "id": "p2-advance",
+          "type": "node",
+          "parent": "1",
+          "label": "Engine::Advance(realDelta)\nchoose WorldContexts"
+        },
+        {
+          "id": "p2-sim-clock",
+          "type": "node",
+          "parent": "1",
+          "label": "WorldContext::SimulationClock\npause / timeScale / frameNumber"
+        },
+        {
+          "id": "p2-step",
+          "type": "node",
+          "parent": "1",
+          "label": "fixed step needed?"
+        },
+        {
+          "id": "p2-world-tick",
+          "type": "node",
+          "parent": "1",
+          "label": "World::FixedTick\n0..N times per outer frame"
+        },
+        {
+          "id": "p2-tick-scheduler",
+          "type": "node",
+          "parent": "1",
+          "label": "TickScheduler::Execute\nTickGroup / enabled ticks / prerequisites"
+        },
+        {
+          "id": "p2-gameplay",
+          "type": "node",
+          "parent": "1",
+          "label": "Gameplay Resolution\nPhysics query / commands / events\ndeferred structural changes"
+        },
+        {
+          "id": "p2-extract",
+          "type": "node",
+          "parent": "1",
+          "label": "RenderExtraction\nWorld state + AssetHandles\nno World pointers cross boundary"
+        },
+        {
+          "id": "p2-submission",
+          "type": "node",
+          "parent": "1",
+          "label": "Build RenderSubmission\nSceneUpdateBatch + RenderFrame"
+        },
+        {
+          "id": "p2-channel",
+          "type": "node",
+          "parent": "1",
+          "label": "RenderSubmissionChannel\nsync move / SPSC queue"
+        },
+        {
+          "id": "p2-apply",
+          "type": "node",
+          "parent": "1",
+          "label": "Renderer consumes submission\nRenderScene::ApplyUpdates"
+        },
+        {
+          "id": "p2-scene-update",
+          "type": "node",
+          "parent": "1",
+          "label": "Render frame update\ninterpolate / visibility / LOD\ndraw lists / passes"
+        },
+        {
+          "id": "p2-viewport-pass",
+          "type": "node",
+          "parent": "1",
+          "label": "Scene and editor viewport passes\nRenderScene to RenderTarget\ngizmo / selection"
+        },
+        {
+          "id": "p2-imgui",
+          "type": "node",
+          "parent": "1",
+          "label": "ImGui::Render / UI Pass\nsample Viewport RenderTarget"
+        },
+        {
+          "id": "p2-rhi",
+          "type": "node",
+          "parent": "1",
+          "label": "RHI Record / Submit\nGPU Execute / Fence / Present"
+        },
+        {
+          "id": "p2-exit",
+          "type": "node",
+          "parent": "1",
+          "label": "exit requested?"
+        },
+        {
+          "id": "p2-thread-label",
+          "type": "node",
+          "parent": "1",
+          "label": "Thread model"
+        },
+        {
+          "id": "p2-game-thread",
+          "type": "node",
+          "parent": "1",
+          "label": "Game / Logic Thread\nEngine / WorldContext / World\nGameObject / Component"
+        },
+        {
+          "id": "p2-render-thread",
+          "type": "node",
+          "parent": "1",
+          "label": "Render Thread\nexecutes Renderer / RenderScene\ndoes not own World"
+        },
+        {
+          "id": "p2-rhi-thread",
+          "type": "node",
+          "parent": "1",
+          "label": "RHI Thread (optional later)\nlow-level command submission"
+        },
+        {
+          "id": "p2-worker-thread",
+          "type": "node",
+          "parent": "1",
+          "label": "Worker Threads\npure jobs; results return to owner thread"
+        },
+        {
+          "id": "p2-m2-note",
+          "type": "node",
+          "parent": "1",
+          "label": "M2 may execute Logic -> Extraction -> Render -> RHI as phases on one physical thread; ownership boundaries remain the same."
+        },
+        {
+          "id": "p2-shutdown-label",
+          "type": "node",
+          "parent": "1",
+          "label": "Ordered shutdown"
+        },
+        {
+          "id": "p2-stop",
+          "type": "node",
+          "parent": "1",
+          "label": "Stop new submissions"
+        },
+        {
+          "id": "p2-engine-stop",
+          "type": "node",
+          "parent": "1",
+          "label": "Engine Shutdown\nstop World ticks"
+        },
+        {
+          "id": "p2-release",
+          "type": "node",
+          "parent": "1",
+          "label": "World releases SceneHandle\ndestroy World / GameInstance / Context"
+        },
+        {
+          "id": "p2-drain",
+          "type": "node",
+          "parent": "1",
+          "label": "Renderer stops accepting\ndrain render queue"
+        },
+        {
+          "id": "p2-wait",
+          "type": "node",
+          "parent": "1",
+          "label": "Wait GPU fences\ndestroy RenderScenes / resources"
+        },
+        {
+          "id": "p2-rhi-stop",
+          "type": "node",
+          "parent": "1",
+          "label": "Destroy Swapchain / Queue\nDevice / RHI Backend"
+        },
+        {
+          "id": "p2-platform-stop",
+          "type": "node",
+          "parent": "1",
+          "label": "Destroy Window / Platform\nShutdown TypeRegistry"
+        },
+        {
+          "id": "p2-return",
+          "type": "node",
+          "parent": "1",
+          "label": "Destroy EngineLoop\nreturn main"
+        },
+        {
+          "id": "p2-e-start-loop",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-start",
+          "target": "p2-create-loop"
+        },
+        {
+          "id": "p2-e-loop-ref",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-create-loop",
+          "target": "p2-init-ref"
+        },
+        {
+          "id": "p2-e-ref-platform",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-init-ref",
+          "target": "p2-init-platform"
+        },
+        {
+          "id": "p2-e-platform-render",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-init-platform",
+          "target": "p2-init-render"
+        },
+        {
+          "id": "p2-e-render-engine",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-init-render",
+          "target": "p2-init-engine"
+        },
+        {
+          "id": "p2-e-engine-world",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-init-engine",
+          "target": "p2-init-world"
+        },
+        {
+          "id": "p2-e-world-scene",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-init-world",
+          "target": "p2-init-scene"
+        },
+        {
+          "id": "p2-e-scene-run",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-init-scene",
+          "target": "p2-run"
+        },
+        {
+          "id": "p2-e-run-pump",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-run",
+          "target": "p2-pump"
+        },
+        {
+          "id": "p2-e-pump-clock",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-pump",
+          "target": "p2-clock"
+        },
+        {
+          "id": "p2-e-clock-ui",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-clock",
+          "target": "p2-ui"
+        },
+        {
+          "id": "p2-e-ui-advance",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-ui",
+          "target": "p2-advance"
+        },
+        {
+          "id": "p2-e-advance-clock",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-advance",
+          "target": "p2-sim-clock"
+        },
+        {
+          "id": "p2-e-clock-step",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-sim-clock",
+          "target": "p2-step"
+        },
+        {
+          "id": "p2-e-step-tick",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-step",
+          "target": "p2-world-tick",
+          "label": "yes"
+        },
+        {
+          "id": "p2-e-tick-scheduler",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-world-tick",
+          "target": "p2-tick-scheduler"
+        },
+        {
+          "id": "p2-e-scheduler-gameplay",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-tick-scheduler",
+          "target": "p2-gameplay"
+        },
+        {
+          "id": "p2-e-gameplay-extract",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-gameplay",
+          "target": "p2-extract",
+          "label": "after stable tick"
+        },
+        {
+          "id": "p2-e-step-extract",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-step",
+          "target": "p2-extract",
+          "label": "no / ticks caught up"
+        },
+        {
+          "id": "p2-e-extract-submit",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-extract",
+          "target": "p2-submission"
+        },
+        {
+          "id": "p2-e-submit-channel",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-submission",
+          "target": "p2-channel",
+          "label": "move / enqueue"
+        },
+        {
+          "id": "p2-e-channel-apply",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-channel",
+          "target": "p2-apply",
+          "label": "consume"
+        },
+        {
+          "id": "p2-e-apply-update",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-apply",
+          "target": "p2-scene-update"
+        },
+        {
+          "id": "p2-e-update-viewport",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-scene-update",
+          "target": "p2-viewport-pass"
+        },
+        {
+          "id": "p2-e-viewport-imgui",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-viewport-pass",
+          "target": "p2-imgui",
+          "label": "RenderTarget texture"
+        },
+        {
+          "id": "p2-e-imgui-rhi",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-imgui",
+          "target": "p2-rhi"
+        },
+        {
+          "id": "p2-e-rhi-exit",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-rhi",
+          "target": "p2-exit"
+        },
+        {
+          "id": "p2-e-exit-pump",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-exit",
+          "target": "p2-pump",
+          "label": "no"
+        },
+        {
+          "id": "p2-e-exit-stop",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-exit",
+          "target": "p2-stop",
+          "label": "yes"
+        },
+        {
+          "id": "p2-e-stop-engine",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-stop",
+          "target": "p2-engine-stop"
+        },
+        {
+          "id": "p2-e-engine-release",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-engine-stop",
+          "target": "p2-release"
+        },
+        {
+          "id": "p2-e-release-drain",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-release",
+          "target": "p2-drain",
+          "label": "Renderer still alive"
+        },
+        {
+          "id": "p2-e-drain-wait",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-drain",
+          "target": "p2-wait"
+        },
+        {
+          "id": "p2-e-wait-rhi",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-wait",
+          "target": "p2-rhi-stop"
+        },
+        {
+          "id": "p2-e-rhi-platform",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-rhi-stop",
+          "target": "p2-platform-stop"
+        },
+        {
+          "id": "p2-e-platform-return",
+          "type": "edge",
+          "parent": "1",
+          "source": "p2-platform-stop",
+          "target": "p2-return"
+        }
+      ]
+    }
+  ]
+}

@@ -6,6 +6,10 @@ endif()
 
 project(MEngine LANGUAGES CXX)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT MEngineEditor)
+set(CMAKE_FOLDER Tools)
+
 option(BUILD_TESTING "Build the local test tree" OFF)
 include(CTest)
 
@@ -50,26 +54,36 @@ set(
     "Compilation database consumed by the reflection generator"
 )
 
-add_subdirectory(Engine)
+# LLVM's packaged libraries use the static release CRT. When its tests link Engine,
+# every executable consuming that Engine must use the same runtime library.
+if(MSVC AND MENGINE_BUILD_REFLECTION_GENERATOR_TESTS)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded)
+endif()
 
-add_library(MEngineReflectionGeneratorCore STATIC
-    Engine/Tools/ReflectionGenerator/CompilationDatabase.cpp
-    Engine/Tools/ReflectionGenerator/GeneratedFilePlan.cpp
-    Engine/Tools/ReflectionGenerator/GeneratedFileWriter.cpp
-    Engine/Tools/ReflectionGenerator/GenerationPlan.cpp
-    Engine/Tools/ReflectionGenerator/HeaderParseInvocationBuilder.cpp
-    Engine/Tools/ReflectionGenerator/HeaderScanJobBuilder.cpp
-    Engine/Tools/ReflectionGenerator/HeaderScanJobResolver.cpp
-    Engine/Tools/ReflectionGenerator/HeaderScanJobValidation.cpp
-    Engine/Tools/ReflectionGenerator/ModuleManifestLoader.cpp
-)
+add_subdirectory(Source)
 
-target_include_directories(MEngineReflectionGeneratorCore
-    PUBLIC
-        Engine/Tools/ReflectionGenerator
-    PRIVATE
-        Engine/ThirdParty
-)
+if(MENGINE_BUILD_REFLECTION_GENERATOR_CLANG
+    OR MENGINE_BUILD_REFLECTION_GENERATOR_TESTS
+    OR MENGINE_ENABLE_REFLECTION_CODEGEN)
+    add_library(MEngineReflectionGeneratorCore STATIC
+        Tools/ReflectionGenerator/CompilationDatabase.cpp
+        Tools/ReflectionGenerator/GeneratedFilePlan.cpp
+        Tools/ReflectionGenerator/GeneratedFileWriter.cpp
+        Tools/ReflectionGenerator/GenerationPlan.cpp
+        Tools/ReflectionGenerator/HeaderParseInvocationBuilder.cpp
+        Tools/ReflectionGenerator/HeaderScanJobBuilder.cpp
+        Tools/ReflectionGenerator/HeaderScanJobResolver.cpp
+        Tools/ReflectionGenerator/HeaderScanJobValidation.cpp
+        Tools/ReflectionGenerator/ModuleManifestLoader.cpp
+    )
+
+    target_include_directories(MEngineReflectionGeneratorCore
+        PUBLIC
+            Tools/ReflectionGenerator
+        PRIVATE
+            ThirdParty
+    )
+endif()
 
 if(MENGINE_BUILD_REFLECTION_GENERATOR_CLANG
     OR MENGINE_BUILD_REFLECTION_CLANG_SMOKE
@@ -125,11 +139,11 @@ if(MENGINE_BUILD_REFLECTION_GENERATOR_CLANG
     endif()
 
     add_library(MEngineReflectionGeneratorClang STATIC
-        Engine/Tools/ReflectionGenerator/Clang/ClangDeclarationValidation.cpp
-        Engine/Tools/ReflectionGenerator/Clang/ClangHeaderScanner.cpp
-        Engine/Tools/ReflectionGenerator/Clang/ReflectionGenerationPipeline.cpp
-        Engine/Tools/ReflectionGenerator/Clang/ReflectionCodeRenderer.cpp
-        Engine/Tools/ReflectionGenerator/Clang/ReflectionModuleRenderer.cpp
+        Tools/ReflectionGenerator/Clang/ClangDeclarationValidation.cpp
+        Tools/ReflectionGenerator/Clang/ClangHeaderScanner.cpp
+        Tools/ReflectionGenerator/Clang/ReflectionGenerationPipeline.cpp
+        Tools/ReflectionGenerator/Clang/ReflectionCodeRenderer.cpp
+        Tools/ReflectionGenerator/Clang/ReflectionModuleRenderer.cpp
     )
 
     if(MSVC)
@@ -141,7 +155,7 @@ if(MENGINE_BUILD_REFLECTION_GENERATOR_CLANG
 
     target_include_directories(MEngineReflectionGeneratorClang
         PUBLIC
-            Engine/Tools/ReflectionGenerator
+            Tools/ReflectionGenerator
     )
 
     target_include_directories(MEngineReflectionGeneratorClang
@@ -159,7 +173,7 @@ if(MENGINE_BUILD_REFLECTION_GENERATOR_CLANG
     )
 
     add_executable(MEngineReflectionGenerator
-        Engine/Tools/ReflectionGenerator/ReflectionGeneratorMain.cpp
+        Tools/ReflectionGenerator/ReflectionGeneratorMain.cpp
     )
 
     if(MSVC)
@@ -176,95 +190,53 @@ if(MENGINE_BUILD_REFLECTION_GENERATOR_CLANG
 endif()
 
 if(MENGINE_ENABLE_REFLECTION_CODEGEN)
-    set(mengine_core_reflection_manifest
-        "${CMAKE_CURRENT_SOURCE_DIR}/Engine/Manifests/Core.Reflection.json"
-    )
-    set(mengine_core_reflection_input_header
-        "${CMAKE_CURRENT_SOURCE_DIR}/Engine/Engine/Core/Reflection/TypeRegistry.h"
-    )
-    set(mengine_core_reflection_compile_source
-        "${CMAKE_CURRENT_SOURCE_DIR}/Engine/Engine/Core/Reflection/TypeRegistry.cpp"
-    )
-    set(mengine_core_reflection_generated_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/Engine/Generated/Reflection/Engine/Core/Reflection"
-    )
-    set(mengine_core_reflection_generated_header
-        "${mengine_core_reflection_generated_directory}/TypeRegistry.h.reflection.generated.h"
-    )
-    set(mengine_core_reflection_generated_source
-        "${mengine_core_reflection_generated_directory}/TypeRegistry.h.reflection.generated.cpp"
-    )
-    set(mengine_core_reflection_module_header
-        "${CMAKE_CURRENT_SOURCE_DIR}/Engine/Generated/Reflection/MEngine.Core.Reflection.reflection.module.generated.h"
-    )
-    set(mengine_core_reflection_module_source
-        "${CMAKE_CURRENT_SOURCE_DIR}/Engine/Generated/Reflection/MEngine.Core.Reflection.reflection.module.generated.cpp"
-    )
-
-    add_custom_command(
-        OUTPUT
-            "${mengine_core_reflection_generated_header}"
-            "${mengine_core_reflection_generated_source}"
-            "${mengine_core_reflection_module_header}"
-            "${mengine_core_reflection_module_source}"
-        COMMAND
-            $<TARGET_FILE:MEngineReflectionGenerator>
-            --compile-commands
+    set(reflection_manifest "${PROJECT_SOURCE_DIR}/Tools/ReflectionGenerator/Manifests/Runtime.Reflection.json")
+    file(READ "${reflection_manifest}" reflection_manifest_json)
+    string(JSON reflection_output GET "${reflection_manifest_json}" output_directory)
+    string(JSON reflection_module GET "${reflection_manifest_json}" module_name)
+    string(JSON reflection_header_count LENGTH "${reflection_manifest_json}" header_files)
+    math(EXPR reflection_header_last "${reflection_header_count} - 1")
+    set(reflection_generated_root "${PROJECT_SOURCE_DIR}/Source/${reflection_output}")
+    set(reflection_outputs
+        "${reflection_generated_root}/${reflection_module}.reflection.module.generated.h"
+        "${reflection_generated_root}/${reflection_module}.reflection.module.generated.cpp")
+    set(reflection_inputs "${reflection_manifest}")
+    foreach(index RANGE ${reflection_header_last})
+        string(JSON header GET "${reflection_manifest_json}" header_files ${index})
+        list(APPEND reflection_inputs "${PROJECT_SOURCE_DIR}/Source/${header}")
+        list(APPEND reflection_outputs
+            "${reflection_generated_root}/${header}.reflection.generated.h"
+            "${reflection_generated_root}/${header}.reflection.generated.cpp")
+    endforeach()
+    add_custom_command(OUTPUT ${reflection_outputs}
+        COMMAND $<TARGET_FILE:MEngineReflectionGenerator>
+            --compile-commands "${MENGINE_REFLECTION_COMPILATION_DATABASE}"
+            --manifest "${reflection_manifest}"
+        DEPENDS MEngineReflectionGenerator ${reflection_inputs}
             "${MENGINE_REFLECTION_COMPILATION_DATABASE}"
-            --manifest
-            "${mengine_core_reflection_manifest}"
-        DEPENDS
-            MEngineReflectionGenerator
-            "${MENGINE_REFLECTION_COMPILATION_DATABASE}"
-            "${mengine_core_reflection_manifest}"
-            "${mengine_core_reflection_input_header}"
-            "${mengine_core_reflection_compile_source}"
-        COMMENT
-            "Generating reflection sources for MEngine.Core.Reflection"
-        VERBATIM
-    )
-
-    set_source_files_properties(
-        "${mengine_core_reflection_generated_header}"
-        "${mengine_core_reflection_generated_source}"
-        "${mengine_core_reflection_module_header}"
-        "${mengine_core_reflection_module_source}"
-        PROPERTIES GENERATED TRUE
-    )
-    set_source_files_properties(
-        "${mengine_core_reflection_generated_header}"
-        "${mengine_core_reflection_module_header}"
-        PROPERTIES HEADER_FILE_ONLY TRUE
-    )
-
-    add_custom_target(MEngineGenerateReflection
-        DEPENDS
-            "${mengine_core_reflection_generated_header}"
-            "${mengine_core_reflection_generated_source}"
-            "${mengine_core_reflection_module_header}"
-            "${mengine_core_reflection_module_source}"
-    )
-
-    target_sources(MEngineReflection
-        PRIVATE
-            "${mengine_core_reflection_generated_header}"
-            "${mengine_core_reflection_generated_source}"
-            "${mengine_core_reflection_module_header}"
-            "${mengine_core_reflection_module_source}"
-    )
+            "${PROJECT_SOURCE_DIR}/Source/Core/Reflection/ReflectionMacros.h"
+            "${PROJECT_SOURCE_DIR}/Source/Core/Reflection/TypeTraits.h"
+            "${PROJECT_SOURCE_DIR}/Source/Core/Serialization/BuiltinSerialization.h"
+            "${PROJECT_SOURCE_DIR}/Source/Core/Math/vector.h"
+        COMMENT "Generating runtime reflection and component implementations"
+        VERBATIM)
+    set_source_files_properties(${reflection_outputs} PROPERTIES GENERATED TRUE)
+    add_custom_target(MEngineGenerateReflection DEPENDS ${reflection_outputs})
+    add_dependencies(Engine MEngineGenerateReflection)
+    target_sources(Engine PRIVATE ${reflection_outputs})
 endif()
 
 if(MENGINE_BUILD_REFLECTION_GENERATOR_TESTS)
     enable_testing()
 
     add_executable(MEngineReflectionGeneratorTests
-        Engine/Tests/ReflectionGenerator/ClangReflectionGeneratorTests.cpp
-        Engine/Tests/ReflectionGenerator/Fixtures/ClangRenderInput.h.reflection.generated.cpp
+        Tests/ReflectionGenerator/ClangReflectionGeneratorTests.cpp
+        Tests/ReflectionGenerator/Fixtures/ClangRenderInput.h.reflection.generated.cpp
     )
 
     if(MSVC)
         set_property(
-            TARGET MEngineReflection
+            TARGET Engine
             PROPERTY MSVC_RUNTIME_LIBRARY MultiThreaded
         )
 
@@ -276,7 +248,7 @@ if(MENGINE_BUILD_REFLECTION_GENERATOR_TESTS)
 
     target_link_libraries(MEngineReflectionGeneratorTests
         PRIVATE
-            MEngineReflection
+            Engine
             MEngineReflectionGeneratorClang
     )
 
@@ -289,12 +261,12 @@ if(MENGINE_BUILD_REFLECTION_GENERATOR_TESTS)
         PRIVATE
             MENGINE_TEST_CLANG_EXECUTABLE="${LLVM_TOOLS_BINARY_DIR}/clang-cl.exe"
             MENGINE_TEST_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}"
-            MENGINE_TEST_MANIFEST="${CMAKE_CURRENT_SOURCE_DIR}/Engine/Manifests/Core.Reflection.json"
-            MENGINE_TEST_RENDER_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/Engine/Tests/ReflectionGenerator/Fixtures/ClangRenderInput.h"
-            MENGINE_TEST_RENDER_GOLDEN_HEADER="${CMAKE_CURRENT_SOURCE_DIR}/Engine/Tests/ReflectionGenerator/Fixtures/ClangRenderInput.h.reflection.generated.h"
-            MENGINE_TEST_RENDER_GOLDEN_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/Engine/Tests/ReflectionGenerator/Fixtures/ClangRenderInput.h.reflection.generated.cpp"
+            MENGINE_TEST_MANIFEST="${CMAKE_CURRENT_SOURCE_DIR}/Tools/ReflectionGenerator/Manifests/Core.Reflection.json"
+            MENGINE_TEST_RENDER_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/Tests/ReflectionGenerator/Fixtures/ClangRenderInput.h"
+            MENGINE_TEST_RENDER_GOLDEN_HEADER="${CMAKE_CURRENT_SOURCE_DIR}/Tests/ReflectionGenerator/Fixtures/ClangRenderInput.h.reflection.generated.h"
+            MENGINE_TEST_RENDER_GOLDEN_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/Tests/ReflectionGenerator/Fixtures/ClangRenderInput.h.reflection.generated.cpp"
             MENGINE_TEST_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
-            MENGINE_TEST_SCAN_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/Engine/Tests/ReflectionGenerator/Fixtures/ClangScanInput.h"
+            MENGINE_TEST_SCAN_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/Tests/ReflectionGenerator/Fixtures/ClangScanInput.h"
     )
 
     add_test(
@@ -310,7 +282,7 @@ endif()
 
 if(MENGINE_BUILD_REFLECTION_CLANG_SMOKE)
     add_executable(MEngineReflectionClangSmoke
-        Engine/Tools/ReflectionGenerator/Smoke/ClangToolingSmoke.cpp
+        Tools/ReflectionGenerator/Smoke/ClangToolingSmoke.cpp
     )
 
     target_include_directories(MEngineReflectionClangSmoke
@@ -324,4 +296,8 @@ if(MENGINE_BUILD_REFLECTION_CLANG_SMOKE)
         PRIVATE
             clangTooling
     )
+endif()
+
+if(BUILD_TESTING)
+    add_subdirectory(Tests)
 endif()

@@ -1,10 +1,12 @@
 # Local editor state
 /.vs/
 /.vscode/
+/imgui.ini
 
 # CMake and Ninja build trees
 /build/
 /out/
+/x64/
 /cmake-build-*/
 /Engine/build/
 CMakeFiles/
@@ -29,33 +31,19 @@ Testing/
 *.pch
 
 # Reflection output regenerated from module manifests
-/Engine/Generated/
+/Generated/
 
 # Temporary files and logs
 *.tmp
 *.tmp.*
 *.log
 
-# Local notes and archived Codex sessions
-/does/
-/CodexSessionTransfer/session/rollout-2026-07-31T15-32-31-019fb716-c698-7a31-886b-1a4bd017ee72.jsonl
-/CodexSession-019fb716-c698-7a31-886b-1a4bd017ee72.zip
-/CodexSessionTransfer/import-session.ps1
-/CodexSessionTransfer/README-导入说明.md
-/CodexSessionTransfer/SHA256.txt
-
-# Local-only tests, smoke verification, and architecture documents
-/Engine/Tests/
-/Docs/
-/README.md
-
 # Local verification and hosting configuration
 /.github/
-/CMakePresets.json
-
-# Third-party documents kept outside source-only commits
-/Engine/ThirdParty/imgui/LICENSE.txt
 
 # Skybox authoring sources and previews; runtime uses the HDR cube faces only
-/Engine/Assets/Textures/Sky/GeneratedDayBlack_v1/*.png
-/Engine/Assets/Textures/Sky/GeneratedDayBlack_v1/SOURCE.md
+/Assets/Textures/Sky/GeneratedDayBlack_v1/*.png
+/Assets/Textures/Sky/GeneratedDayBlack_v1/SOURCE.md
+
+# Local CMake preset overrides
+/CMakeUserPresets.json

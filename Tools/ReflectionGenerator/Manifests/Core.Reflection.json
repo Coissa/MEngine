@@ -1,0 +1,9 @@
+{
+  "module_name": "MEngine.Core.Reflection",
+  "module_root": "../../../Source",
+  "header_files": [
+    "Core/Reflection/TypeRegistry.h"
+  ],
+  "output_directory": "Generated/Reflection",
+  "compile_command_source": "Core/Reflection/TypeRegistry.cpp"
+}

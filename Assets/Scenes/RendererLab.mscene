@@ -1,0 +1,443 @@
+MENGINE_SCENE 5
+scene_state 0
+render_settings -0.57735 0.57735 -0.57735 4 0.03 1.2 0
+lighting_settings 1 0.97 0.92 0.8 0 1 80
+local_lights 3
+light 0 -4 3 -4 9 0 -1 0 30 1 0.35 0.12 20 35
+light 0 5 4 3 10 0 -1 0 35 0.2 0.45 1 20 35
+light 1 0 6 5 12 0 -1 -0.5 60 1 0.85 0.6 18 30
+mesh_assets 20
+1 79aa1e31-297d-5e9e-b136-413d67622a33
+2 55a9afaf-177a-5fa6-b148-349e25c47fc4
+3 a4d40a8a-2c46-5225-884a-22762fada498
+4 fd0a90f2-5095-589f-8b49-bd4e218fc1c5
+5 0ea86e9a-ebe0-5cf8-b656-4f96179f5f12
+6 cbc235e7-76e9-5fe1-bf18-2cb0c0a4262f
+7 fb36569a-92b7-59ab-9566-02a94e0fec71
+8 d5eed93f-13d1-5fcc-8ea9-503e57d26595
+9 da8a287a-2cf1-593e-8f0b-18f26b7775e6
+10 b3c33024-5880-5a16-8c67-f538de4161ab
+11 daffbe34-c2c2-5268-93d1-9b45c5f5511b
+12 4adc342d-7ea2-5527-ad69-dbc428428bb6
+13 03826e5c-1808-5a65-b201-f6811a963fbe
+14 49f1b17a-db39-54f6-9521-abdaff2b474d
+15 4b4e9524-4403-507e-ba83-80aaf8c240b7
+16 b851fe3c-3560-552d-b106-707abfb3aea4
+17 d9c5fd7a-b334-5b2e-af49-d0fc8d2944c6
+18 d5227c73-0308-59bb-8142-3f8f8c777d27
+19 d8eb6ef5-2715-55d3-a62a-8a5a7b5150ef
+20 f172b3fc-05a2-5f5a-9c24-6979f9f7f235
+material_assets 15
+1 7a8f181b-0ecf-5b29-93a2-aa9c09b5607b
+2 92c327b1-becb-5ef3-bb37-b68a7508ad67
+3 c9fbb85a-e696-5c9f-9c14-14635f32c347
+4 46fdbf69-1b2e-56f0-babb-4203e190a05d
+5 c603920f-2038-5deb-b894-5f86a020d11c
+6 833343b6-8215-5271-95e0-bcae03fa4194
+7 bbf7994c-4132-5570-8f10-3cdca7e37a4a
+8 216b8034-a9d2-5046-a194-a6efa9eba5fd
+9 1a97fc03-e243-50bd-954c-8eb2dcc4f2f5
+10 46d73eb9-8cba-5841-ad09-33d69dcc8df2
+11 b0c46f37-cb73-596a-824c-63930c114b8e
+12 bb439674-f8bf-55bf-8039-49f22e1a64a9
+13 1c9a20a8-fc9c-510b-ad1f-643c934d71df
+14 9224fcc0-632f-59dc-887e-30ab81bb843c
+15 365d6ba0-4b28-5e0e-b573-697a1f47da78
+object_count 50
+object 1000 "Main Camera"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 28
+0 7 -22 11.3099325 0 0 1 1 1
+component "MEngine.Runtime.CameraComponent" 1 12
+45 0.5 500 1
+end_object
+object 1 "Tiled Ground"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+4 2 1
+end_object
+object 2 "Brick Pedestal"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+0 0.75 0 0 0 0 2 1 2
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+1 1 1
+end_object
+object 3 "Skull"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 25
+0 2.5 0 0 0 0 0.5 0.5 0.5
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+5 3 1
+end_object
+object 100 "Brick Column 1 Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 21
+-5 1.5 -8 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+3 1 1
+end_object
+object 200 "Column Sphere 1 Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 21
+-5 3.6 -8 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+2 3 1
+end_object
+object 101 "Brick Column 1 Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+5 1.5 -8 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+3 1 1
+end_object
+object 201 "Column Sphere 1 Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+5 3.6 -8 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+2 3 1
+end_object
+object 102 "Brick Column 2 Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 21
+-5 1.5 -4 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+3 1 1
+end_object
+object 202 "Column Sphere 2 Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 21
+-5 3.6 -4 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+2 3 1
+end_object
+object 103 "Brick Column 2 Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+5 1.5 -4 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+3 1 1
+end_object
+object 203 "Column Sphere 2 Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+5 3.6 -4 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+2 3 1
+end_object
+object 104 "Brick Column 3 Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+-5 1.5 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+3 1 1
+end_object
+object 204 "Column Sphere 3 Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+-5 3.6 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+2 3 1
+end_object
+object 105 "Brick Column 3 Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 19
+5 1.5 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+3 1 1
+end_object
+object 205 "Column Sphere 3 Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 19
+5 3.6 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+2 3 1
+end_object
+object 106 "Brick Column 4 Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+-5 1.5 4 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+3 1 1
+end_object
+object 206 "Column Sphere 4 Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+-5 3.6 4 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+2 3 1
+end_object
+object 107 "Brick Column 4 Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 19
+5 1.5 4 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+3 1 1
+end_object
+object 207 "Column Sphere 4 Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 19
+5 3.6 4 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+2 3 1
+end_object
+object 108 "Brick Column 5 Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+-5 1.5 8 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+3 1 1
+end_object
+object 208 "Column Sphere 5 Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+-5 3.6 8 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+2 3 1
+end_object
+object 109 "Brick Column 5 Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 19
+5 1.5 8 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+3 1 1
+end_object
+object 209 "Column Sphere 5 Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 19
+5 3.6 8 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+2 3 1
+end_object
+object 4 "Wire Fence"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 27
+-2.5 1.5 3 0 0 0 1.2 2 0.15
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+1 5 1
+end_object
+object 5 "Water Surface Left"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 22
+-10 0.4 -3 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+6 4 1
+end_object
+object 6 "Water Surface Right"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 21
+10 0.4 -3 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+6 4 1
+end_object
+object 300 "Tree 1"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 22
+-10 2.5 16 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+7 6 1
+end_object
+object 301 "Tree 2"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 21
+-7 2.5 16 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+7 7 1
+end_object
+object 302 "Tree 3"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 21
+-4 2.5 16 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+7 8 1
+end_object
+object 303 "Tree 4"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 21
+-1 2.5 16 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+7 6 1
+end_object
+object 304 "Tree 5"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+2 2.5 16 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+7 7 1
+end_object
+object 305 "Tree 6"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+5 2.5 16 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+7 8 1
+end_object
+object 306 "Tree 7"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 20
+8 2.5 16 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+7 6 1
+end_object
+object 307 "Tree 8"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 21
+11 2.5 16 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+7 7 1
+end_object
+object 8 "Quad Surface"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 18
+-9 2 8 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 5
+8 1 1
+end_object
+object 9 "Bezier Surface"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+9 1 8 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 6
+9 10 1
+end_object
+object 10 "Ice Panel"
+parent 0
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 18
+0 3 12 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 6
+10 9 1
+end_object
+object 20 "Soldier Left"
+parent 0
+component_count 1
+component "MEngine.Runtime.TransformComponent" 1 31
+-2 0 -5 0 180 0 0.05 0.05 -0.05
+end_object
+object 21 "Soldier Right"
+parent 0
+component_count 1
+component "MEngine.Runtime.TransformComponent" 1 28
+2 0 -5 0 0 0 0.05 0.05 -0.05
+end_object
+object 400 "soldier_head"
+parent 20
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 7
+11 11 1
+end_object
+object 401 "soldier_jacket"
+parent 20
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 7
+12 12 1
+end_object
+object 402 "soldier_pants"
+parent 20
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 7
+13 13 1
+end_object
+object 403 "soldier_upBody1"
+parent 20
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 7
+14 14 1
+end_object
+object 404 "soldier_upBody2"
+parent 20
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 7
+15 15 1
+end_object
+object 410 "soldier_head"
+parent 21
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 7
+16 11 1
+end_object
+object 411 "soldier_jacket"
+parent 21
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 7
+17 12 1
+end_object
+object 412 "soldier_pants"
+parent 21
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 7
+18 13 1
+end_object
+object 413 "soldier_upBody1"
+parent 21
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 7
+19 14 1
+end_object
+object 414 "soldier_upBody2"
+parent 21
+component_count 2
+component "MEngine.Runtime.TransformComponent" 1 17
+0 0 0 0 0 0 1 1 1
+component "MEngine.Runtime.MeshRendererComponent" 1 7
+20 15 1
+end_object
+end_scene
